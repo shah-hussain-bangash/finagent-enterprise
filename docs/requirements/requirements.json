@@ -1,0 +1,2201 @@
+[
+ {
+  "id": "BR-001",
+  "doc": "FAE-BRD-001",
+  "text": "Controlled AML case lifecycle from valid alert to reviewed completion.",
+  "owner": "AML Operations",
+  "kind": "MUST",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "BR-002",
+  "doc": "FAE-BRD-001",
+  "text": "Separate tenant data, knowledge, case access and configuration.",
+  "owner": "Security",
+  "kind": "MUST",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "BR-003",
+  "doc": "FAE-BRD-001",
+  "text": "Restrict access and actions to authorized roles and case assignments.",
+  "owner": "Security",
+  "kind": "MUST",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "BR-004",
+  "doc": "FAE-BRD-001",
+  "text": "Collect evidence only from approved sources and expose completeness limitations.",
+  "owner": "Data owners",
+  "kind": "MUST",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "BR-005",
+  "doc": "FAE-BRD-001",
+  "text": "Use approved policy versions and link material claims to evidence.",
+  "owner": "Compliance",
+  "kind": "MUST",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "BR-006",
+  "doc": "FAE-BRD-001",
+  "text": "Require accountable human review before finalizing investigation output.",
+  "owner": "AML Operations",
+  "kind": "MUST",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "BR-007",
+  "doc": "FAE-BRD-001",
+  "text": "Prevent unauthorized financial or regulatory actions regardless of AI output.",
+  "owner": "Compliance",
+  "kind": "MUST",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "BR-008",
+  "doc": "FAE-BRD-001",
+  "text": "Retain traceable case, evidence, model/policy version and decision history.",
+  "owner": "Compliance",
+  "kind": "MUST",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "BR-009",
+  "doc": "FAE-BRD-001",
+  "text": "Recover interrupted work without silent loss or duplicate committed effects.",
+  "owner": "Operations",
+  "kind": "MUST",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "BR-010",
+  "doc": "FAE-BRD-001",
+  "text": "Make failed, blocked and uncertain outcomes visible for resolution.",
+  "owner": "Operations",
+  "kind": "MUST",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "BR-011",
+  "doc": "FAE-BRD-001",
+  "text": "Protect sensitive data throughout use, storage, export and retention.",
+  "owner": "Security/privacy",
+  "kind": "MUST",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "BR-012",
+  "doc": "FAE-BRD-001",
+  "text": "Measure handling time, output quality, reliability and operating cost.",
+  "owner": "Product Owner",
+  "kind": "MUST",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "BR-013",
+  "doc": "FAE-BRD-001",
+  "text": "Validate AI behavior before release and after material changes.",
+  "owner": "Model governance",
+  "kind": "MUST",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "BR-014",
+  "doc": "FAE-BRD-001",
+  "text": "Provide authorized report export and management summaries.",
+  "owner": "AML Operations",
+  "kind": "SHOULD",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "BR-015",
+  "doc": "FAE-BRD-001",
+  "text": "Support reusable configurations for future approved workflows.",
+  "owner": "Product Owner",
+  "kind": "SHOULD",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "FR-001",
+  "doc": "FAE-SRS-002",
+  "text": "Authenticated access: The system SHALL validate enterprise identity and reject expired, invalid or untrusted sessions. Tenant and role context SHALL derive from trusted membership, not user-supplied IDs.",
+  "acceptance": "Invalid credentials and forged tenant parameters cannot access protected resources. Existing sessions follow the agreed revocation policy.",
+  "parents": "BR-BR-002, 003, 011",
+  "kind": "SHALL",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "FR-002",
+  "doc": "FAE-SRS-002",
+  "text": "Authorization on every operation: The system SHALL authorize reads, mutations, searches, document downloads, citations, exports and background actions by tenant, role and applicable case/source permission. Deny by default.",
+  "acceptance": "A role/tenant negative-test matrix yields zero unauthorized results, including counts, snippets and cached content.",
+  "parents": "BR-BR-002, 003, 011",
+  "kind": "SHALL",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "FR-003",
+  "doc": "FAE-SRS-002",
+  "text": "Reviewer separation and delegation: The system SHALL enforce a configured reviewer matrix. Proposed default: the submitting analyst cannot approve the same report. Delegation SHALL be explicit, time-bounded and auditable.",
+  "acceptance": "Self-approval fails under the default policy; expired delegation cannot approve; legitimate delegated review records both identities.",
+  "parents": "BR-BR-006, 007, 008",
+  "kind": "SHALL",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "FR-004",
+  "doc": "FAE-SRS-002",
+  "text": "Guarded transitions: The system SHALL reject invalid or stale case transitions using a case version. Concurrent edits SHALL not silently overwrite accepted work.",
+  "acceptance": "Two updates using the same version result in one accepted update and one conflict; an illegal transition has no business effect.",
+  "parents": "BR-BR-001, 006, 008",
+  "kind": "SHALL",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "FR-005",
+  "doc": "FAE-SRS-002",
+  "text": "Run lifecycle: The system SHALL expose Queued, Running, Waiting for Evidence, Waiting for Review, Retrying, Succeeded, Failed, Cancelled and Outcome Uncertain states with reason and timestamps.",
+  "acceptance": "Every active run has an accountable case and visible next action; Succeeded does not bypass required case review.",
+  "parents": "BR-BR-009, 010, 012",
+  "kind": "SHALL",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "FR-006",
+  "doc": "FAE-SRS-002",
+  "text": "Version invalidation: Changes to reviewed facts, report content or the evidence snapshot SHALL invalidate affected approval. Reopened completed cases SHALL retain prior completion history.",
+  "acceptance": "Changing material evidence after approval prevents finalization until a new valid review is recorded.",
+  "parents": "BR-BR-005, 006, 008",
+  "kind": "SHALL",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "FR-007",
+  "doc": "FAE-SRS-002",
+  "text": "Validate alert intake: The system SHALL validate source identity, alert reference, schema version, event time, alert type and required subject references before creating a case. Untrusted payload fields SHALL not grant permissions.",
+  "acceptance": "Malformed or unsupported input is rejected or quarantined with a reason and correlation ID; no partial business case is created.",
+  "parents": "BR-BR-001, 003, 004",
+  "kind": "SHALL",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "FR-008",
+  "doc": "FAE-SRS-002",
+  "text": "Deduplicate intake: The system SHALL uniquely identify intake by tenant, source system and source alert reference. Replays with the same payload SHALL return the existing result; materially changed duplicates SHALL require explicit reconciliation.",
+  "acceptance": "Repeated deliveries create one business case. Changed-payload replay does not silently replace evidence or create a second case.",
+  "parents": "BR-BR-001, 009",
+  "kind": "SHALL",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "FR-009",
+  "doc": "FAE-SRS-002",
+  "text": "Case ownership and assignment: The system SHALL record queue, assigned analyst, alert category, timestamps and ownership history. Only permitted supervisors or configured rules may reassign cases.",
+  "acceptance": "Assignment to an ineligible user fails; reassignment retains actor, time and reason. [BRD: BR-001, 003, 008] FR-010 | Case list and detail Requirement: The system SHALL provide permission-filtered cases with status, assignment, age and blockers; support pagination and filters by status, owner, date and alert reference. Case detail SHALL show evidence, reports, review and history. Acceptance: A user can locate a permitted case; inaccessible cases and their metadata are absent from lists, counts and search.",
+  "parents": "BR-BR-001, 003, 010",
+  "kind": "SHALL",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "FR-010",
+  "doc": "FAE-SRS-002",
+  "text": "Case list and detail: The system SHALL provide permission-filtered cases with status, assignment, age and blockers; support pagination and filters by status, owner, date and alert reference. Case detail SHALL show evidence, reports, review and history.",
+  "acceptance": "A user can locate a permitted case; inaccessible cases and their metadata are absent from lists, counts and search.",
+  "parents": "BR-001, 003, 010",
+  "kind": "SHALL",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "FR-011",
+  "doc": "FAE-SRS-002",
+  "text": "Escalation and due work: The system SHALL show configured due times and escalate blocked/overdue work to the configured owner. Delivery failures SHALL remain visible.",
+  "acceptance": "A test case crossing a configured threshold appears in the escalation queue once per escalation rule; notification retry does not duplicate the business escalation.",
+  "parents": "BR-BR-010, 012",
+  "kind": "SHALL",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "FR-012",
+  "doc": "FAE-SRS-002",
+  "text": "Authorized evidence retrieval: The system SHALL retrieve customer and transaction evidence through approved connectors scoped to the case and permitted purpose. Store source ID, retrieval time, version/hash and applicable access label.",
+  "acceptance": "A connector cannot retrieve another tenant or an unrelated restricted subject. Source failures appear as gaps, not empty evidence presented as complete.",
+  "parents": "BR-BR-002, 004, 008, 011",
+  "kind": "SHALL",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "FR-013",
+  "doc": "FAE-SRS-002",
+  "text": "Secure document ingestion: The system SHALL validate file type/size, scan uploads, quarantine suspicious content and expose processing status. Parser failures SHALL preserve the source safely and report a recoverable error.",
+  "acceptance": "Blocked files never enter retrieval or model context. A malformed PDF does not execute code, crash the queue or expose another file. Proposed limits: PDF/DOCX/CSV, 20 MiB per file; confirm before pilot.",
+  "parents": "BR-BR-004, 011",
+  "kind": "SHALL",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "FR-014",
+  "doc": "FAE-SRS-002",
+  "text": "Extraction and validation: The system SHALL extract agreed fields into typed records, preserve page/row provenance, represent uncertainty and flag invalid formats, missing values and conflicting values for review.",
+  "acceptance": "For the approved fixture set, reviewers can inspect each extracted field against its source. Low-confidence or invalid required fields cannot silently become accepted facts.",
+  "parents": "BR-BR-004, 005, 013",
+  "kind": "SHALL",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "FR-015",
+  "doc": "FAE-SRS-002",
+  "text": "Completeness and reconciliation: The system SHALL check required evidence by alert type and display missing, stale or contradictory records. Analysts may resolve conflicts with a recorded reason without deleting original evidence.",
+  "acceptance": "A missing transaction interval or conflicting customer attribute blocks a completeness pass until resolved or explicitly accepted under an approved exception rule.",
+  "parents": "BR-BR-004, 005, 008",
+  "kind": "SHALL",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "FR-016",
+  "doc": "FAE-SRS-002",
+  "text": "Evidence snapshots: The system SHALL version case evidence sets and bind report citations and review requests to immutable snapshot identifiers. Re-fetching SHALL create a new version when content changes.",
+  "acceptance": "A historical approved report resolves to its reviewed evidence version subject to current access and retention; overwritten source content cannot silently change its meaning.",
+  "parents": "BR-BR-005, 006, 008",
+  "kind": "SHALL",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "FR-017",
+  "doc": "FAE-SRS-002",
+  "text": "Approved knowledge lifecycle: The system SHALL index only approved policy versions with owner, status, effective dates, institution applicability and access scope. Retired versions SHALL not be used as current guidance.",
+  "acceptance": "An unapproved or inapplicable policy is excluded. Historical investigation views retain policy references without presenting them as current policy.",
+  "parents": "BR-BR-005, 008, 011",
+  "kind": "SHALL",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "FR-018",
+  "doc": "FAE-SRS-002",
+  "text": "Permission-aware retrieval: The system SHALL enforce tenant/source permissions before content enters model context and recheck access when displaying citations. Retrieval caches SHALL preserve scope and respond to permission changes.",
+  "acceptance": "A restricted policy never appears in snippets, model prompts, citations, caches or generated summaries for an unauthorized user.",
+  "parents": "BR-BR-002, 003, 005, 011",
+  "kind": "SHALL",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "FR-019",
+  "doc": "FAE-SRS-002",
+  "text": "Citations and evidence sufficiency: The system SHALL attach verifiable document/page/section or structured-record references to material factual claims and expose supporting excerpts where permitted. Missing support SHALL be explicit.",
+  "acceptance": "Automated checks plus reviewer validation identify unresolved or mismatched citations. Unsupported material conclusions prevent the review-ready validation pass.",
+  "parents": "BR-BR-005, 006, 013",
+  "kind": "SHALL",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "FR-020",
+  "doc": "FAE-SRS-002",
+  "text": "No-answer and conflicting guidance: The system SHALL return insufficient-evidence status when no applicable source is found and surface conflicting policy versions for resolution. It SHALL not substitute general model knowledge as approved policy.",
+  "acceptance": "An empty, revoked or contradictory policy corpus produces an explicit limitation and escalation, not a fabricated institutional rule.",
+  "parents": "BR-BR-005, 007, 013",
+  "kind": "SHALL",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "FR-021",
+  "doc": "FAE-SRS-002",
+  "text": "Bounded specialist execution: The system SHALL run versioned KYC completeness, AML summary, Compliance and Reporting capabilities with typed input/output, allowed tools, timeouts, step limits and cost budgets.",
+  "acceptance": "A capability exceeding its limit stops or escalates with reason; it cannot spawn unrestricted work or exceed the tool permission boundary.",
+  "parents": "BR-BR-004, 005, 007, 012, 013",
+  "kind": "SHALL",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "FR-022",
+  "doc": "FAE-SRS-002",
+  "text": "Validated findings: The system SHALL distinguish sourced facts, deterministic calculations, interpretive findings and unresolved gaps. Schema-invalid outputs SHALL be rejected or repaired within bounded limits.",
+  "acceptance": "Invalid currency/date fields, invented evidence IDs and unsupported numerical conclusions are caught in the approved evaluation cases and do not become accepted facts.",
+  "parents": "BR-BR-004, 005, 013",
+  "kind": "SHALL",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "FR-023",
+  "doc": "FAE-SRS-002",
+  "text": "Deterministic calculations: Transaction sums, counts, date windows and currency handling SHALL use validated deterministic logic. Rounding, duplicate treatment and currency conversion sources SHALL be specified for each calculation.",
+  "acceptance": "Known fixtures reproduce expected totals exactly under the configured rules; different currencies are not silently summed into one amount.",
+  "parents": "BR-BR-005, 013",
+  "kind": "SHALL",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "FR-024",
+  "doc": "FAE-SRS-002",
+  "text": "Controlled tool gateway: The system SHALL authorize every tool invocation independently of the model and enforce tenant scope, parameter validation, purpose, tool allowlist and read/write classification.",
+  "acceptance": "Generated requests to move funds, freeze an account, change roles or call an unapproved endpoint are denied and recorded.",
+  "parents": "BR-BR-002, 003, 007, 008",
+  "kind": "SHALL",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "FR-025",
+  "doc": "FAE-SRS-002",
+  "text": "Untrusted content and lineage: The system SHALL treat retrieved/uploaded instructions as data, prevent them from granting authority, minimize sensitive prompt content and record model, prompt, workflow and policy versions.",
+  "acceptance": "Adversarial evidence cannot override permissions or approval requirements. A report can be traced to its configuration versions without retaining unrestricted sensitive prompts in ordinary logs. [BRD: BR-007, 008, 011, 013] FinAgent Enterprise | FAE-SRS-002 | v1.0 | Draft 8 FR-026 | Structured investigation report Requirement: The system SHALL produce a versioned draft with alert context, evidence scope, relevant activity, validated calculations, findings, policy references, gaps and proposed disposition for human judgment. Acceptance: The approved template is populated or marks unavailable sections explicitly; every material conclusion is supported or blocks readiness.",
+  "parents": "BR-BR-001, 005, 006",
+  "kind": "SHALL",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "FR-026",
+  "doc": "FAE-SRS-002",
+  "text": "Structured investigation report: The system SHALL produce a versioned draft with alert context, evidence scope, relevant activity, validated calculations, findings, policy references, gaps and proposed disposition for human judgment.",
+  "acceptance": "The approved template is populated or marks unavailable sections explicitly; every material conclusion is supported or blocks readiness.",
+  "parents": "BR-001, 005, 006",
+  "kind": "SHALL",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "FR-027",
+  "doc": "FAE-SRS-002",
+  "text": "Analyst editing and submission: The system SHALL preserve draft revisions, author and time; validate required report fields and evidence support before freezing a review snapshot.",
+  "acceptance": "A reviewer sees the exact submitted content and citations. Analyst edits after submission require withdrawal or a new revision; no silent alteration of reviewed text occurs.",
+  "parents": "BR-BR-005, 006, 008",
+  "kind": "SHALL",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "FR-028",
+  "doc": "FAE-SRS-002",
+  "text": "Reviewer decisions: The system SHALL permit authorized Approve, Return for Rework and Request Information decisions with rationale, reviewer identity, time and bound report/evidence versions.",
+  "acceptance": "Missing rationale, stale versions or unauthorized reviewer decisions fail without changing approval state. A valid decision is recorded once on replay.",
+  "parents": "BR-BR-003, 006, 008, 009",
+  "kind": "SHALL",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "FR-029",
+  "doc": "FAE-SRS-002",
+  "text": "Finalization gate: Before a permitted external case-status write, the system SHALL revalidate role authority, required approval, current snapshot and action scope. Report acceptance SHALL not authorize excluded financial/regulatory actions.",
+  "acceptance": "Expired or invalidated approval prevents the write. A successful confirmed write is recorded; unknown outcomes enter reconciliation rather than Completed.",
+  "parents": "BR-BR-006, 007, 009, 010",
+  "kind": "SHALL",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "FR-030",
+  "doc": "FAE-SRS-002",
+  "text": "Controlled export - Should: The system SHOULD export authorized report versions with case/reference IDs, version, review status and evidence list. Exports SHALL preserve access checks and be audited.",
+  "acceptance": "An unauthorized export fails. Draft output is visibly marked Draft; approved output includes the applicable approval reference.",
+  "parents": "BR-BR-003, 008, 011, 014",
+  "kind": "SHOULD",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "FR-031",
+  "doc": "FAE-SRS-002",
+  "text": "Durable progress: The system SHALL persist authoritative run state and completed-step references before acknowledging work completion. Restart SHALL resume only eligible unfinished work.",
+  "acceptance": "Injected worker termination at agreed checkpoints preserves acknowledged case data and resumes without rerunning committed business effects.",
+  "parents": "BR-BR-008, 009",
+  "kind": "SHALL",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "FR-032",
+  "doc": "FAE-SRS-002",
+  "text": "Idempotent commands and effects: Mutating commands SHALL accept an idempotency identifier scoped to tenant and operation. Same-key/same-payload replay SHALL return the original result; changed-payload replay SHALL conflict.",
+  "acceptance": "Duplicate start, review and finalization requests do not duplicate runs, decisions or effects. External connectors use a stable operation reference and reconciliation when native idempotency is absent.",
+  "parents": "BR-BR-001, 006, 009",
+  "kind": "SHALL",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "FR-033",
+  "doc": "FAE-SRS-002",
+  "text": "Bounded retries and uncertain outcomes: The system SHALL retry only classified transient errors with configured limits and delay. Permanent failures require correction; ambiguous external writes require status reconciliation before another write.",
+  "acceptance": "Timeout-after-commit testing yields one external effect. Exhausted retries surface a reason, owner and recovery action. No blind retry of an unknown write is allowed.",
+  "parents": "BR-BR-009, 010",
+  "kind": "SHALL",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "FR-034",
+  "doc": "FAE-SRS-002",
+  "text": "Exclusive execution and stale workers: The system SHALL prevent concurrent workers from committing the same protected step. An expired or superseded worker SHALL not commit new results.",
+  "acceptance": "Competing workers and lease-expiry tests produce one valid step completion. Late responses cannot overwrite the newer authoritative state.",
+  "parents": "BR-BR-009",
+  "kind": "SHALL",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "FR-035",
+  "doc": "FAE-SRS-002",
+  "text": "Controlled cancellation and manual recovery: The system SHALL stop scheduling new work after authorized cancellation, record in-flight outcomes and preserve committed effects. Recovery actions require authorization, reason and audit.",
+  "acceptance": "Cancel during a connector call does not falsely imply rollback; uncertain results remain reconcilable. Manual retry cannot bypass approval or duplicate protection.",
+  "parents": "BR-BR-003, 008, 009, 010",
+  "kind": "SHALL",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "FR-036",
+  "doc": "FAE-SRS-002",
+  "text": "Protected audit history: The system SHALL record material access, changes, assignments, tool calls, policy/config changes, review decisions, exports and recovery actions with tenant, actor, case/run, time, outcome and correlation ID.",
+  "acceptance": "Accepted pilot cases contain all mandatory events. Ordinary users/operators cannot alter history; audit storage access and integrity controls are tested.",
+  "parents": "BR-BR-008, 011",
+  "kind": "SHALL",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "FR-037",
+  "doc": "FAE-SRS-002",
+  "text": "Operational visibility: The system SHALL show run/step status, elapsed time, retries, blockers, connector health and cost, with links to permitted case details. Logs SHALL redact sensitive payloads and secrets.",
+  "acceptance": "An injected dependency failure appears on the operator dashboard and configured alert route; ordinary telemetry contains no fixture secrets or prohibited customer data.",
+  "parents": "BR-BR-010, 011, 012",
+  "kind": "SHALL",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "FR-038",
+  "doc": "FAE-SRS-002",
+  "text": "Business metrics and budgets: The system SHALL report volumes, handling/review time, quality/rework, failures, recovery and model/tool cost. It SHALL enforce configurable workflow and tenant budgets.",
+  "acceptance": "Usage reconciles to defined billing units and periods. A budget breach stops new billable work or follows an explicitly approved exception, while preserving current case state.",
+  "parents": "BR-BR-012",
+  "kind": "SHALL",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "FR-039",
+  "doc": "FAE-SRS-002",
+  "text": "Retention, legal hold and deletion: The system SHALL apply approved retention rules across primary records, documents, indexes, caches, exports under its control and backup lifecycle. Legal holds SHALL block prohibited deletion.",
+  "acceptance": "A synthetic deletion exercise verifies eligible removal and index/cache propagation; held records remain protected. Backup restoration reapplies deletion/hold records before access is restored. [BRD: BR-008, 011] FR-040 | Configuration and AI release control Requirement: The system SHALL version approved workflow, prompt, model, policy and connector configurations. Material changes require evaluation and authorized promotion with rollback. Acceptance: An unapproved configuration cannot serve production work. Rollback preserves historical lineage and does not reinterpret existing approvals.",
+  "parents": "BR-BR-007, 008, 013, 015",
+  "kind": "SHALL",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "FR-040",
+  "doc": "FAE-SRS-002",
+  "text": "Configuration and AI release control: The system SHALL version approved workflow, prompt, model, policy and connector configurations. Material changes require evaluation and authorized promotion with rollback.",
+  "acceptance": "An unapproved configuration cannot serve production work. Rollback preserves historical lineage and does not reinterpret existing approvals.",
+  "parents": "BR-007, 008, 013, 015",
+  "kind": "SHALL",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "UI-001",
+  "doc": "FAE-SRS-002",
+  "text": "Safe and accessible interaction: The interface SHALL distinguish Draft, Approved, Blocked and Outcome Uncertain states without relying only on color. It SHALL support keyboard operation, readable labels and explicit action feedback.",
+  "acceptance": "Primary analyst/reviewer journeys pass keyboard and screen-reader checks against the agreed accessibility checklist; failed saves never appear successful. Proposed accessibility target: WCAG 2.2 AA, subject to scope confirmation.",
+  "parents": "BR-BR-001, 006, 010",
+  "kind": "SHALL",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "UI-002",
+  "doc": "FAE-SRS-002",
+  "text": "Concurrent review and expired access: The interface SHALL explain stale-content conflicts and prevent submitting a decision on a superseded snapshot. Session expiry SHALL not leak sensitive data or silently discard acknowledged edits.",
+  "acceptance": "Two-reviewer and expired-session scenarios produce clear feedback; server checks still enforce all controls when the interface is bypassed.",
+  "parents": "BR-BR-003, 006, 008",
+  "kind": "SHALL",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "NFR-001",
+  "doc": "FAE-SRS-002",
+  "text": "Security: encrypt traffic and sensitive stored data; approved key/secrets management; least privilege; no secrets in code/logs; test key rotation.",
+  "kind": "SHALL",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "NFR-002",
+  "doc": "FAE-SRS-002",
+  "text": "Isolation: zero unauthorized disclosure or action in tenant/role/source negative tests incl. search, workers, caches and exports.",
+  "kind": "SHALL",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "NFR-003",
+  "doc": "FAE-SRS-002",
+  "text": "API latency: proposed P95 <=500 ms for case list/detail reads excl. downloads and AI; 50 users, 10 rps, 30-min steady state. Confirm before pilot.",
+  "kind": "SHALL",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "NFR-004",
+  "doc": "FAE-SRS-002",
+  "text": "AI duration: show progress and elapsed time; bound task duration by configured timeout; task SLOs agreed after benchmarking.",
+  "kind": "SHALL",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "NFR-005",
+  "doc": "FAE-SRS-002",
+  "text": "Availability: proposed 99.9% monthly; measurement and outage accounting to be agreed. Not a contractual SLA.",
+  "kind": "SHALL",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "NFR-006",
+  "doc": "FAE-SRS-002",
+  "text": "Recovery: no loss of acknowledged authoritative records in worker-restart tests; RPO/RTO/backup targets require Operations approval.",
+  "kind": "SHALL",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "NFR-007",
+  "doc": "FAE-SRS-002",
+  "text": "Capacity: bounded queues, concurrency and tenant quotas; no cross-tenant starvation under agreed load.",
+  "kind": "SHALL",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "NFR-008",
+  "doc": "FAE-SRS-002",
+  "text": "Observability: correlate case/run/step/tool events; safe actionable alerts; monitoring failure must not disable approval or authorization.",
+  "kind": "SHALL",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "NFR-009",
+  "doc": "FAE-SRS-002",
+  "text": "Maintainability: version configurations/contracts; test migrations and rollback; document dependencies and ownership.",
+  "kind": "SHALL",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "NFR-010",
+  "doc": "FAE-SRS-002",
+  "text": "AI quality: evaluate task completion, citation validity, unsupported claims, policy applicability and adversarial behaviour on a versioned dataset.",
+  "kind": "SHALL",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "NFR-011",
+  "doc": "FAE-SRS-002",
+  "text": "Cost: measure model/tool usage per case/tenant; enforce budgets; record incomplete estimates when billing arrives late.",
+  "kind": "SHALL",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "NFR-012",
+  "doc": "FAE-SRS-002",
+  "text": "Usability: verify UI-001/002 via analyst/reviewer UAT, accessibility checks and error/uncertainty journeys.",
+  "kind": "SHALL",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "DIR-001",
+  "doc": "FAE-DIR-004",
+  "text": "The system SHALL maintain an approved source register for every enabled integration, with owner, purpose, permitted fields/operations, classification, credentials scope, environment, contract version and support contact.",
+  "kind": "SHALL",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "DIR-002",
+  "doc": "FAE-DIR-004",
+  "text": "Every record, retrieval request, index entry, cache item and external operation SHALL retain enforced tenant scope. A tenant identifier in an incoming payload is untrusted until mapped from authenticated source configuration.",
+  "kind": "SHALL",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "DIR-003",
+  "doc": "FAE-DIR-004",
+  "text": "Data access SHALL be limited to the case purpose, user/worker authority and approved source permission. Administrative platform access alone SHALL not grant unrestricted case-content access.",
+  "kind": "SHALL",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "DIR-004",
+  "doc": "FAE-DIR-004",
+  "text": "The register SHALL identify the real source product, endpoint/event contract, environment, owner and access approval before enabling a connector. Product names in the blueprint are candidates, not confirmed institutional systems.",
+  "kind": "SHALL",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "DIR-005",
+  "doc": "FAE-DIR-004",
+  "text": "Each source SHALL specify whether delivery is push, polling or on-demand; its pagination, rate limits, data scope, timestamps, ordering guarantees, schema changes and deletion/correction signaling.",
+  "kind": "SHALL",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "DIR-006",
+  "doc": "FAE-DIR-004",
+  "text": "Canonical identifiers SHALL be stable, opaque strings. Retain external identifiers separately with source-system namespace. Do not use names, email addresses or account numbers as internal primary keys.",
+  "kind": "SHALL",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "DIR-007",
+  "doc": "FAE-DIR-004",
+  "text": "All event timestamps SHALL be timezone-aware and normalized to UTC while preserving original timezone/offset where needed for interpretation. Date-only business fields SHALL remain dates; no invented midnight timezone.",
+  "kind": "SHALL",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "DIR-008",
+  "doc": "FAE-DIR-004",
+  "text": "Money SHALL use exact decimal values and an explicit currency. Preserve source amount/currency; store any converted value separately with rate, source, effective time and rounding rule. No silent currency mixing or floating-point aggregation.",
+  "kind": "SHALL",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "DIR-009",
+  "doc": "FAE-DIR-004",
+  "text": "Missing, unknown, withheld, not applicable and extraction failure SHALL be distinguishable. Required fields SHALL not be filled by model guesswork. Enumerations SHALL have documented values and explicit unsupported-value handling. Common field",
+  "kind": "SHALL",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "DIR-010",
+  "doc": "FAE-DIR-004",
+  "text": "Intake SHALL reject or quarantine missing alert keys, unsupported alert type, invalid timestamps, invalid windows or unresolved subject references. No partial case shall be marked successfully ingested.",
+  "kind": "SHALL",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "DIR-011",
+  "doc": "FAE-DIR-004",
+  "text": "Identity resolution SHALL use approved source references and explicit mappings. Same-name customers SHALL not be automatically merged. Ambiguous matches SHALL require resolution with an audit record.",
+  "kind": "SHALL",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "DIR-012",
+  "doc": "FAE-DIR-004",
+  "text": "Transaction retrieval SHALL define account scope, time boundaries, ordering, pagination and completeness proof. Record returned count, page/cursor completion, source as-of time and known exclusions. An incomplete page sequence SHALL not be labelled a complete investigation window.",
+  "kind": "SHALL",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "DIR-013",
+  "doc": "FAE-DIR-004",
+  "text": "Calculations SHALL document treatment of pending items, reversals, duplicates, corrections, negative values, timezone boundaries and currencies. Derived totals SHALL reference the input snapshot and calculation-rule version.",
+  "kind": "SHALL",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "DIR-014",
+  "doc": "FAE-DIR-004",
+  "text": "Uploads SHALL be validated and scanned before parsing/indexing. Suspicious files remain quarantined. Proposed MVP limits: PDF, DOCX and CSV; 20 MiB per file. Actual limits and encrypted-file handling require confirmation.",
+  "kind": "SHALL",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "DIR-015",
+  "doc": "FAE-DIR-004",
+  "text": "Extracted content SHALL inherit source and case restrictions. Chunking/indexing SHALL preserve version and page/section references. Search results SHALL never broaden permissions relative to the original source.",
+  "kind": "SHALL",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "DIR-016",
+  "doc": "FAE-DIR-004",
+  "text": "Only approved, effective and applicable policies SHALL serve current guidance. Historical policy references SHALL remain distinguishable from current guidance. A missing applicable policy triggers an explicit gap, not a generated institutional rule.",
+  "kind": "SHALL",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "DIR-017",
+  "doc": "FAE-DIR-004",
+  "text": "Every material claim SHALL link to a resolvable evidence record or be marked unsupported. A hash verifies content identity, not factual correctness. Citation validation must also check that the cited content supports the claim.",
+  "kind": "SHALL",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "DIR-018",
+  "doc": "FAE-DIR-004",
+  "text": "Review decisions SHALL bind to the exact report and evidence snapshot. Changes to relevant content invalidate the approval; keep prior versions and decisions according to retention policy.",
+  "kind": "SHALL",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "DIR-019",
+  "doc": "FAE-DIR-004",
+  "text": "Audit history SHALL be protected from alteration by ordinary users and operators. Record material events and safe references; do not place complete customer documents, secrets or unrestricted prompts in ordinary audit/telemetry payloads.",
+  "kind": "SHALL",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "DIR-020",
+  "doc": "FAE-DIR-004",
+  "text": "Authoritative workflow state SHALL survive worker restarts. Transient caches SHALL not be the sole store of case, approval, external-effect or durable progress information.",
+  "kind": "SHALL",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "DIR-021",
+  "doc": "FAE-DIR-004",
+  "text": "Each connector SHALL define authenticated principal, tenant mapping, allowed endpoint/tool operations, field projection, parameter validation, request/response schema, timeout, retry categories, quotas and credentials rotation.",
+  "kind": "SHALL",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "DIR-022",
+  "doc": "FAE-DIR-004",
+  "text": "Events SHALL carry event_id, schema_version, source_system, source_event_time, correlation_id and typed payload. Tenant context SHALL be validated against the authenticated channel. Preserve the source alert/business key separately from the delivery event ID. Contract area",
+  "kind": "SHALL",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "DIR-023",
+  "doc": "FAE-DIR-004",
+  "text": "Mappings SHALL be versioned, reviewed by the source/business owner and tested with normal, missing, duplicate, malformed and boundary-value fixtures. No lossy normalization without an approved rule and original reference.",
+  "kind": "SHALL",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "DIR-024",
+  "doc": "FAE-DIR-004",
+  "text": "Quality gates SHALL test requiredness, types, enum validity, referential integrity, timestamp/window logic, duplicates, permissions, source freshness and retrieval completeness. Record validation outcome per record/batch.",
+  "kind": "SHALL",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "DIR-025",
+  "doc": "FAE-DIR-004",
+  "text": "Invalid records SHALL enter a restricted quarantine with safe reason, source reference, owner and resolution state. Corrected replay SHALL preserve the original failure history and follow the same duplicate and permission controls.",
+  "kind": "SHALL",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "DIR-026",
+  "doc": "FAE-DIR-004",
+  "text": "At-least-once delivery SHALL be supported. Alert deduplication uses tenant + source_system + source_alert_id. Command/effect idempotency uses tenant + operation type + stable operation key; retain payload fingerprint and original outcome.",
+  "kind": "SHALL",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "DIR-027",
+  "doc": "FAE-DIR-004",
+  "text": "Same-key/same-payload replay SHALL return the original result. Same-key/different-payload replay SHALL conflict or enter explicit reconciliation. Idempotency retention must cover the agreed maximum replay horizon; expiry must not permit accidental duplicate business effects.",
+  "kind": "SHALL",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "DIR-028",
+  "doc": "FAE-DIR-004",
+  "text": "Only classified transient failures SHALL be retried within bounded attempts/backoff. Validation, authorization and permanent schema failures SHALL not be blindly retried. Retry limit, delay and source rate-limit handling require owner approval.",
+  "kind": "SHALL",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "DIR-029",
+  "doc": "FAE-DIR-004",
+  "text": "After an ambiguous external write, the connector SHALL query or reconcile using its stable operation reference before another attempt. If the target cannot prove outcome safely, keep Outcome Uncertain and route to manual resolution; do not claim exactly-once execution.",
+  "kind": "SHALL",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "DIR-030",
+  "doc": "FAE-DIR-004",
+  "text": "Incremental synchronization SHALL use approved cursors/watermarks, overlap windows and stable source ordering. Advance durable watermarks only after required records are safely processed or accounted for. Late events/corrections SHALL be handled without silent loss.",
+  "kind": "SHALL",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "DIR-031",
+  "doc": "FAE-DIR-004",
+  "text": "Concurrent workers SHALL not commit the same protected step. A superseded worker SHALL be unable to commit stale results. Cancellation stops new work but does not imply rollback of committed external effects. Failure case",
+  "kind": "SHALL",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "DIR-032",
+  "doc": "FAE-DIR-004",
+  "text": "Sensitive data SHALL be protected in transit and at rest using institution-approved controls. Secrets SHALL be rotated/revoked through the approved mechanism. Connector network destinations and egress SHALL be restricted to approved services.",
+  "kind": "SHALL",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "DIR-033",
+  "doc": "FAE-DIR-004",
+  "text": "Permission checks SHALL cover source retrieval, indexing, cache access, model context, citation opening, report generation and export. Access revocation SHALL propagate according to an agreed maximum delay; until confirmed, this is a production decision.",
+  "kind": "SHALL",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "DIR-034",
+  "doc": "FAE-DIR-004",
+  "text": "A retention schedule SHALL identify record class, trigger event, retention period, legal hold, deletion method, backup treatment and owner. No statutory period is assumed by this document; Compliance/Legal must determine the applicable obligations.",
+  "kind": "SHALL",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "DIR-035",
+  "doc": "FAE-DIR-004",
+  "text": "Deletion SHALL propagate to derived chunks/indexes/caches and controlled exports where applicable. Legal holds block prohibited deletion. Backup restoration SHALL reapply deletion/hold instructions before restored records become accessible.",
+  "kind": "SHALL",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "DIR-036",
+  "doc": "FAE-DIR-004",
+  "text": "Each connector SHALL expose safe metrics for intake, success/failure, age/freshness, rate limiting, retries, quarantine, reconciliation backlog and usage. Alerts SHALL have an owner and runbook; payloads must not leak protected data.",
+  "kind": "SHALL",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "DIR-037",
+  "doc": "FAE-DIR-004",
+  "text": "Operational reports SHALL distinguish source event time, platform receipt time, processing time and review time. Usage cost SHALL identify currency, unit basis, pricing-version reference and estimated versus reconciled status.",
+  "kind": "SHALL",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "DIR-038",
+  "doc": "FAE-DIR-004",
+  "text": "Contract/mapping changes SHALL be tested before promotion. Breaking changes require a new supported version, migration/rollback plan and source-owner approval; unsupported events are quarantined rather than silently misparsed.",
+  "kind": "SHALL",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "DIR-039",
+  "doc": "FAE-DIR-004",
+  "text": "Bulk imports/backfills SHALL be restartable, idempotent, permission-scoped and reconciled by batch/window. They SHALL not automatically trigger production external writes or duplicate existing cases. Onboarding gate",
+  "kind": "SHALL",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "AER-001",
+  "doc": "FAE-AER-005",
+  "text": "Each enabled capability SHALL have a stable ID/version, purpose, accountable owner, typed input/output contract, model/prompt version, allowed tools, source scopes, budgets, timeouts and evaluation record.",
+  "kind": "SHALL",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "AER-002",
+  "doc": "FAE-AER-005",
+  "text": "Only approved registry versions SHALL execute in a controlled release environment. An unapproved or disabled capability SHALL fail closed with a safe reason and no unauthorized tool call.",
+  "kind": "SHALL",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "AER-003",
+  "doc": "FAE-AER-005",
+  "text": "Every invocation SHALL validate input schema, current permission and snapshot scope. User-supplied role/tenant values SHALL not override trusted identity. Unauthorized evidence SHALL be excluded before entering context.",
+  "kind": "SHALL",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "AER-004",
+  "doc": "FAE-AER-005",
+  "text": "Outputs SHALL conform to a versioned schema with explicit required fields and supported enumerations. Invalid output SHALL not become accepted findings; bounded repair is allowed and recorded.",
+  "kind": "SHALL",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "AER-005",
+  "doc": "FAE-AER-005",
+  "text": "Facts, deterministic calculation results, interpretations and gaps SHALL be distinguishable. Confidence, if shown, SHALL have a defined meaning and calibration evidence; model self-confidence alone SHALL not approve findings.",
+  "kind": "SHALL",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "AER-006",
+  "doc": "FAE-AER-005",
+  "text": "AG-KYC SHALL evaluate only the approved checklist and supplied source scope. It SHALL not infer an identity match, document authenticity or verified KYC status from a plausible name or a model impression.",
+  "kind": "SHALL",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "AER-007",
+  "doc": "FAE-AER-005",
+  "text": "Missing or conflicting required evidence SHALL produce an explicit gap. The agent SHALL preserve differing values with source references rather than silently selecting one as authoritative.",
+  "kind": "SHALL",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "AER-008",
+  "doc": "FAE-AER-005",
+  "text": "AG-AML SHALL cite material factual conclusions and preserve the difference between an observed pattern and an allegation. It SHALL not assert criminal conduct solely from a monitoring alert or model inference.",
+  "kind": "SHALL",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "AER-009",
+  "doc": "FAE-AER-005",
+  "text": "Transaction totals, counts, time windows, reversals and currency treatment SHALL come from versioned deterministic services. The agent SHALL not silently recalculate or combine currencies in generated prose.",
+  "kind": "SHALL",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "AER-010",
+  "doc": "FAE-AER-005",
+  "text": "Incomplete transaction retrieval, stale data, conflicting records or unvalidated indicators SHALL appear in limitations and block claims requiring that missing support. No account action or regulatory submission may be initiated.",
+  "kind": "SHALL",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "AER-011",
+  "doc": "FAE-AER-005",
+  "text": "AG-COMPLIANCE SHALL use only approved, permitted and applicable policy versions for current guidance. Historical references SHALL be labelled historical. Approval and applicability metadata SHALL be validated outside model judgment.",
+  "kind": "SHALL",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "AER-012",
+  "doc": "FAE-AER-005",
+  "text": "When no supporting policy is retrieved, the capability SHALL return Insufficient Evidence and request policy-owner review. It SHALL not substitute general model knowledge as an institution-approved rule.",
+  "kind": "SHALL",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "AER-013",
+  "doc": "FAE-AER-005",
+  "text": "Citation checks SHALL verify source existence, version, current access, location and semantic support. Conflicting policies SHALL be exposed and escalated; authority/effective-date rules must determine resolution.",
+  "kind": "SHALL",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "AER-014",
+  "doc": "FAE-AER-005",
+  "text": "AG-REPORT SHALL preserve factual meaning, numerical values, source attribution and limitations from validated inputs. It SHALL not introduce unsupported facts, remove material contradictions or mark its own output Approved.",
+  "kind": "SHALL",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "AER-015",
+  "doc": "FAE-AER-005",
+  "text": "Required report sections SHALL be populated or explicitly state why unavailable. Unsupported material conclusions SHALL fail review-ready validation. Narrative readiness does not replace reviewer approval.",
+  "kind": "SHALL",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "AER-016",
+  "doc": "FAE-AER-005",
+  "text": "Report revisions SHALL retain authorship, source/configuration lineage and snapshot binding. Material edits after submission invalidate the affected approval and require a new review version.",
+  "kind": "SHALL",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "AER-017",
+  "doc": "FAE-AER-005",
+  "text": "Document extraction SHALL preserve provenance and distinguish extracted, corrected and unverified values. Malformed, encrypted, quarantined or unreadable content SHALL not be silently interpreted as verified data.",
+  "kind": "SHALL",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "AER-018",
+  "doc": "FAE-AER-005",
+  "text": "Retrieved and uploaded text SHALL be treated as untrusted evidence. Embedded instructions SHALL not modify tool permissions, identity, workflow objectives, approval rules or secrets handling. Extraction test slice",
+  "kind": "SHALL",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "AER-019",
+  "doc": "FAE-AER-005",
+  "text": "The orchestrator SHALL validate every capability handoff: input schema, current permissions, snapshot/version, allowed next step and upstream quality status. A narrative response cannot itself authorize a tool or case transition.",
+  "kind": "SHALL",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "AER-020",
+  "doc": "FAE-AER-005",
+  "text": "Execution SHALL have bounded steps, model calls, tool calls, elapsed time, tokens and cost. Limits SHALL be configured by workflow/tenant and enforced outside model discretion. Missing limit configuration prevents release enablement.",
+  "kind": "SHALL",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "AER-021",
+  "doc": "FAE-AER-005",
+  "text": "Recoverable progress SHALL be checkpointed with authoritative step state and configuration lineage. Replays SHALL not duplicate committed side effects, approvals or accepted findings. Superseded workers SHALL not commit stale results.",
+  "kind": "SHALL",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "AER-022",
+  "doc": "FAE-AER-005",
+  "text": "Only classified transient failures SHALL be retried. Schema repair SHALL be bounded; repeated invalid output escalates. An ambiguous external effect SHALL be reconciled before retry; an agent SHALL not invent a successful outcome.",
+  "kind": "SHALL",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "AER-023",
+  "doc": "FAE-AER-005",
+  "text": "Human review SHALL be required before finalization. Permission, approval validity and bound snapshot SHALL be rechecked by application controls. Cancellation stops new scheduling while preserving committed/uncertain outcomes. Handoff",
+  "kind": "SHALL",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "AER-024",
+  "doc": "FAE-AER-005",
+  "text": "The model context SHALL contain only currently permitted, task-relevant information. Tenant/source permissions SHALL apply to retrieval, caches, handoffs, citations and exports. Cross-tenant context or output disclosure is prohibited.",
+  "kind": "SHALL",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "AER-025",
+  "doc": "FAE-AER-005",
+  "text": "Tool calls SHALL pass an independent allowlist, schema, scope and authorization gate. Denied requests SHALL be recorded safely. Model-generated tool arguments SHALL not expand the approved subject/time window or network destination.",
+  "kind": "SHALL",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "AER-026",
+  "doc": "FAE-AER-005",
+  "text": "Each material claim SHALL have an evidence link and support status. The system SHALL distinguish source availability from semantic support; an accessible citation can still be irrelevant or contradictory.",
+  "kind": "SHALL",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "AER-027",
+  "doc": "FAE-AER-005",
+  "text": "Ordinary telemetry SHALL not retain secrets, unrestricted customer documents or complete sensitive prompts. Approved protected traces may retain minimized artifacts with access, retention and deletion controls.",
+  "kind": "SHALL",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "AER-028",
+  "doc": "FAE-AER-005",
+  "text": "AI output SHALL not grant permission, suppress required audit events, approve its own case, change customer master data or initiate excluded financial/regulatory actions. Controls remain effective if the agent behaves adversarially.",
+  "kind": "SHALL",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "AER-029",
+  "doc": "FAE-AER-005",
+  "text": "Evaluation SHALL use versioned datasets with source/permission provenance, case-family labels, expected facts, critical gaps, applicable policies, expected calculations, allowed tools and prohibited outcomes. Use synthetic data first.",
+  "kind": "SHALL",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "AER-030",
+  "doc": "FAE-AER-005",
+  "text": "Development, validation and locked release sets SHALL be separated by case family/customer/story lineage to prevent near-duplicate leakage. Do not tune prompts on the locked release set. Record dataset changes and any contamination.",
+  "kind": "SHALL",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "AER-031",
+  "doc": "FAE-AER-005",
+  "text": "At least two qualified reviewers SHALL independently label critical findings and resolve disagreements through an adjudicator. Record rubric/version and agreement measures. Labels requiring domain judgment must be accepted by AML/Compliance owners.",
+  "kind": "SHALL",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "AER-032",
+  "doc": "FAE-AER-005",
+  "text": "Evaluation reports SHALL show numerator, denominator, failures, omitted/not-applicable items, case slices, model/config versions and uncertainty. Zero generated claims yields N/A support precision, not a perfect score.",
+  "kind": "SHALL",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "AER-033",
+  "doc": "FAE-AER-005",
+  "text": "Every candidate release SHALL run contract/unit checks, tool/permission integration tests, retrieval/extraction evaluations, agent-level tests and complete workflow tests on approved datasets. Record actual outcomes and configuration fingerprints.",
+  "kind": "SHALL",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "AER-034",
+  "doc": "FAE-AER-005",
+  "text": "LLM-based judging MAY assist triage but SHALL not be the sole authority for material fact correctness, policy interpretation, critical controls or final release. Judge configuration must be versioned and calibrated against human labels; do not let source instructions alter the scoring rubric. Evaluation record",
+  "kind": "SHALL",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "AER-035",
+  "doc": "FAE-AER-005",
+  "text": "Production/pilot monitoring SHALL track quality proxies, reviewer corrections, gap/escalation rate, denied tool attempts, source/policy freshness, failures, retries, latency and cost by tenant/case type/configuration without leaking sensitive content.",
+  "kind": "SHALL",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "AER-036",
+  "doc": "FAE-AER-005",
+  "text": "Material model, prompt, tool, extraction, retrieval, policy-selection or workflow changes SHALL trigger scoped regression plus relevant end-to-end/control tests. Provider deployment changes require detection or an agreed notification/retest process.",
+  "kind": "SHALL",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "AER-037",
+  "doc": "FAE-AER-005",
+  "text": "A critical control incident SHALL disable affected capability/action paths, preserve evidence, notify the assigned owner and require investigation before re-enablement. Rollback SHALL preserve case/report/approval lineage; it does not erase committed effects.",
+  "kind": "SHALL",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "SPR-001",
+  "doc": "FAE-SPR-006",
+  "text": "Every protected asset and control SHALL have a named owner and classification before live use. The approved threat model SHALL cover cross-tenant access, data leakage, unsafe AI tools, malicious documents, insider misuse and workflow replay.",
+  "kind": "SHALL",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "SPR-002",
+  "doc": "FAE-SPR-006",
+  "text": "Compliance/Legal SHALL maintain an applicability register containing exact instrument/clause/version, effective date, applicable entity/data/process, control IDs, evidence, owner and review date. Exclusions need recorded rationale.",
+  "kind": "SHALL",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "SPR-003",
+  "doc": "FAE-SPR-006",
+  "text": "Retention periods, notification deadlines, transfer conditions and regulatory approval/notification requirements SHALL be determined per applicable regime and obligation. No universal default period or deadline is assumed.",
+  "kind": "SHALL",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "SPR-004",
+  "doc": "FAE-SPR-006",
+  "text": "The system SHALL authenticate users through an approved enterprise identity service and validate token issuer, audience, signature and validity. Tenant/role authority must derive from trusted membership.",
+  "kind": "SHALL",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "SPR-005",
+  "doc": "FAE-SPR-006",
+  "text": "MFA SHALL be required for privileged users and reviewer/high-impact operations under an approved authentication policy. Session lifetime, idle timeout, reauthentication and revocation delay SHALL be configured before live use.",
+  "kind": "SHALL",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "SPR-006",
+  "doc": "FAE-SPR-006",
+  "text": "Role grants SHALL follow approved joiner/mover/leaver and periodic access-review processes. Elevated access SHALL be time-limited where practicable and auditable. Shared interactive accounts are prohibited.",
+  "kind": "SHALL",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "SPR-007",
+  "doc": "FAE-SPR-006",
+  "text": "Service identities SHALL have connector-specific scopes and environment separation. Secrets SHALL not be embedded in source, prompts or ordinary logs. Use short-lived credentials where supported.",
+  "kind": "SHALL",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "SPR-008",
+  "doc": "FAE-SPR-006",
+  "text": "Emergency access SHALL require a documented break-glass process with approval or justified emergency activation, expiry, monitoring and post-event review. It SHALL not erase audit history or bypass immutable approval evidence.",
+  "kind": "SHALL",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "SPR-009",
+  "doc": "FAE-SPR-006",
+  "text": "Every protected operation SHALL enforce tenant, role, case assignment and applicable source permission server-side. Deny by default, including searches, counts, exports, citations and background work.",
+  "kind": "SHALL",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "SPR-010",
+  "doc": "FAE-SPR-006",
+  "text": "Storage relationships, object paths, indexes, caches and queued tasks SHALL preserve trusted tenant scope. A guessed ID or client-supplied tenant SHALL not broaden authorization.",
+  "kind": "SHALL",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "SPR-011",
+  "doc": "FAE-SPR-006",
+  "text": "Evidence permissions SHALL be checked before retrieval/model context and again when opening sources or exporting. Permission-change propagation SHALL have an approved maximum delay.",
+  "kind": "SHALL",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "SPR-012",
+  "doc": "FAE-SPR-006",
+  "text": "Download links SHALL be short-lived and scoped to authorized objects/operations. Bulk access, query size and export volume SHALL be bounded and monitored.",
+  "kind": "SHALL",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "SPR-013",
+  "doc": "FAE-SPR-006",
+  "text": "Input queries and filters SHALL be validated and parameterized. Model text SHALL not become unrestricted SQL, shell commands, object paths or arbitrary network destinations.",
+  "kind": "SHALL",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "SPR-014",
+  "doc": "FAE-SPR-006",
+  "text": "Sensitive data SHALL be encrypted in transit and at rest using institution-approved cryptographic profiles. Certificates SHALL be validated and insecure fallback prohibited.",
+  "kind": "SHALL",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "SPR-015",
+  "doc": "FAE-SPR-006",
+  "text": "Keys and secrets SHALL use approved managed storage, restricted administrative roles, rotation, revocation and recovery procedures. Key destruction must respect holds, backups and retention duties.",
+  "kind": "SHALL",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "SPR-016",
+  "doc": "FAE-SPR-006",
+  "text": "Databases, object stores, queues, search services and model endpoints SHALL use approved network exposure. Egress SHALL be limited to permitted services; segmentation SHALL restrict lateral access.",
+  "kind": "SHALL",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "SPR-017",
+  "doc": "FAE-SPR-006",
+  "text": "Application interfaces SHALL enforce request size/rate bounds, safe headers, origin/session protections and validation of uploaded content. Parsers SHALL run with constrained permissions and resource limits.",
+  "kind": "SHALL",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "SPR-018",
+  "doc": "FAE-SPR-006",
+  "text": "Maintain a processing inventory covering purpose, personal-data categories, subjects, source, recipients, controller/processor role, applicable basis, location, retention and safeguards. Record relevant privacy assessment before live processing.",
+  "kind": "SHALL",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "SPR-019",
+  "doc": "FAE-SPR-006",
+  "text": "Collect and expose only fields required for the approved investigation. Mask/tokenize where suitable; identify reidentification paths. Consent SHALL not be assumed to be the required or sufficient basis for every AML processing activity.",
+  "kind": "SHALL",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "SPR-020",
+  "doc": "FAE-SPR-006",
+  "text": "Privacy notices, rights requests, correction, restriction and deletion handling SHALL follow the applicable regime and approved legal exceptions. Requests SHALL be authenticated, tracked and routed to authorized privacy staff.",
+  "kind": "SHALL",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "SPR-021",
+  "doc": "FAE-SPR-006",
+  "text": "Personal-data use for evaluation, debugging, model improvement or training SHALL require separate purpose/access approval. Provider retention, support access and training settings SHALL be documented and verified.",
+  "kind": "SHALL",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "SPR-022",
+  "doc": "FAE-SPR-006",
+  "text": "External disclosures SHALL use approved destinations, recipient permissions and minimal content. Notices to analysts SHALL contain only minimal references and a permission-checked link.",
+  "kind": "SHALL",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "SPR-023",
+  "doc": "FAE-SPR-006",
+  "text": "An approved schedule SHALL define retention by record class, start trigger, duration, legal basis, hold, archival, deletion and backup treatment. Case facts, audit records, prompts, indexes and exports may need different rules.",
+  "kind": "SHALL",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "SPR-024",
+  "doc": "FAE-SPR-006",
+  "text": "Legal holds SHALL block prohibited deletion and retain an auditable hold owner/reason/release process. Deletion SHALL propagate to derived chunks, indexes, caches and controlled copies according to approved scope.",
+  "kind": "SHALL",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "SPR-025",
+  "doc": "FAE-SPR-006",
+  "text": "Backup restore SHALL reapply deletion/hold restrictions before exposing restored records. Expired data in backups SHALL be handled through an approved controlled lifecycle without routine unauthorized restoration.",
+  "kind": "SHALL",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "SPR-026",
+  "doc": "FAE-SPR-006",
+  "text": "Maintain a location/transfer register for storage, inference, disaster recovery, telemetry, remote support and subprocessors. Region selection alone SHALL not be treated as proof of compliant processing.",
+  "kind": "SHALL",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "SPR-027",
+  "doc": "FAE-SPR-006",
+  "text": "Cross-border access/transfer and outsourcing SHALL be assessed under applicable obligations, contracts and necessary approvals before enablement. Record safeguards and regulator/customer access requirements as applicable.",
+  "kind": "SHALL",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "SPR-028",
+  "doc": "FAE-SPR-006",
+  "text": "Retrieved documents, tool results and user text SHALL be treated as untrusted data. They SHALL not change identity, policy, tool permissions or workflow objectives.",
+  "kind": "SHALL",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "SPR-029",
+  "doc": "FAE-SPR-006",
+  "text": "The tool gateway SHALL independently authorize allowed tool, parameters, tenant/subject/window, network destination and action type. MVP agents SHALL not initiate excluded financial/regulatory actions.",
+  "kind": "SHALL",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "SPR-030",
+  "doc": "FAE-SPR-006",
+  "text": "Permission-aware retrieval and context minimization SHALL apply before inference. Shared models/caches SHALL not allow tenant data crossover. Secrets and unnecessary identifiers SHALL be excluded.",
+  "kind": "SHALL",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "SPR-031",
+  "doc": "FAE-SPR-006",
+  "text": "Material findings SHALL carry verifiable evidence and uncertainty. Deterministic values SHALL come from validated services. Unsupported material conclusions SHALL not pass final readiness/approval checks.",
+  "kind": "SHALL",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "SPR-032",
+  "doc": "FAE-SPR-006",
+  "text": "Models/prompts/tools/workflows SHALL be versioned, evaluated and approved before promotion. Bound execution time, steps, tokens and cost; maintain a capability/action disable mechanism.",
+  "kind": "SHALL",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "SPR-033",
+  "doc": "FAE-SPR-006",
+  "text": "Reviewer authority, separation of duties and delegation SHALL follow an approved matrix. Approval SHALL bind exact report/evidence versions and expire/invalidate under agreed rules.",
+  "kind": "SHALL",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "SPR-034",
+  "doc": "FAE-SPR-006",
+  "text": "Finalization SHALL independently verify approval, current authorization, action scope and expected state. Replay and concurrent workers SHALL not duplicate committed effects. Unknown outcomes require reconciliation.",
+  "kind": "SHALL",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "SPR-035",
+  "doc": "FAE-SPR-006",
+  "text": "Material access, decisions, changes, tool actions, exports and recovery SHALL produce protected audit events with actor, tenant, object/version, time, outcome and correlation.",
+  "kind": "SHALL",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "SPR-036",
+  "doc": "FAE-SPR-006",
+  "text": "Audit/monitoring data SHALL be minimized, access-controlled, integrity-protected and time-correlated. Retention and legally authorized access SHALL be governed separately from ordinary logs.",
+  "kind": "SHALL",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "SPR-037",
+  "doc": "FAE-SPR-006",
+  "text": "AML investigation/report confidentiality SHALL be enforced through restricted case access and approved disclosure procedures. Requests potentially affected by investigation secrecy or disclosure restrictions SHALL be routed to Compliance/Legal.",
+  "kind": "SHALL",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "SPR-038",
+  "doc": "FAE-SPR-006",
+  "text": "Every material service provider SHALL undergo documented due diligence proportionate to risk, including security, privacy, resilience, model/data handling, subcontractors, locations and financial/operational dependency.",
+  "kind": "SHALL",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "SPR-039",
+  "doc": "FAE-SPR-006",
+  "text": "Contracts SHALL address approved purpose, confidentiality, data use/training, access, subprocessing, incident cooperation, audit/regulatory access where required, retention/deletion, change notice, continuity and exit.",
+  "kind": "SHALL",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "SPR-040",
+  "doc": "FAE-SPR-006",
+  "text": "Outsourcing classification and any required approval, notification or consultation SHALL be resolved before go-live. Keep a register of services, owners, criticality, data flows and renewal/review dates.",
+  "kind": "SHALL",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "SPR-041",
+  "doc": "FAE-SPR-006",
+  "text": "An exit plan SHALL cover usable data/configuration export, credentials revocation, deletion evidence, ongoing legal holds and safe migration to an alternate provider/process.",
+  "kind": "SHALL",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "SPR-042",
+  "doc": "FAE-SPR-006",
+  "text": "Delivery pipelines SHALL scan source/secrets/dependencies and container/build artifacts; restrict build/deploy credentials and verify artifact provenance. Maintain dependency inventory and risk-based remediation.",
+  "kind": "SHALL",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "SPR-043",
+  "doc": "FAE-SPR-006",
+  "text": "Threat review, secure code review and security testing SHALL cover new endpoints, authorization, file processing, tool routing, migrations and configuration changes. Independent testing SHALL precede live release.",
+  "kind": "SHALL",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "SPR-044",
+  "doc": "FAE-SPR-006",
+  "text": "Production changes SHALL use reviewed versioned configurations and controlled promotion/rollback. Model, prompt, policy-selection and mapping changes require relevant evaluations as well as code checks.",
+  "kind": "SHALL",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "SPR-045",
+  "doc": "FAE-SPR-006",
+  "text": "Production data SHALL not be copied into unapproved development, evaluation or troubleshooting systems. Synthetic fixtures SHALL include security boundary cases without live secrets or identifiers.",
+  "kind": "SHALL",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "SPR-046",
+  "doc": "FAE-SPR-006",
+  "text": "An incident process SHALL define severity, detection, owner, escalation, containment, evidence preservation, impact assessment, recovery and lessons learned. Include AI-specific leakage/unsafe-action events.",
+  "kind": "SHALL",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "SPR-047",
+  "doc": "FAE-SPR-006",
+  "text": "Privacy/Compliance SHALL determine applicable regulator, data-protection authority, customer and contractual notification duties. Track discovery/awareness, required clock starts, decisions, deadlines and submissions.",
+  "kind": "SHALL",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "SPR-048",
+  "doc": "FAE-SPR-006",
+  "text": "Backups, restoration, failover and manual continuity SHALL meet approved RPO/RTO and data/control requirements. During outages, authorization, approval and audit duties SHALL not be silently bypassed.",
+  "kind": "SHALL",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "SPR-049",
+  "doc": "FAE-SPR-006",
+  "text": "Security/operations alerts SHALL cover access anomalies, privilege changes, forbidden tool attempts, secret exposure, audit gaps, stalled reconciliation and unusual export/usage. Alerts need safe payloads and an owner.",
+  "kind": "SHALL",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "SPR-050",
+  "doc": "FAE-SPR-006",
+  "text": "Containment/rollback SHALL preserve case evidence and effect history. Re-enablement requires root-cause assessment, relevant retest and authorized acceptance of residual risk.",
+  "kind": "SHALL",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "NQ-001",
+  "doc": "FAE-NFR-007",
+  "text": "Every measurable requirement SHALL identify owner, workload/environment, metric definition, threshold, observation window and acceptance evidence. Pending values SHALL remain visible as unresolved decisions.",
+  "kind": "SHALL",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "NQ-002",
+  "doc": "FAE-NFR-007",
+  "text": "Performance results SHALL include successful and failed attempts, timeouts, cold/warm conditions and relevant percentiles. Do not hide failures by excluding them from latency/task-success reporting.",
+  "kind": "SHALL",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "NQ-003",
+  "doc": "FAE-NFR-007",
+  "text": "Quality testing SHALL use production-representative configuration and synthetic or approved data. Any differences from intended production sizing, region, network or provider quota SHALL be documented.",
+  "kind": "SHALL",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "NQ-004",
+  "doc": "FAE-NFR-007",
+  "text": "Load generators SHALL preserve intended offered load and report achieved throughput, queuing, errors and dropped requests. Keep AI task arrivals and concurrency distinct from interactive API traffic.",
+  "kind": "SHALL",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "NQ-005",
+  "doc": "FAE-NFR-007",
+  "text": "Under the section 2 steady workload, case list/detail read APIs SHALL target P95 <=500 ms and P99 <=1,500 ms at ingress, excluding file downloads and AI inference. Report cache-hit/miss behavior separately.",
+  "kind": "SHALL",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "NQ-006",
+  "doc": "FAE-NFR-007",
+  "text": "Authorized edits, reviewer commands and workflow-start acknowledgements SHALL target P95 <=1 second for durable acceptance. An acknowledgement SHALL not claim workflow completion.",
+  "kind": "SHALL",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "NQ-007",
+  "doc": "FAE-NFR-007",
+  "text": "Permission-filtered policy search SHALL target P95 <=2 seconds under the declared corpus/search rate, excluding generated answer synthesis. Returned evidence SHALL remain subject to permission/applicability checks.",
+  "kind": "SHALL",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "NQ-008",
+  "doc": "FAE-NFR-007",
+  "text": "The primary case workspace SHALL target usable content within 3 seconds at P95 on the agreed client/network profile. Save/decision actions SHALL show immediate pending feedback and confirmed outcome/error.",
+  "kind": "SHALL",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "NQ-009",
+  "doc": "FAE-NFR-007",
+  "text": "At steady pilot load, unexpected application/server failures SHALL target <=0.5% of valid requests. Deliberate invalid/unauthorized test requests SHALL be reported separately, not used to improve or worsen the normal-load rate.",
+  "kind": "SHALL",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "NQ-010",
+  "doc": "FAE-NFR-007",
+  "text": "For the normal synthetic case profile, AI draft generation SHALL initially target P95 <=5 minutes from execution start to validated draft/explicit insufficiency. Queue and human-review time SHALL be reported separately.",
+  "kind": "SHALL",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "NQ-011",
+  "doc": "FAE-NFR-007",
+  "text": "For accepted tasks within the pilot arrival profile, queue wait SHALL target P95 <=60 seconds. Jobs exceeding configured age/timeout SHALL remain visible with owner and next action.",
+  "kind": "SHALL",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "NQ-012",
+  "doc": "FAE-NFR-007",
+  "text": "A clean supported document of up to 20 pages SHALL target P95 <=120 seconds from scan acceptance to typed extraction result under the benchmark profile. Large/complex files SHALL use separate limits.",
+  "kind": "SHALL",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "NQ-013",
+  "doc": "FAE-NFR-007",
+  "text": "Every run SHALL enforce approved model/tool/step/time/token/cost limits. A timeout or invalid output SHALL stop, retry only within approved bounds, or escalate without fabricating a successful result.",
+  "kind": "SHALL",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "NQ-014",
+  "doc": "FAE-NFR-007",
+  "text": "AI output quality SHALL meet the separately approved AER-005 evaluation gates. Speed/cost optimization SHALL not bypass evidence, applicability, permission or reviewer controls.",
+  "kind": "SHALL",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "NQ-015",
+  "doc": "FAE-NFR-007",
+  "text": "Production service availability SHALL target 99.9% per calendar month, subject to owner approval. Until an SLA defines exclusions, report gross availability including planned maintenance and customer-impacting dependency failures.",
+  "kind": "SHALL",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "NQ-016",
+  "doc": "FAE-NFR-007",
+  "text": "Critical journeys SHALL include authenticated case access, review-decision persistence and durable intake. Dependency failures that prevent a defined journey SHALL count against that journey even when the process health endpoint is green.",
+  "kind": "SHALL",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "NQ-017",
+  "doc": "FAE-NFR-007",
+  "text": "During model/search/source outages, the system SHALL preserve existing case state and allow only safe authorized degraded functions. It SHALL not fabricate missing evidence, bypass approval or label queued work Completed.",
+  "kind": "SHALL",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "NQ-018",
+  "doc": "FAE-NFR-007",
+  "text": "Maintenance and release activities SHALL target no loss of acknowledged records and preserve authorization, audit and version binding. If downtime is required, schedule and communicate through the approved operating process.",
+  "kind": "SHALL",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "NQ-019",
+  "doc": "FAE-NFR-007",
+  "text": "Worker/service restart tests SHALL lose zero acknowledged authoritative case, review, evidence-version or external-operation records. Acknowledgement SHALL follow required durable commit.",
+  "kind": "SHALL",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "NQ-020",
+  "doc": "FAE-NFR-007",
+  "text": "Duplicate delivery/command replay SHALL produce no duplicate protected business effect. Same-key changed payload SHALL conflict or require reconciliation. Unknown external outcomes SHALL not be blindly retried.",
+  "kind": "SHALL",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "NQ-021",
+  "doc": "FAE-NFR-007",
+  "text": "Competing workers and stale versions SHALL not overwrite newer authoritative state or commit the same protected step. Model outputs arriving after cancellation/supersession SHALL not silently become accepted findings.",
+  "kind": "SHALL",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "NQ-022",
+  "doc": "FAE-NFR-007",
+  "text": "Every required case/evidence/report/approval link SHALL preserve tenant and version integrity through normal operation, migration and restore.",
+  "kind": "SHALL",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "NQ-023",
+  "doc": "FAE-NFR-007",
+  "text": "Retries SHALL be bounded and classified. Poison work SHALL reach a restricted failed/quarantine state with owner, reason and permitted recovery action; no infinite retry loop.",
+  "kind": "SHALL",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "NQ-024",
+  "doc": "FAE-NFR-007",
+  "text": "Recovery targets SHALL distinguish process failover from site disaster. RTO SHALL end only when critical business journeys and required controls are usable; record detection, decision, restore and validation intervals.",
+  "kind": "SHALL",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "NQ-025",
+  "doc": "FAE-NFR-007",
+  "text": "Any unrecoverable data within an approved disaster RPO SHALL be identified and reconciled with source systems and external effect history. Restoring state SHALL not repeat already committed external actions.",
+  "kind": "SHALL",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "NQ-026",
+  "doc": "FAE-NFR-007",
+  "text": "Restore SHALL preserve legal holds, deletion restrictions, current permissions and audit history. Required keys and provider dependencies SHALL be included in recovery planning.",
+  "kind": "SHALL",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "NQ-027",
+  "doc": "FAE-NFR-007",
+  "text": "The system SHALL sustain the steady pilot profile while meeting approved latency/error targets and integrity controls. At 2x API rate for 10 minutes it SHALL shed excess load safely without data corruption or cross-tenant starvation.",
+  "kind": "SHALL",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "NQ-028",
+  "doc": "FAE-NFR-007",
+  "text": "Tenant and workload quotas SHALL bound concurrency, queues, expensive search/export, parser resources and model usage. A noisy tenant SHALL not gain another tenant's data or exhaust unbounded shared resources.",
+  "kind": "SHALL",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "NQ-029",
+  "doc": "FAE-NFR-007",
+  "text": "Scaling SHALL be driven by measured bottlenecks and authorized provider limits. Scale actions SHALL not lose leases/checkpoints, duplicate effects or bypass budget limits.",
+  "kind": "SHALL",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "NQ-030",
+  "doc": "FAE-NFR-007",
+  "text": "An 8-hour steady-load soak SHALL show no unbounded growth in memory, connections, queued retries, orphan tasks or temporary files.",
+  "kind": "SHALL",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "NQ-031",
+  "doc": "FAE-NFR-007",
+  "text": "Authorization/tenant/source isolation SHALL remain effective under load, cache reuse, worker replay, partial failure and restore. Availability/performance optimization SHALL not weaken access checks.",
+  "kind": "SHALL",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "NQ-032",
+  "doc": "FAE-NFR-007",
+  "text": "Encryption, keys, secrets, network exposure, model-context minimization and approved locations SHALL comply with the signed security/privacy baseline.",
+  "kind": "SHALL",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "NQ-033",
+  "doc": "FAE-NFR-007",
+  "text": "Revocation propagation, retention/deletion completion and security-log coverage SHALL have measurable approved limits. Pending legal/security values SHALL block affected live enablement.",
+  "kind": "SHALL",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "NQ-034",
+  "doc": "FAE-NFR-007",
+  "text": "Resource exhaustion and malformed content SHALL fail safely with bounded impact. Ordinary error/telemetry responses SHALL not leak sensitive data, source payloads or secrets.",
+  "kind": "SHALL",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "NQ-035",
+  "doc": "FAE-NFR-007",
+  "text": "Operational telemetry SHALL correlate tenant-safe case/run/step/tool references, configuration versions, duration, status, retry and cost. Ordinary logs SHALL redact protected content and secrets.",
+  "kind": "SHALL",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "NQ-036",
+  "doc": "FAE-NFR-007",
+  "text": "Critical synthetic service failures and control anomalies SHALL target detection within 5 minutes; alert delivery within 1 minute after detection. Routing SHALL identify an accountable responder.",
+  "kind": "SHALL",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "NQ-037",
+  "doc": "FAE-NFR-007",
+  "text": "The proposed live operating model SHALL provide 24x7 critical-incident alert coverage with P1 acknowledgement <=15 minutes. Resolution/update cadence and P2-P4 support targets require Operations/business agreement.",
+  "kind": "SHALL",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "NQ-038",
+  "doc": "FAE-NFR-007",
+  "text": "Dashboards SHALL show offered/achieved traffic, error/latency, queue age, job outcomes, blocked cases, source freshness, reconciliation backlog, resource pressure and cost.",
+  "kind": "SHALL",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "NQ-039",
+  "doc": "FAE-NFR-007",
+  "text": "Runbooks SHALL cover dependency failure, credential/key rotation, dead letters, unknown write outcome, model disablement, restore, rollback and privacy/security triage.",
+  "kind": "SHALL",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "NQ-040",
+  "doc": "FAE-NFR-007",
+  "text": "The agreed analyst/reviewer journeys SHALL target WCAG 2.2 AA conformance, including keyboard access, focus visibility, labels, contrast, error identification and non-color status cues. Scope/exceptions require explicit review.",
+  "kind": "SHALL",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "NQ-041",
+  "doc": "FAE-NFR-007",
+  "text": "Users SHALL distinguish Draft, Approved, Blocked, Failed and Outcome Uncertain states, see pending/confirmed save status, and recover from stale version/session errors without false success.",
+  "kind": "SHALL",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "NQ-042",
+  "doc": "FAE-NFR-007",
+  "text": "MVP support SHALL target the current and previous major stable desktop Chrome and Edge releases at acceptance time, with exact tested versions recorded. Minimum proposed viewport: 1280x720; content SHALL remain usable at 200% zoom.",
+  "kind": "SHALL",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "NQ-043",
+  "doc": "FAE-NFR-007",
+  "text": "Time and financial information SHALL preserve timezone/currency meaning. English is the proposed MVP language; localization SHALL not be claimed without translated content, layout and domain review.",
+  "kind": "SHALL",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "NQ-044",
+  "doc": "FAE-NFR-007",
+  "text": "Releases SHALL be reproducible from versioned code/configuration with dependency/artifact identity, reviewed migration and rollback instructions. Model/prompt/policy/mapping changes SHALL retain lineage.",
+  "kind": "SHALL",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "NQ-045",
+  "doc": "FAE-NFR-007",
+  "text": "Breaking interface/data changes SHALL use explicit versions, compatibility checks and migration tests. Changes SHALL preserve case/evidence/report/approval relationships and replay behavior.",
+  "kind": "SHALL",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "NQ-046",
+  "doc": "FAE-NFR-007",
+  "text": "Release regression SHALL cover critical business, access, recovery and AI evaluation behavior. Test selection SHALL be risk-based; coverage percentage alone is not acceptance evidence.",
+  "kind": "SHALL",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "NQ-047",
+  "doc": "FAE-NFR-007",
+  "text": "Usage SHALL be attributable to case/tenant/configuration and include failed calls, retries, extraction, retrieval, inference and relevant infrastructure allocation. Estimated and reconciled cost SHALL be distinguishable.",
+  "kind": "SHALL",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "NQ-048",
+  "doc": "FAE-NFR-007",
+  "text": "Per-run, per-tenant and monthly spend limits SHALL be configured and enforced before billable live work. Budget breach SHALL stop new chargeable work or use an explicitly approved exception without losing case state.",
+  "kind": "SHALL",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "NQ-049",
+  "doc": "FAE-NFR-007",
+  "text": "Acceptance SHALL retain versioned scripts, fixture manifests, environment/provider quotas, raw metrics, failure logs, reconciliation reports, quality scores and owner decisions. Tests here are planned, not represented as executed implementation checks.",
+  "kind": "SHALL",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "NQ-050",
+  "doc": "FAE-NFR-007",
+  "text": "No release SHALL be marked accepted on averages alone. Review endpoint/case/tenant slices, P95/P99 tails, all critical failures, incomplete telemetry and unapproved assumptions.",
+  "kind": "SHALL",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "MST:AG-001",
+  "doc": "FAE-MASTER v1.0",
+  "text": "versioned tool and agent schemas",
+  "kind": "IMPL",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "MST:AG-002",
+  "doc": "FAE-MASTER v1.0",
+  "text": "maximum 12 model reasoning/tool steps per pilot run (tunable)",
+  "kind": "IMPL",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "MST:AG-003",
+  "doc": "FAE-MASTER v1.0",
+  "text": "no direct money movement/financial write tools",
+  "kind": "IMPL",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "MST:API-001",
+  "doc": "FAE-MASTER v1.0",
+  "text": "OpenAPI examples and schemas committed to git",
+  "kind": "IMPL",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "MST:API-002",
+  "doc": "FAE-MASTER v1.0",
+  "text": "unauthorized cross-tenant ID cannot resolve",
+  "kind": "IMPL",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "MST:API-003",
+  "doc": "FAE-MASTER v1.0",
+  "text": "idempotent create semantics",
+  "kind": "IMPL",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "MST:ARCH-001",
+  "doc": "FAE-MASTER v1.0",
+  "text": "tenant context propagated end-to-end",
+  "kind": "IMPL",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "MST:ARCH-002",
+  "doc": "FAE-MASTER v1.0",
+  "text": "no LLM decision controls authorization",
+  "kind": "IMPL",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "MST:ARCH-003",
+  "doc": "FAE-MASTER v1.0",
+  "text": "transactional outbox for durable events",
+  "kind": "IMPL",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "MST:AZ-001",
+  "doc": "FAE-MASTER v1.0",
+  "text": "no public access to private financial data stores",
+  "kind": "IMPL",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "MST:AZ-002",
+  "doc": "FAE-MASTER v1.0",
+  "text": "signed IaC approvals for production",
+  "kind": "IMPL",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "MST:AZ-003",
+  "doc": "FAE-MASTER v1.0",
+  "text": "disaster recovery exercises",
+  "kind": "IMPL",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "MST:BR-001",
+  "doc": "FAE-MASTER v1.0",
+  "text": "Human review before material case disposition",
+  "kind": "IMPL",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "MST:BR-002",
+  "doc": "FAE-MASTER v1.0",
+  "text": "Every claim backed by authorized case or policy evidence",
+  "kind": "IMPL",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "MST:BR-003",
+  "doc": "FAE-MASTER v1.0",
+  "text": "Report case outcomes by institution and operating team",
+  "kind": "IMPL",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "MST:BR-004",
+  "doc": "FAE-MASTER v1.0",
+  "text": "Segregation of duties for approval",
+  "kind": "IMPL",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "MST:COST-001",
+  "doc": "FAE-MASTER v1.0",
+  "text": "approve per-workflow model budget",
+  "kind": "IMPL",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "MST:COST-002",
+  "doc": "FAE-MASTER v1.0",
+  "text": "review cloud cost monthly",
+  "kind": "IMPL",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "MST:DB-001",
+  "doc": "FAE-MASTER v1.0",
+  "text": "tenant uniqueness and FK integrity",
+  "kind": "IMPL",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "MST:DB-002",
+  "doc": "FAE-MASTER v1.0",
+  "text": "no direct PII in operational trace by default",
+  "kind": "IMPL",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "MST:DB-003",
+  "doc": "FAE-MASTER v1.0",
+  "text": "transactional outbox for workflow handoff",
+  "kind": "IMPL",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "MST:DOM-001",
+  "doc": "FAE-MASTER v1.0",
+  "text": "AML is only release-one vertical slice",
+  "kind": "IMPL",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "MST:DOM-002",
+  "doc": "FAE-MASTER v1.0",
+  "text": "no automatic regulated actions",
+  "kind": "IMPL",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "MST:FR-001..FR-018",
+  "doc": "FAE-MASTER v1.0",
+  "text": "trace in backlog and tests",
+  "kind": "IMPL",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "MST:GO-001",
+  "doc": "FAE-MASTER v1.0",
+  "text": "release requires written business/security/compliance signoff",
+  "kind": "IMPL",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "MST:GO-002",
+  "doc": "FAE-MASTER v1.0",
+  "text": "production launch uses a limited rollout",
+  "kind": "IMPL",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "MST:GO-003",
+  "doc": "FAE-MASTER v1.0",
+  "text": "unresolved ambiguous financial action blocks release",
+  "kind": "IMPL",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "MST:INT-001",
+  "doc": "FAE-MASTER v1.0",
+  "text": "financial connectors read-only in first pilot",
+  "kind": "IMPL",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "MST:INT-002",
+  "doc": "FAE-MASTER v1.0",
+  "text": "validated schema before tool execution",
+  "kind": "IMPL",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "MST:INT-003",
+  "doc": "FAE-MASTER v1.0",
+  "text": "per-tool authorization policy",
+  "kind": "IMPL",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "MST:OPS-001",
+  "doc": "FAE-MASTER v1.0",
+  "text": "named owner for each critical alert",
+  "kind": "IMPL",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "MST:OPS-002",
+  "doc": "FAE-MASTER v1.0",
+  "text": "runbooks tested in staging",
+  "kind": "IMPL",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "MST:OPS-003",
+  "doc": "FAE-MASTER v1.0",
+  "text": "audit-friendly incident chronology",
+  "kind": "IMPL",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "MST:PLAN-001",
+  "doc": "FAE-MASTER v1.0",
+  "text": "no production data in developer fixture store",
+  "kind": "IMPL",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "MST:PLAN-002",
+  "doc": "FAE-MASTER v1.0",
+  "text": "incrementally demo thin vertical slices",
+  "kind": "IMPL",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "MST:PRJ-001",
+  "doc": "FAE-MASTER v1.0",
+  "text": "Deliver read-only AML investigation as first production pilot",
+  "kind": "IMPL",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "MST:PRJ-002",
+  "doc": "FAE-MASTER v1.0",
+  "text": "Human reviewer remains owner of disposition",
+  "kind": "IMPL",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "MST:PRJ-003",
+  "doc": "FAE-MASTER v1.0",
+  "text": "Reusable platform separates cross-cutting services from financial domains",
+  "kind": "IMPL",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "MST:RAG-001",
+  "doc": "FAE-MASTER v1.0",
+  "text": "enforce ACL within retrieval, not by prompt",
+  "kind": "IMPL",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "MST:RAG-002",
+  "doc": "FAE-MASTER v1.0",
+  "text": "citation refs include policy version",
+  "kind": "IMPL",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "MST:RAG-003",
+  "doc": "FAE-MASTER v1.0",
+  "text": "support safe reindex/revoke",
+  "kind": "IMPL",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "MST:REC-001",
+  "doc": "FAE-MASTER v1.0",
+  "text": "guarded state transitions",
+  "kind": "IMPL",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "MST:REC-002",
+  "doc": "FAE-MASTER v1.0",
+  "text": "no unsafe replay of externally-visible action",
+  "kind": "IMPL",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "MST:REC-003",
+  "doc": "FAE-MASTER v1.0",
+  "text": "auditable manual reconcile mode",
+  "kind": "IMPL",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "MST:SEC-001",
+  "doc": "FAE-MASTER v1.0",
+  "text": "zero cross-tenant document leakage",
+  "kind": "IMPL",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "MST:SEC-002",
+  "doc": "FAE-MASTER v1.0",
+  "text": "audited review on sensitive dispositions",
+  "kind": "IMPL",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "MST:SEC-003",
+  "doc": "FAE-MASTER v1.0",
+  "text": "restrict all model-call payloads to approved data",
+  "kind": "IMPL",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "MST:STACK-001",
+  "doc": "FAE-MASTER v1.0",
+  "text": "record ADR for every material dependency",
+  "kind": "IMPL",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "MST:STACK-002",
+  "doc": "FAE-MASTER v1.0",
+  "text": "unsupported region/features block deployment",
+  "kind": "IMPL",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "MST:TST-001",
+  "doc": "FAE-MASTER v1.0",
+  "text": "every BR/FR links to verification",
+  "kind": "IMPL",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "MST:TST-002",
+  "doc": "FAE-MASTER v1.0",
+  "text": "no deploy on critical authorization failures",
+  "kind": "IMPL",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "MST:TST-003",
+  "doc": "FAE-MASTER v1.0",
+  "text": "keep golden test data reproducible",
+  "kind": "IMPL",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "MST:UI-001",
+  "doc": "FAE-MASTER v1.0",
+  "text": "evidence-first investigation interface",
+  "kind": "IMPL",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "MST:UI-002",
+  "doc": "FAE-MASTER v1.0",
+  "text": "approval gate visible and explicit",
+  "kind": "IMPL",
+  "status": "DRAFT REQUIREMENT"
+ },
+ {
+  "id": "MST:UI-003",
+  "doc": "FAE-MASTER v1.0",
+  "text": "accessibility WCAG 2.2 AA target subject to review",
+  "kind": "IMPL",
+  "status": "DRAFT REQUIREMENT"
+ }
+]

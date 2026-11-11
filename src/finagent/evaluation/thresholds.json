@@ -1,0 +1,16 @@
+{
+  "version": "eval-thresholds-0.1-PROPOSED",
+  "status": "PROPOSED_NOT_APPROVED",
+  "owner": "Model governance (OPEN: AI-D04)",
+  "note": "Proposed engineering targets only. Meeting them is NOT an acceptance decision.",
+  "metrics": {
+    "deterministic_value_accuracy": 1.0,
+    "unsupported_claim_rejection_rate": 1.0,
+    "boundary_escalation_rate": 1.0,
+    "gap_disclosure_rate": 1.0,
+    "schema_robustness_rate": 1.0,
+    "budget_enforcement": 1.0,
+    "rag_applicability_accuracy": 1.0,
+    "rag_abstention_accuracy": 1.0
+  }
+}

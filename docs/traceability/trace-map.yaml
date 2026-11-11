@@ -1,0 +1,176 @@
+# Requirement -> implementation files (hand-maintained, reviewed in PRs).
+# Test linkage is NOT listed here: it comes from @pytest.mark.req markers via junit (ADR-0012).
+# Listing a file here means "implemented (possibly partially)"; `partial: true` marks incomplete scope.
+
+BR-001: {files: [src/finagent/services/case_service/intake.py, src/finagent/orchestration/graphs/aml.py, src/finagent/services/review_service/finalization.py]}
+BR-002: {files: [src/finagent/database/models.py, src/finagent/services/case_service/queries.py]}
+BR-003: {files: [src/finagent/agents/runner.py, src/finagent/agents/validation.py, src/finagent/orchestration/graphs/aml.py], partial: true, note: productivity benefit is a pilot measurement (DEC-03) - not measured}
+BR-004: {files: [src/finagent/services/evidence_service/gathering.py, src/finagent/services/evidence_service/snapshots.py, src/finagent/integrations/tool_gateway/gateway.py]}
+BR-005: {files: [src/finagent/services/knowledge_service/retrieval.py, src/finagent/services/knowledge_service/citations.py, src/finagent/agents/validation.py, src/finagent/services/review_service/reports.py]}
+BR-006: {files: [src/finagent/services/review_service/review.py, src/finagent/services/review_service/finalization.py, src/finagent/security/authorization/policy.py]}
+BR-007: {files: [src/finagent/security/authorization/policy.py, src/finagent/agents/validation.py, src/finagent/integrations/tool_gateway/definitions.py]}
+BR-008: {files: [src/finagent/services/audit_service/writer.py, src/finagent/services/review_service/reports.py, src/finagent/agents/runner.py, src/finagent/services/review_service/review.py], partial: true, note: retention periods not approved (DEC-05)}
+FR-001: {files: [src/finagent/security/authentication/passkeys.py, src/finagent/api/routers/passkeys.py, apps/web/app/security/passkeys/page.tsx, apps/web/app/security/passkeys/PasskeyControls.tsx, apps/web/app/security/passkeys/api/route.ts, src/finagent/security/authentication/email_verification.py, src/finagent/api/routers/email_verification.py, apps/web/app/security/email/page.tsx, src/finagent/security/authentication/totp.py, src/finagent/api/routers/totp_auth.py, src/finagent/security/authentication/totp_console.py, apps/web/app/security/page.tsx, src/finagent/security/authentication/tokens.py, src/finagent/security/authentication/resolver.py, src/finagent/security/authentication/passwords.py, src/finagent/security/authentication/connector_credentials.py, src/finagent/api/deps.py, apps/web/lib/session.ts, apps/web/lib/password-auth.ts], partial: true, note: Password and Google locally verified; live Entra and production acceptance pending; local connector verified; local TOTP candidate integration verification pending}
+FR-002: {files: [src/finagent/security/authorization/policy.py, src/finagent/services/case_service/queries.py, src/finagent/services/document_service/queries.py, src/finagent/services/document_service/downloads.py, src/finagent/services/knowledge_service/retrieval.py, src/finagent/services/review_service/exports.py, src/finagent/services/review_service/review.py]}
+FR-003: {files: [src/finagent/security/authorization/policy.py, src/finagent/security/authentication/resolver.py, src/finagent/services/admin_service/delegations.py, src/finagent/services/case_service/commands.py, src/finagent/services/review_service/review.py], partial: true, note: default matrix only; approved reviewer matrix is DEC-06}
+FR-004: {files: [src/finagent/domain/states.py, src/finagent/services/case_service/transitions.py, src/finagent/services/case_service/commands.py, src/finagent/services/review_service/reports.py]}
+FR-005: {files: [src/finagent/domain/states.py, src/finagent/services/workflow_service/runs.py, src/finagent/worker/runner.py]}
+FR-006: {files: [src/finagent/domain/states.py, src/finagent/services/review_service/invalidation.py, src/finagent/services/review_service/approvals.py, src/finagent/services/evidence_service/items.py, src/finagent/services/review_service/reports.py, src/finagent/services/review_service/finalization.py], partial: true, note: reopening a COMPLETED case is not offered in R1}
+FR-007: {files: [src/finagent/integrations/local_connector_demo.py, src/finagent/services/case_service/contracts.py, src/finagent/services/case_service/intake.py]}
+FR-008: {files: [src/finagent/integrations/local_connector_demo.py, src/finagent/services/case_service/intake.py, src/finagent/database/models.py]}
+FR-009: {files: [src/finagent/services/case_service/intake.py, src/finagent/services/case_service/commands.py]}
+FR-010: {files: [src/finagent/services/case_service/queries.py, src/finagent/api/routers/v1.py, apps/web/app/cases/page.tsx, 'apps/web/app/cases/[id]/page.tsx']}
+FR-011: {files: [src/finagent/services/case_service/escalation.py, src/finagent/database/models.py, src/finagent/database/seeds.py, src/finagent/api/routers/v1.py, apps/web/app/escalations/page.tsx], partial: true, note: no real notification channel; SLAs PROPOSED (DEC-16)}
+FR-012: {files: [src/finagent/integrations/sources.py, src/finagent/integrations/factory.py, src/finagent/integrations/tool_gateway/gateway.py, src/finagent/services/evidence_service/gathering.py]}
+FR-013: {files: [src/finagent/documents/formats.py, src/finagent/documents/scanner.py, src/finagent/documents/sandbox.py, src/finagent/documents/parse_worker.py, src/finagent/documents/parsers.py, src/finagent/services/document_service/ingest.py, src/finagent/services/document_service/processing.py, src/finagent/api/routers/evidence.py], partial: true, note: ClamAV adapter LIVE NOT VERIFIED; no OCR provider (explicit OCR_UNAVAILABLE)}
+FR-014: {files: [src/finagent/documents/extraction.py, src/finagent/services/document_service/processing.py, src/finagent/services/document_service/corrections.py], partial: true, note: extraction profile SYNTHETIC; approved field list is AI-D02}
+FR-015: {files: [src/finagent/services/evidence_service/snapshots.py, src/finagent/services/evidence_service/conflicts.py, src/finagent/services/review_service/review.py]}
+FR-016: {files: [src/finagent/services/evidence_service/items.py, src/finagent/services/evidence_service/snapshots.py, src/finagent/database/migrations/versions/0005_investigation_domain.py]}
+FR-017: {files: [src/finagent/services/knowledge_service/ingestion.py]}
+FR-018: {files: [src/finagent/services/knowledge_service/retrieval.py], partial: true, note: Azure AI Search adapter LIVE NOT VERIFIED}
+FR-019: {files: [src/finagent/services/knowledge_service/citations.py, src/finagent/agents/validation.py], partial: true, note: semantic support is a lexical proxy (documented)}
+FR-020: {files: [src/finagent/services/knowledge_service/retrieval.py, src/finagent/agents/runner.py]}
+FR-021: {files: [src/finagent/agents/registry.py, src/finagent/agents/runner.py, src/finagent/agents/gateway.py, src/finagent/orchestration/graphs/aml.py]}
+FR-022: {files: [src/finagent/agents/contracts.py, src/finagent/agents/validation.py, 'apps/web/app/cases/[id]/agents/page.tsx']}
+FR-023: {files: [src/finagent/domain/money.py, src/finagent/domain/aml_calculations.py], partial: true, note: SYNTHETIC rules only; approved rules are AI-D02}
+FR-024: {files: [src/finagent/integrations/tool_gateway/gateway.py, src/finagent/integrations/tool_gateway/definitions.py, src/finagent/security/authorization/policy.py]}
+FR-025: {files: [src/finagent/agents/registry.py, src/finagent/agents/validation.py, src/finagent/agents/prep.py, src/finagent/agents/runner.py]}
+FR-026: {files: [src/finagent/services/review_service/reports.py, src/finagent/agents/runner.py, src/finagent/orchestration/graphs/aml.py]}
+FR-027: {files: [src/finagent/services/review_service/reports.py, src/finagent/services/review_service/review.py, 'apps/web/app/cases/[id]/report/page.tsx']}
+FR-028: {files: [src/finagent/services/review_service/review.py, 'apps/web/app/approvals/[id]/page.tsx']}
+FR-029: {files: [src/finagent/domain/states.py, src/finagent/services/review_service/finalization.py, src/finagent/integrations/tool_gateway/gateway.py]}
+FR-030: {files: [src/finagent/services/review_service/exports.py, 'apps/web/app/exports/[id]/route.ts']}
+FR-031: {files: [src/finagent/orchestration/runtime.py, src/finagent/orchestration/checkpointer.py, src/finagent/worker/runner.py, src/finagent/orchestration/graphs/aml.py]}
+FR-032: {files: [src/finagent/services/case_service/intake.py, src/finagent/services/idempotency.py, src/finagent/services/workflow_service/runs.py, src/finagent/domain/fingerprint.py, src/finagent/services/document_service/ingest.py, src/finagent/services/review_service/review.py]}
+FR-033: {files: [src/finagent/services/workflow_service/external_ops.py, src/finagent/worker/runner.py, src/finagent/domain/states.py]}
+FR-034: {files: [src/finagent/worker/leases.py, src/finagent/orchestration/runtime.py, src/finagent/orchestration/checkpointer.py, src/finagent/services/case_service/intake.py]}
+FR-035: {files: [src/finagent/services/workflow_service/runs.py, src/finagent/orchestration/runtime.py, src/finagent/worker/runner.py, src/finagent/services/workflow_service/external_ops.py]}
+FR-036: {files: [src/finagent/services/audit_service/writer.py, src/finagent/services/audit_service/queries.py, src/finagent/api/routers/ops.py]}
+FR-037: {files: [src/finagent/api/routers/v1.py, src/finagent/core/logging.py, src/finagent/api/routers/ops.py, 'apps/web/app/workflows/[id]/page.tsx', apps/web/app/page.tsx], partial: true, note: connector health panel and latency SLO dashboards not built}
+FR-038: {files: [src/finagent/api/routers/ops.py, apps/web/app/page.tsx], partial: true, note: handling/review-time and quality KPIs not computed; budgets enforced (NQ-048)}
+FR-039: {files: [src/finagent/services/governance_service/retention.py, src/finagent/services/evidence_service/items.py], partial: true, note: Feature-gated document/evidence payload purges and legal holds verified locally; approved retention periods and backup lifecycle acceptance pending}
+FR-040: {files: [src/finagent/services/governance_service/config.py, src/finagent/evaluation/runner.py, src/finagent/agents/gateway.py, src/finagent/services/governance_service/promotion_readiness.py, src/finagent/api/routers/governance.py]}
+UI-001: {files: [apps/web/components/StatusBadge.tsx, apps/web/app/globals.css, apps/web/app/layout.tsx], partial: true, note: WCAG 2.2 AA not audited; keyboard/labels/text-not-colour implemented}
+UI-002: {files: [src/finagent/services/case_service/commands.py, src/finagent/api/deps.py, src/finagent/services/review_service/review.py, 'apps/web/app/approvals/[id]/page.tsx', apps/web/app/actions.ts]}
+NFR-001: {files: [src/finagent/security/redaction.py], partial: true}
+NFR-002: {files: [src/finagent/services/case_service/queries.py, src/finagent/database/models.py], partial: true}
+NFR-008: {files: [src/finagent/core/correlation.py, src/finagent/api/routers/v1.py], partial: true}
+DIR-001: {files: [docs/data/source-register.md], partial: true, note: synthetic sources only; real register is DATA-D01}
+DIR-002: {files: [src/finagent/security/authentication/resolver.py, src/finagent/services/case_service/contracts.py]}
+DIR-003: {files: [src/finagent/security/authorization/policy.py]}
+DIR-005: {files: [docs/data/source-register.md, src/finagent/integrations/sources.py], partial: true}
+DIR-006: {files: [src/finagent/integrations/sources.py], partial: true}
+DIR-007: {files: [src/finagent/integrations/sources.py, src/finagent/services/case_service/contracts.py]}
+DIR-008: {files: [src/finagent/domain/money.py]}
+DIR-009: {files: [src/finagent/integrations/sources.py, src/finagent/documents/extraction.py]}
+DIR-010: {files: [src/finagent/services/case_service/contracts.py, src/finagent/services/case_service/intake.py], partial: true}
+DIR-012: {files: [src/finagent/integrations/sources.py]}
+DIR-013: {files: [src/finagent/domain/money.py, src/finagent/domain/aml_calculations.py], partial: true, note: SYNTHETIC rule versions}
+DIR-014: {files: [src/finagent/documents/formats.py, src/finagent/services/document_service/ingest.py, src/finagent/api/routers/evidence.py], partial: true, note: limits PROPOSED (DATA-D04)}
+DIR-017: {files: [src/finagent/agents/validation.py, src/finagent/services/knowledge_service/citations.py, src/finagent/services/review_service/reports.py]}
+DIR-018: {files: [src/finagent/domain/states.py, src/finagent/services/review_service/review.py, src/finagent/services/review_service/approvals.py, src/finagent/services/review_service/finalization.py]}
+DIR-019: {files: [src/finagent/services/audit_service/writer.py, src/finagent/database/migrations/versions/0001_foundation_tenancy_cases_audit_outbox.py, src/finagent/database/grants.py]}
+DIR-020: {files: [src/finagent/worker/runner.py, src/finagent/worker/service.py, src/finagent/orchestration/checkpointer.py]}
+DIR-021: {files: [src/finagent/integrations/http_client.py, src/finagent/integrations/sources.py, src/finagent/integrations/factory.py, src/finagent/core/config.py]}
+DIR-022: {files: [src/finagent/services/case_service/contracts.py, src/finagent/worker/events.py, src/finagent/worker/consumer.py]}
+DIR-025: {files: [src/finagent/services/case_service/intake.py, src/finagent/services/document_service/ingest.py], partial: true, note: intake reconciliation resolution workflow pending; document quarantine has owner/state}
+DIR-026: {files: [src/finagent/services/case_service/intake.py, src/finagent/database/models.py]}
+DIR-027: {files: [src/finagent/services/case_service/intake.py]}
+DIR-028: {files: [src/finagent/integrations/resilience.py, src/finagent/worker/runner.py, src/finagent/worker/outbox_relay.py, src/finagent/worker/consumer.py]}
+DIR-029: {files: [src/finagent/services/workflow_service/external_ops.py]}
+DIR-031: {files: [src/finagent/worker/leases.py, src/finagent/orchestration/runtime.py, src/finagent/services/workflow_service/runs.py]}
+DIR-032: {files: [src/finagent/core/crypto.py, src/finagent/orchestration/checkpointer.py], partial: true, note: checkpoint encryption + signed events; TLS/Key Vault/egress are P14}
+DIR-033: {files: [src/finagent/security/authentication/resolver.py], partial: true}
+DIR-034: {files: [src/finagent/services/governance_service/retention.py], partial: true, note: no approved schedule (SEC-D05)}
+DIR-038: {files: [src/finagent/integrations/http_client.py, src/finagent/worker/events.py], partial: true}
+AER-001: {files: [src/finagent/agents/registry.py]}
+AER-002: {files: [src/finagent/agents/registry.py, src/finagent/services/governance_service/config.py]}
+AER-003: {files: [src/finagent/agents/contracts.py, src/finagent/agents/runner.py]}
+AER-004: {files: [src/finagent/agents/contracts.py, src/finagent/agents/gateway.py]}
+AER-005: {files: [src/finagent/agents/contracts.py, src/finagent/agents/validation.py]}
+AER-006: {files: [src/finagent/agents/prep.py], partial: true, note: checklist SYNTHETIC v0 (AI-D02)}
+AER-007: {files: [src/finagent/services/evidence_service/snapshots.py, src/finagent/agents/prep.py]}
+AER-008: {files: [src/finagent/agents/providers.py, src/finagent/agents/validation.py], partial: true, note: mock provider wording}
+AER-009: {files: [src/finagent/domain/money.py, src/finagent/domain/aml_calculations.py, src/finagent/agents/validation.py]}
+AER-010: {files: [src/finagent/agents/validation.py, src/finagent/services/evidence_service/snapshots.py]}
+AER-011: {files: [src/finagent/services/knowledge_service/retrieval.py]}
+AER-012: {files: [src/finagent/services/knowledge_service/retrieval.py, src/finagent/agents/runner.py]}
+AER-013: {files: [src/finagent/services/knowledge_service/citations.py], partial: true, note: lexical support proxy}
+AER-014: {files: [src/finagent/agents/validation.py, src/finagent/agents/runner.py]}
+AER-015: {files: [src/finagent/services/review_service/reports.py], partial: true, note: required-section list SYNTHETIC}
+AER-016: {files: [src/finagent/domain/states.py, src/finagent/services/review_service/reports.py, src/finagent/services/review_service/invalidation.py]}
+AER-017: {files: [src/finagent/documents/extraction.py, src/finagent/services/document_service/processing.py, src/finagent/services/document_service/corrections.py]}
+AER-018: {files: [src/finagent/agents/registry.py, src/finagent/agents/validation.py]}
+AER-019: {files: [src/finagent/worker/runner.py, src/finagent/orchestration/graphs/skeleton.py, src/finagent/agents/gateway.py, src/finagent/agents/runner.py, src/finagent/orchestration/graphs/aml.py]}
+AER-020: {files: [src/finagent/agents/gateway.py, src/finagent/agents/registry.py, src/finagent/orchestration/runtime.py]}
+AER-021: {files: [src/finagent/orchestration/runtime.py, src/finagent/orchestration/checkpointer.py, src/finagent/services/workflow_service/external_ops.py]}
+AER-022: {files: [src/finagent/integrations/resilience.py, src/finagent/services/workflow_service/external_ops.py, src/finagent/agents/gateway.py, src/finagent/worker/runner.py]}
+AER-023: {files: [src/finagent/services/review_service/finalization.py, src/finagent/services/review_service/review.py]}
+AER-024: {files: [src/finagent/integrations/tool_gateway/gateway.py, src/finagent/agents/prep.py, src/finagent/services/knowledge_service/retrieval.py]}
+AER-025: {files: [src/finagent/integrations/tool_gateway/gateway.py, src/finagent/integrations/tool_gateway/definitions.py]}
+AER-026: {files: [src/finagent/agents/validation.py, src/finagent/services/review_service/reports.py]}
+AER-027: {files: [src/finagent/security/redaction.py, src/finagent/agents/gateway.py, src/finagent/api/routers/ops.py]}
+AER-028: {files: [src/finagent/agents/validation.py, src/finagent/services/review_service/review.py]}
+AER-029: {files: [src/finagent/evaluation/runner.py, src/finagent/evaluation/datasets/aml-synthetic-v1.json], partial: true, note: SYNTHETIC single-author labels}
+AER-032: {files: [src/finagent/evaluation/runner.py, src/finagent/evaluation/reporting.py], partial: true, note: 'Synthetic counts and case slices verified; uncertainty remains descriptive, not independent validation'}
+AER-033: {files: [src/finagent/services/governance_service/config.py, src/finagent/evaluation/runner.py]}
+AER-035: {files: [src/finagent/api/routers/ops.py, monitoring/alert-rules.yaml], partial: true, note: reviewer-correction and quality-proxy dashboards not built}
+AER-037: {files: [src/finagent/orchestration/graphs/aml.py, src/finagent/worker/runner.py], partial: true, note: run escalates; automatic capability disablement not built}
+SPR-004: {files: [src/finagent/security/authentication/email_verification.py, src/finagent/api/routers/email_verification.py, apps/web/app/security/email/page.tsx, src/finagent/security/authentication/connector_credentials.py, src/finagent/security/authentication/tokens.py, src/finagent/security/authentication/passwords.py, src/finagent/core/config.py, src/finagent/api/deps.py, src/finagent/database/migrations/versions/0012_password_credentials.py]}
+SPR-005: {files: [src/finagent/security/authentication/passkeys.py, src/finagent/api/routers/passkeys.py, apps/web/app/security/passkeys/page.tsx, apps/web/app/security/passkeys/PasskeyControls.tsx, apps/web/app/security/passkeys/api/route.ts, src/finagent/security/authentication/totp.py, src/finagent/api/routers/totp_auth.py, src/finagent/security/authentication/totp_console.py, apps/web/app/security/page.tsx, src/finagent/security/authentication/tokens.py, src/finagent/security/authorization/policy.py, src/finagent/security/authentication/resolver.py, src/finagent/core/config.py], note: step-up enforced via require(); LIVE ENTRA amr/acr NOT VERIFIED; session/idle limits OPEN (SEC-D02), partial: true, note: local TOTP candidate verification pending; institutional MFA acceptance remains open}
+SPR-006: {files: [src/finagent/security/authentication/resolver.py, src/finagent/services/admin_service/delegations.py], partial: true, note: time-limited delegation and immediate revocation; periodic access reviews not built}
+SPR-008: {files: [src/finagent/services/admin_service/break_glass.py, src/finagent/security/authentication/resolver.py, src/finagent/security/authorization/policy.py, src/finagent/api/routers/admin.py]}
+SPR-009: {files: [src/finagent/security/authorization/policy.py, src/finagent/services/case_service/queries.py], partial: true}
+SPR-010: {files: [src/finagent/database/models.py, src/finagent/services/case_service/queries.py], partial: true}
+SPR-011: {files: [src/finagent/services/document_service/downloads.py, src/finagent/services/knowledge_service/citations.py, src/finagent/services/review_service/exports.py]}
+SPR-012: {files: [src/finagent/services/document_service/downloads.py, src/finagent/services/review_service/exports.py]}
+SPR-013: {files: [src/finagent/services/case_service/queries.py, src/finagent/integrations/http_client.py], partial: true}
+SPR-016: {files: [src/finagent/database/grants.py, src/finagent/integrations/http_client.py], partial: true, note: fixed destinations; network egress policy is P14}
+SPR-017: {files: [src/finagent/api/main.py, src/finagent/api/deps.py, src/finagent/security/rate_limit.py, src/finagent/documents/sandbox.py, src/finagent/documents/parse_worker.py, src/finagent/documents/parsers.py, src/finagent/api/routers/evidence.py], partial: true, note: parser child has no network isolation on Windows}
+SPR-024: {files: [src/finagent/services/governance_service/retention.py, src/finagent/services/evidence_service/items.py], partial: true, note: Payload purging and legal holds verified locally; full derived-copy and lifecycle acceptance pending}
+SPR-028: {files: [src/finagent/agents/registry.py, src/finagent/agents/validation.py, src/finagent/services/knowledge_service/retrieval.py]}
+SPR-029: {files: [src/finagent/integrations/tool_gateway/gateway.py, src/finagent/integrations/tool_gateway/definitions.py]}
+SPR-030: {files: [src/finagent/integrations/tool_gateway/gateway.py, src/finagent/integrations/sources.py], partial: true, note: projection + data classes; model context minimisation is P8}
+SPR-031: {files: [src/finagent/domain/money.py, src/finagent/agents/validation.py, src/finagent/domain/aml_calculations.py]}
+SPR-033: {files: [src/finagent/security/authorization/policy.py, src/finagent/domain/states.py, src/finagent/services/review_service/review.py, src/finagent/services/review_service/finalization.py], partial: true, note: approval expiry rule is DEC-06}
+SPR-035: {files: [src/finagent/services/audit_service/writer.py, src/finagent/database/grants.py]}
+SPR-036: {files: [src/finagent/services/audit_service/writer.py, src/finagent/security/redaction.py], partial: true}
+NQ-017: {files: [src/finagent/integrations/resilience.py], partial: true}
+NQ-019: {files: [src/finagent/worker/outbox_relay.py, src/finagent/worker/runner.py]}
+NQ-020: {files: [src/finagent/services/case_service/intake.py, src/finagent/worker/consumer.py, src/finagent/services/workflow_service/external_ops.py]}
+NQ-021: {files: [src/finagent/worker/leases.py, src/finagent/orchestration/runtime.py, src/finagent/worker/runner.py]}
+NQ-022: {files: [src/finagent/database/models.py], partial: true}
+NQ-023: {files: [src/finagent/worker/consumer.py, src/finagent/worker/runner.py]}
+NQ-027: {files: [src/finagent/security/rate_limit.py], partial: true, note: load shedding per tenant only; no load evidence}
+NQ-028: {files: [src/finagent/security/rate_limit.py, src/finagent/api/deps.py], partial: true, note: request-rate quotas done; queue/model/parser/search quotas in later phases}
+NQ-035: {files: [src/finagent/core/logging.py, src/finagent/security/redaction.py], partial: true}
+NQ-048: {files: [src/finagent/agents/gateway.py], partial: true, note: budgets PROPOSED (DEC-07)}
+MST:AG-001: {files: [src/finagent/agents/registry.py, src/finagent/agents/contracts.py]}
+MST:AG-002: {files: [src/finagent/orchestration/runtime.py, src/finagent/core/config.py, src/finagent/orchestration/graphs/aml.py]}
+MST:AG-003: {files: [src/finagent/security/authorization/policy.py, src/finagent/integrations/tool_gateway/definitions.py]}
+MST:API-002: {files: [src/finagent/services/case_service/queries.py]}
+MST:API-003: {files: [src/finagent/services/case_service/intake.py], partial: true}
+MST:ARCH-001: {files: [src/finagent/worker/events.py, src/finagent/orchestration/checkpointer.py, src/finagent/worker/runner.py], partial: true}
+MST:ARCH-002: {files: [src/finagent/core/config.py, src/finagent/security/authorization/policy.py]}
+MST:ARCH-003: {files: [src/finagent/services/case_service/intake.py, src/finagent/database/models.py, src/finagent/worker/outbox_relay.py]}
+MST:AZ-002: {files: [src/finagent/worker/queue.py], partial: true, note: Service Bus adapter vs fake client only - LIVE INTEGRATION NOT VERIFIED}
+MST:BR-004: {files: [src/finagent/security/authorization/policy.py], partial: true}
+MST:DB-001: {files: [src/finagent/database/models.py]}
+MST:DB-002: {files: [src/finagent/security/redaction.py], partial: true}
+MST:DB-003: {files: [src/finagent/database/models.py, src/finagent/worker/outbox_relay.py, src/finagent/worker/consumer.py]}
+MST:INT-001: {files: [src/finagent/integrations/tool_gateway/definitions.py, src/finagent/integrations/tool_gateway/gateway.py]}
+MST:INT-002: {files: [src/finagent/integrations/tool_gateway/gateway.py, src/finagent/integrations/http_client.py]}
+MST:INT-003: {files: [src/finagent/integrations/tool_gateway/definitions.py, docs/agents/tool-permission-matrix.md]}
+MST:OPS-001: {files: [src/finagent/services/case_service/queries.py, monitoring/alert-rules.yaml], partial: true, note: owners are role placeholders}
+MST:RAG-001: {files: [src/finagent/services/knowledge_service/retrieval.py]}
+MST:RAG-002: {files: [src/finagent/services/knowledge_service/retrieval.py, src/finagent/services/knowledge_service/citations.py]}
+MST:RAG-003: {files: [src/finagent/services/knowledge_service/ingestion.py]}
+MST:REC-001: {files: [src/finagent/domain/states.py, src/finagent/services/workflow_service/runs.py, src/finagent/worker/leases.py]}
+MST:REC-002: {files: [src/finagent/services/workflow_service/external_ops.py]}
+MST:REC-003: {files: [src/finagent/services/workflow_service/external_ops.py, src/finagent/api/routers/workflows.py]}
+MST:SEC-001: {files: [src/finagent/services/case_service/queries.py, src/finagent/documents/storage.py, src/finagent/services/document_service/queries.py, src/finagent/services/knowledge_service/retrieval.py]}
+MST:SEC-002: {files: [src/finagent/services/review_service/review.py, src/finagent/services/audit_service/writer.py]}
+MST:SEC-003: {files: [src/finagent/agents/prep.py, src/finagent/agents/gateway.py]}
+MST:UI-001: {files: ['apps/web/app/cases/[id]/evidence/page.tsx', 'apps/web/app/documents/[id]/page.tsx']}
+MST:UI-002: {files: ['apps/web/app/approvals/[id]/page.tsx']}
+MST:UI-003: {files: [apps/web/app/globals.css, apps/web/app/layout.tsx], partial: true, note: not audited}

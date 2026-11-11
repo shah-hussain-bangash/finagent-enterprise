@@ -1,0 +1,76 @@
+{
+  "$id": "https://finagent.local/contracts/events/envelope.v1.schema.json",
+  "additionalProperties": false,
+  "description": "FinAgent event envelope v1. event_id is the delivery id (never the business key); payloads carry references only; signature = HMAC-SHA256 over the canonical JSON without `signature`.",
+  "properties": {
+    "correlation_id": {
+      "maxLength": 64,
+      "title": "Correlation Id",
+      "type": "string"
+    },
+    "event_id": {
+      "format": "uuid",
+      "title": "Event Id",
+      "type": "string"
+    },
+    "event_type": {
+      "maxLength": 100,
+      "title": "Event Type",
+      "type": "string"
+    },
+    "occurred_at": {
+      "format": "date-time",
+      "title": "Occurred At",
+      "type": "string"
+    },
+    "payload": {
+      "additionalProperties": true,
+      "title": "Payload",
+      "type": "object"
+    },
+    "producer": {
+      "default": "finagent-outbox",
+      "title": "Producer",
+      "type": "string"
+    },
+    "resource_id": {
+      "maxLength": 100,
+      "title": "Resource Id",
+      "type": "string"
+    },
+    "schema_version": {
+      "maxLength": 16,
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "signature": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Signature"
+    },
+    "tenant_ref": {
+      "format": "uuid",
+      "title": "Tenant Ref",
+      "type": "string"
+    }
+  },
+  "required": [
+    "event_id",
+    "event_type",
+    "schema_version",
+    "tenant_ref",
+    "resource_id",
+    "occurred_at",
+    "correlation_id",
+    "payload"
+  ],
+  "title": "EventEnvelope",
+  "type": "object"
+}

@@ -1,0 +1,82 @@
+﻿{
+    "schema_version":  1,
+    "capability":  "workflow_status_and_recovery_diagnostics",
+    "status":  "IMPLEMENTED_AND_ISOLATED_VERIFIED",
+    "endpoint":  "GET /api/v1/workflows/{run_id}/diagnostics",
+    "purpose":  [
+                    "Explain current workflow state",
+                    "Identify attention or recovery guidance",
+                    "Distinguish cancellation requested from cancellation completed",
+                    "Expose attempt information without authorizing retries",
+                    "Prioritize reconciliation for uncertain external operations"
+                ],
+    "authorization":  {
+                          "visibility_reused_from_existing_get_run":  true,
+                          "case_read_scope_preserved":  true,
+                          "platform_operator_metadata_scope_preserved":  true,
+                          "tenant_admin_without_required_permission_denied":  true,
+                          "cross_tenant_run_hidden":  true,
+                          "permission_hints_are_advisory_only":  true
+                      },
+    "safety":  {
+                   "read_only_endpoint":  true,
+                   "write_methods_available":  false,
+                   "database_writes_observed":  false,
+                   "worker_liveness_claimed":  false,
+                   "sla_claimed":  false,
+                   "case_completion_claimed":  false,
+                   "case_id_exposed":  false,
+                   "status_reason_exposed":  false,
+                   "workflow_step_output_exposed":  false,
+                   "workflow_history_reason_exposed":  false
+               },
+    "cache_control":  {
+                          "cache_control":  "private, no-store",
+                          "pragma":  "no-cache"
+                      },
+    "verification":  {
+                         "source_unit_checks":  "PASS",
+                         "source_unit_test_count":  18,
+                         "ruff":  "PASS",
+                         "mypy":  "PASS",
+                         "isolated_auth_postgres":  "PASS",
+                         "anonymous_request":  "401",
+                         "wrong_signature":  "401",
+                         "tenant_supervisor":  "200",
+                         "platform_operator":  "200",
+                         "tenant_admin":  "403",
+                         "cross_tenant":  "404",
+                         "post":  "405",
+                         "put":  "405",
+                         "patch":  "405",
+                         "delete":  "405",
+                         "request_database_unchanged":  true,
+                         "candidate_packaging":  "PASS",
+                         "candidate_route_get_only":  true,
+                         "candidate_anonymous_request":  "401",
+                         "candidate_database_used":  false,
+                         "existing_api_web_unchanged":  true,
+                         "working_tree_sources_unchanged":  true
+                     },
+    "candidate":  {
+                      "image":  "finagent-workflow-diagnostics-candidate:5011e00e9b75",
+                      "dockerfile":  "apps/api/Dockerfile",
+                      "build_context":  ".",
+                      "deployed":  false
+                  },
+    "evidence":  {
+                     "integration":  "C:\\finagent-enterprise\\reports\\workflow-diagnostics-integration-v3-20261028T104838652768Z\\workflow-diagnostics-integration-v3.json",
+                     "candidate":  "C:\\finagent-enterprise\\reports\\workflow-diagnostics-candidate-v2-20261028T122142131116Z\\workflow-diagnostics-candidate-v2.json"
+                 },
+    "scope_boundaries":  {
+                             "ui_changed":  false,
+                             "migrations_run":  false,
+                             "live_api_replaced":  false,
+                             "deployment_performed":  false,
+                             "main_database_changed":  false,
+                             "finagent_test_changed":  false,
+                             "external_identity_provider_verification":  "NOT_RUN"
+                         },
+    "next_recommended_backend_area":  "AI evaluation and release management",
+    "created_at_utc":  "2026-10-28T12:54:15.8944012Z"
+}

@@ -1,0 +1,23 @@
+# OPTIONAL LOCAL OVERRIDE. Requires reviewed app registrations and existing principal mapping.
+# Never put secret values into this file. The base compose file still supplies other settings.
+# Example invocation, only after configuration is ready:
+# docker compose -f compose.yaml -f compose.entra.example.yaml --profile app up -d --build --no-deps api web
+# Use the actual base Compose filename if your project uses docker-compose.yml instead.
+services:
+  api:
+    environment:
+      FINAGENT_AUTH_MODE: entra
+      FINAGENT_API_AUDIENCE: ${FINAGENT_ENTRA_API_CLIENT_ID:?Set the API registration client GUID}
+      FINAGENT_ENTRA_ISSUER: https://login.microsoftonline.com/${FINAGENT_ENTRA_TENANT_ID:?Set the tenant GUID}/v2.0
+      FINAGENT_ENTRA_JWKS_URL: https://login.microsoftonline.com/${FINAGENT_ENTRA_TENANT_ID:?Set the tenant GUID}/discovery/v2.0/keys
+      FINAGENT_ENTRA_REQUIRED_SCOPE: ${FINAGENT_ENTRA_REQUIRED_SCOPE:-access_as_user}
+  web:
+    environment:
+      FINAGENT_WEB_AUTH_MODE: entra
+      FINAGENT_ENVIRONMENT: local
+      FINAGENT_ENTRA_TENANT_ID: ${FINAGENT_ENTRA_TENANT_ID:?Set the tenant GUID}
+      FINAGENT_ENTRA_WEB_CLIENT_ID: ${FINAGENT_ENTRA_WEB_CLIENT_ID:?Set the web registration client GUID}
+      FINAGENT_ENTRA_WEB_CLIENT_SECRET: ${FINAGENT_ENTRA_WEB_CLIENT_SECRET:?Provide the web client secret through the approved local environment}
+      FINAGENT_ENTRA_API_SCOPE: ${FINAGENT_ENTRA_API_SCOPE:?Set the full delegated FinAgent API scope URI}
+      FINAGENT_WEB_ORIGIN: http://127.0.0.1:3001
+      FINAGENT_WEB_AUTH_REDIS_URL: redis://redis:6379/2

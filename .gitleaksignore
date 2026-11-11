@@ -1,0 +1,22 @@
+# FinAgent Gitleaks finding-specific false-positive allowlist
+# P13.10 reviewed 2026-10-26
+# Entries below are Gitleaks-native finding fingerprints only.
+# Do not replace these with a rule-wide generic-api-key suppression.
+
+/scan/install_entra_web_signin.py:generic-api-key:23
+/scan/install_entra_web_signin.py:generic-api-key:30
+/scan/install_entra_web_signin.py:generic-api-key:671
+/scan/install_google_web_signin.py:generic-api-key:22
+/scan/install_google_web_signin.py:generic-api-key:24
+/scan/install_google_web_signin.py:generic-api-key:27
+/scan/install_google_web_signin.py:generic-api-key:28
+/scan/install_google_web_signin.py:generic-api-key:30
+/scan/install_google_web_signin.py:generic-api-key:32
+/scan/install_google_web_signin.py:generic-api-key:383
+/scan/install_operations_dashboard.py:generic-api-key:31
+/scan/src/finagent/core/config.py:generic-api-key:263
+/scan/src/finagent/core/config.py:generic-api-key:268
+
+# Reviewed local development key defaults
+src/finagent/core/config.py:generic-api-key:329
+src/finagent/core/config.py:generic-api-key:334

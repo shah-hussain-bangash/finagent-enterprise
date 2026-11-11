@@ -1,0 +1,45 @@
+.env
+.env.*
+!.env.example
+__pycache__/
+*.egg-info/
+.venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+reports/
+node_modules/
+.next/
+*.tfstate*
+.terraform/
+var/
+dist/
+
+# Local backups and database exports
+backups/
+*.bak
+*.dump
+*.sql
+*.sqlite
+*.sqlite3
+*.db
+
+# Private keys and credentials
+*.pem
+*.key
+*.pfx
+*.p12
+credentials*.json
+service-account*.json
+
+# Local editor settings
+.vscode/
+
+# Local runtime settings
+compose.*.local.json
+mobile-passkey-runtime.json
+
+# Original requirements documents
+docs/requirements/source/
+
+/docs/backend-capabilities/access-explanation-20261028T072752768324Z.json

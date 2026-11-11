@@ -1,0 +1,16 @@
+{
+  "capability": "Read-only role/permission catalog",
+  "endpoint": "GET /api/v1/admin/role-permission-catalog",
+  "status": "SOURCE_AND_CANDIDATE_ISOLATED_VERIFIED",
+  "recorded_at_utc": "2026-10-28T08:29:05.418410+00:00",
+  "candidate_image_id": "sha256:938c0c9af80c7e5c1267ca9f4455335f7994303b773380594a809f6e3fe67b9e",
+  "evidence_path": "reports/catalog-candidate-8f1a3b593078/catalog-candidate.json",
+  "evidence_sha256": "7f5e5b312a7d660254088918ded50422246f80c3712fbaf9acb501c2ad2a7621",
+  "integration_evidence": {
+    "path": "reports/role-catalog-integration-c4fbcd651629/role-catalog-integration.json",
+    "sha256": "417d96e8e8f7f23ddabd2c5ea551eb4b85af5b81f9a6959c1cb62947bf97528a"
+  },
+  "interface": "DEFERRED",
+  "live_deployment": "NOT_PERFORMED",
+  "external_idp_migrations_production_grants": "NOT_TESTED"
+}

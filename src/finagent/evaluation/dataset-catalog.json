@@ -1,0 +1,307 @@
+{
+  "schema_version": 1,
+  "datasets": {
+    "aml-synthetic-v1": {
+      "dataset": "aml-synthetic-v1",
+      "version": "1.1.0",
+      "split": "development",
+      "content_sha256": "0241b042a6fdbffcb7625d7609d4989ffca58c9cd2cfb660e0fca7a0229ed611",
+      "lineages": {
+        "struct-001": {
+          "family": "TM_STRUCTURING",
+          "customer": "customer-eval-001",
+          "story": "legacy-aml-synthetic-v1-shared-development-origin"
+        },
+        "benign-001": {
+          "family": "TM_STRUCTURING",
+          "customer": "customer-eval-001",
+          "story": "legacy-aml-synthetic-v1-shared-development-origin"
+        },
+        "gap-001": {
+          "family": "TM_STRUCTURING",
+          "customer": "customer-eval-001",
+          "story": "legacy-aml-synthetic-v1-shared-development-origin"
+        },
+        "adv-number-001": {
+          "family": "TM_STRUCTURING",
+          "customer": "customer-eval-001",
+          "story": "legacy-aml-synthetic-v1-shared-development-origin"
+        },
+        "adv-evidence-001": {
+          "family": "TM_STRUCTURING",
+          "customer": "customer-eval-001",
+          "story": "legacy-aml-synthetic-v1-shared-development-origin"
+        },
+        "adv-guilt-001": {
+          "family": "TM_STRUCTURING",
+          "customer": "customer-eval-001",
+          "story": "legacy-aml-synthetic-v1-shared-development-origin"
+        },
+        "adv-injection-001": {
+          "family": "TM_STRUCTURING",
+          "customer": "customer-eval-001",
+          "story": "legacy-aml-synthetic-v1-shared-development-origin"
+        },
+        "schema-001": {
+          "family": "TM_STRUCTURING",
+          "customer": "customer-eval-001",
+          "story": "legacy-aml-synthetic-v1-shared-development-origin"
+        },
+        "budget-001": {
+          "family": "TM_STRUCTURING",
+          "customer": "customer-eval-001",
+          "story": "legacy-aml-synthetic-v1-shared-development-origin"
+        },
+        "rag-current-001": {
+          "family": "TM_STRUCTURING",
+          "customer": "customer-eval-001",
+          "story": "legacy-aml-synthetic-v1-shared-development-origin"
+        },
+        "rag-historical-001": {
+          "family": "TM_STRUCTURING",
+          "customer": "customer-eval-001",
+          "story": "legacy-aml-synthetic-v1-shared-development-origin"
+        },
+        "rag-abstain-001": {
+          "family": "TM_STRUCTURING",
+          "customer": "customer-eval-001",
+          "story": "legacy-aml-synthetic-v1-shared-development-origin"
+        },
+        "multi-quality-001": {
+          "family": "TM_MULTI_CURRENCY_ACTIVITY",
+          "customer": "synthetic-multi-currency-customer-quality-001",
+          "story": "synthetic-multi-currency-quality-story-001"
+        },
+        "multi-gap-001": {
+          "family": "TM_MULTI_CURRENCY_ACTIVITY",
+          "customer": "synthetic-multi-currency-customer-gap-001",
+          "story": "synthetic-multi-currency-gap-story-001"
+        },
+        "multi-adv-number-001": {
+          "family": "TM_MULTI_CURRENCY_ACTIVITY",
+          "customer": "synthetic-multi-currency-customer-adversarial-001",
+          "story": "synthetic-multi-currency-adversarial-story-001"
+        },
+        "multi-schema-001": {
+          "family": "TM_MULTI_CURRENCY_ACTIVITY",
+          "customer": "synthetic-multi-currency-customer-robustness-001",
+          "story": "synthetic-multi-currency-robustness-story-001"
+        }
+      },
+      "input_sha256": [
+        "01276383dde034ce59ad1d471d4c36884354ca2bd082fea8e8432516139ede5f",
+        "0630dcd3e9d168273ffb488a4839a639706a5acc89f832c2e4c38c6ccef89a10",
+        "0bb8584c2a35aaf89031e014658b0559ad3506cc363360aa5b180482943d1970",
+        "1e89c42f69cbd103288ddcf00556714e221d6a61d7f39fb371fc6c9fcc53c7bf",
+        "25a8d6a35673b3685eb927fa4819bbdacc17a63664d2fc527619d27301e46db5",
+        "2d3c5f2092bd737b899cc1c2b42af881efc3322cc5913d2a34e9bf6a918a5b4a",
+        "34bee36259c484325c9347d8a6e08c868df0399a01ac2d6a33b840b8a6b15ef7",
+        "5a9c42be63b9986351c8e052d8d5355244d4724ce6a16999a1d0e8316e513339",
+        "5e887059567c72d874f048d6e8cdc3d42bd0dba84401295a13fa5034ba868595",
+        "620a91a539861bfa97a5e5221e8c9d1a519b7f63c21a35805cb6a28ebdf4a51c",
+        "64553978e0284c4fd600e02c8976315d35aecdb5dea89aba23d7119e931fae11",
+        "c6b410757b79512567712b81b6126272e73efe78be49f2fd524e18357435d45c",
+        "d04130bd6629056c6eed120224a689953eba14e2bae9f364c7b7144ce09b555d",
+        "e9b91bc8031d6de47005baeef15c0fe1a5bb3890e1fd88c1dd4bde944cad7b14",
+        "f3884b801d371dc5c744e3f2416d081c5a7aaf17fbfc141ff49f33031fc45da9",
+        "fbcd90442e7c359599b2b5ffa4bb1512ae0f3d9e81104304282f335a741770a6"
+      ],
+      "contaminated": false,
+      "reason": "P13.3 development-only synthetic coverage expansion: adds independent TM_MULTI_CURRENCY_ACTIVITY quality, gap, adversarial-rejection and robustness scenarios. Labels remain single-author UNREVIEWED; no threshold or release-acceptance decision is implied."
+    }
+  },
+  "history": [
+    {
+      "dataset": "aml-synthetic-v1",
+      "version": "1.0.0",
+      "split": "development",
+      "content_sha256": "8c7711a7fdbc9d3ac02e7d36adc711ffe4ec2e484d9d20c89393b680382309d7",
+      "lineages": {
+        "struct-001": {
+          "family": "TM_STRUCTURING",
+          "customer": "customer-eval-001",
+          "story": "legacy-aml-synthetic-v1-shared-development-origin"
+        },
+        "benign-001": {
+          "family": "TM_STRUCTURING",
+          "customer": "customer-eval-001",
+          "story": "legacy-aml-synthetic-v1-shared-development-origin"
+        },
+        "gap-001": {
+          "family": "TM_STRUCTURING",
+          "customer": "customer-eval-001",
+          "story": "legacy-aml-synthetic-v1-shared-development-origin"
+        },
+        "adv-number-001": {
+          "family": "TM_STRUCTURING",
+          "customer": "customer-eval-001",
+          "story": "legacy-aml-synthetic-v1-shared-development-origin"
+        },
+        "adv-evidence-001": {
+          "family": "TM_STRUCTURING",
+          "customer": "customer-eval-001",
+          "story": "legacy-aml-synthetic-v1-shared-development-origin"
+        },
+        "adv-guilt-001": {
+          "family": "TM_STRUCTURING",
+          "customer": "customer-eval-001",
+          "story": "legacy-aml-synthetic-v1-shared-development-origin"
+        },
+        "adv-injection-001": {
+          "family": "TM_STRUCTURING",
+          "customer": "customer-eval-001",
+          "story": "legacy-aml-synthetic-v1-shared-development-origin"
+        },
+        "schema-001": {
+          "family": "TM_STRUCTURING",
+          "customer": "customer-eval-001",
+          "story": "legacy-aml-synthetic-v1-shared-development-origin"
+        },
+        "budget-001": {
+          "family": "TM_STRUCTURING",
+          "customer": "customer-eval-001",
+          "story": "legacy-aml-synthetic-v1-shared-development-origin"
+        },
+        "rag-current-001": {
+          "family": "TM_STRUCTURING",
+          "customer": "customer-eval-001",
+          "story": "legacy-aml-synthetic-v1-shared-development-origin"
+        },
+        "rag-historical-001": {
+          "family": "TM_STRUCTURING",
+          "customer": "customer-eval-001",
+          "story": "legacy-aml-synthetic-v1-shared-development-origin"
+        },
+        "rag-abstain-001": {
+          "family": "TM_STRUCTURING",
+          "customer": "customer-eval-001",
+          "story": "legacy-aml-synthetic-v1-shared-development-origin"
+        }
+      },
+      "input_sha256": [
+        "01276383dde034ce59ad1d471d4c36884354ca2bd082fea8e8432516139ede5f",
+        "0630dcd3e9d168273ffb488a4839a639706a5acc89f832c2e4c38c6ccef89a10",
+        "1e89c42f69cbd103288ddcf00556714e221d6a61d7f39fb371fc6c9fcc53c7bf",
+        "25a8d6a35673b3685eb927fa4819bbdacc17a63664d2fc527619d27301e46db5",
+        "2d3c5f2092bd737b899cc1c2b42af881efc3322cc5913d2a34e9bf6a918a5b4a",
+        "34bee36259c484325c9347d8a6e08c868df0399a01ac2d6a33b840b8a6b15ef7",
+        "620a91a539861bfa97a5e5221e8c9d1a519b7f63c21a35805cb6a28ebdf4a51c",
+        "64553978e0284c4fd600e02c8976315d35aecdb5dea89aba23d7119e931fae11",
+        "d04130bd6629056c6eed120224a689953eba14e2bae9f364c7b7144ce09b555d",
+        "e9b91bc8031d6de47005baeef15c0fe1a5bb3890e1fd88c1dd4bde944cad7b14",
+        "f3884b801d371dc5c744e3f2416d081c5a7aaf17fbfc141ff49f33031fc45da9",
+        "fbcd90442e7c359599b2b5ffa4bb1512ae0f3d9e81104304282f335a741770a6"
+      ],
+      "contaminated": false,
+      "reason": "Previously used for prompt, validator and regression development; not an independent validation or release set."
+    },
+    {
+      "dataset": "aml-synthetic-v1",
+      "version": "1.1.0",
+      "split": "development",
+      "content_sha256": "0241b042a6fdbffcb7625d7609d4989ffca58c9cd2cfb660e0fca7a0229ed611",
+      "lineages": {
+        "struct-001": {
+          "family": "TM_STRUCTURING",
+          "customer": "customer-eval-001",
+          "story": "legacy-aml-synthetic-v1-shared-development-origin"
+        },
+        "benign-001": {
+          "family": "TM_STRUCTURING",
+          "customer": "customer-eval-001",
+          "story": "legacy-aml-synthetic-v1-shared-development-origin"
+        },
+        "gap-001": {
+          "family": "TM_STRUCTURING",
+          "customer": "customer-eval-001",
+          "story": "legacy-aml-synthetic-v1-shared-development-origin"
+        },
+        "adv-number-001": {
+          "family": "TM_STRUCTURING",
+          "customer": "customer-eval-001",
+          "story": "legacy-aml-synthetic-v1-shared-development-origin"
+        },
+        "adv-evidence-001": {
+          "family": "TM_STRUCTURING",
+          "customer": "customer-eval-001",
+          "story": "legacy-aml-synthetic-v1-shared-development-origin"
+        },
+        "adv-guilt-001": {
+          "family": "TM_STRUCTURING",
+          "customer": "customer-eval-001",
+          "story": "legacy-aml-synthetic-v1-shared-development-origin"
+        },
+        "adv-injection-001": {
+          "family": "TM_STRUCTURING",
+          "customer": "customer-eval-001",
+          "story": "legacy-aml-synthetic-v1-shared-development-origin"
+        },
+        "schema-001": {
+          "family": "TM_STRUCTURING",
+          "customer": "customer-eval-001",
+          "story": "legacy-aml-synthetic-v1-shared-development-origin"
+        },
+        "budget-001": {
+          "family": "TM_STRUCTURING",
+          "customer": "customer-eval-001",
+          "story": "legacy-aml-synthetic-v1-shared-development-origin"
+        },
+        "rag-current-001": {
+          "family": "TM_STRUCTURING",
+          "customer": "customer-eval-001",
+          "story": "legacy-aml-synthetic-v1-shared-development-origin"
+        },
+        "rag-historical-001": {
+          "family": "TM_STRUCTURING",
+          "customer": "customer-eval-001",
+          "story": "legacy-aml-synthetic-v1-shared-development-origin"
+        },
+        "rag-abstain-001": {
+          "family": "TM_STRUCTURING",
+          "customer": "customer-eval-001",
+          "story": "legacy-aml-synthetic-v1-shared-development-origin"
+        },
+        "multi-quality-001": {
+          "family": "TM_MULTI_CURRENCY_ACTIVITY",
+          "customer": "synthetic-multi-currency-customer-quality-001",
+          "story": "synthetic-multi-currency-quality-story-001"
+        },
+        "multi-gap-001": {
+          "family": "TM_MULTI_CURRENCY_ACTIVITY",
+          "customer": "synthetic-multi-currency-customer-gap-001",
+          "story": "synthetic-multi-currency-gap-story-001"
+        },
+        "multi-adv-number-001": {
+          "family": "TM_MULTI_CURRENCY_ACTIVITY",
+          "customer": "synthetic-multi-currency-customer-adversarial-001",
+          "story": "synthetic-multi-currency-adversarial-story-001"
+        },
+        "multi-schema-001": {
+          "family": "TM_MULTI_CURRENCY_ACTIVITY",
+          "customer": "synthetic-multi-currency-customer-robustness-001",
+          "story": "synthetic-multi-currency-robustness-story-001"
+        }
+      },
+      "input_sha256": [
+        "01276383dde034ce59ad1d471d4c36884354ca2bd082fea8e8432516139ede5f",
+        "0630dcd3e9d168273ffb488a4839a639706a5acc89f832c2e4c38c6ccef89a10",
+        "0bb8584c2a35aaf89031e014658b0559ad3506cc363360aa5b180482943d1970",
+        "1e89c42f69cbd103288ddcf00556714e221d6a61d7f39fb371fc6c9fcc53c7bf",
+        "25a8d6a35673b3685eb927fa4819bbdacc17a63664d2fc527619d27301e46db5",
+        "2d3c5f2092bd737b899cc1c2b42af881efc3322cc5913d2a34e9bf6a918a5b4a",
+        "34bee36259c484325c9347d8a6e08c868df0399a01ac2d6a33b840b8a6b15ef7",
+        "5a9c42be63b9986351c8e052d8d5355244d4724ce6a16999a1d0e8316e513339",
+        "5e887059567c72d874f048d6e8cdc3d42bd0dba84401295a13fa5034ba868595",
+        "620a91a539861bfa97a5e5221e8c9d1a519b7f63c21a35805cb6a28ebdf4a51c",
+        "64553978e0284c4fd600e02c8976315d35aecdb5dea89aba23d7119e931fae11",
+        "c6b410757b79512567712b81b6126272e73efe78be49f2fd524e18357435d45c",
+        "d04130bd6629056c6eed120224a689953eba14e2bae9f364c7b7144ce09b555d",
+        "e9b91bc8031d6de47005baeef15c0fe1a5bb3890e1fd88c1dd4bde944cad7b14",
+        "f3884b801d371dc5c744e3f2416d081c5a7aaf17fbfc141ff49f33031fc45da9",
+        "fbcd90442e7c359599b2b5ffa4bb1512ae0f3d9e81104304282f335a741770a6"
+      ],
+      "contaminated": false,
+      "reason": "P13.3 development-only synthetic coverage expansion: adds independent TM_MULTI_CURRENCY_ACTIVITY quality, gap, adversarial-rejection and robustness scenarios. Labels remain single-author UNREVIEWED; no threshold or release-acceptance decision is implied."
+    }
+  ]
+}

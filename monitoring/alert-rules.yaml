@@ -1,0 +1,40 @@
+# Prometheus alert rules over GET /api/v1/metrics (operator token, per tenant). Thresholds and
+# owners are PROPOSED; incident severities and notification matrix are OPEN (SEC-D08, NFR-D03).
+groups:
+  - name: finagent-operations
+    rules:
+      - alert: FinAgentUncertainExternalOperation
+        expr: finagent_external_operations{status="OUTCOME_UNCERTAIN"} > 0
+        for: 5m
+        labels: {severity: high, owner: platform-operator}
+        annotations:
+          summary: An external effect has an unproven outcome
+          runbook: docs/operations/runbook-uncertain-operation.md
+      - alert: FinAgentRunsHeldForHumanReview
+        expr: finagent_workflow_runs{status="HUMAN_REVIEW"} > 0
+        for: 30m
+        labels: {severity: medium, owner: platform-operator}
+        annotations:
+          summary: Workflow runs are waiting for a human recovery decision
+          runbook: docs/operations/runbook-recovery.md
+      - alert: FinAgentRunsFailed
+        expr: increase(finagent_workflow_runs{status="FAILED"}[1h]) > 0
+        labels: {severity: medium, owner: platform-operator}
+        annotations: {summary: Workflow runs failed permanently, runbook: docs/operations/runbook-recovery.md}
+      - alert: FinAgentDeadLetters
+        expr: finagent_dead_letters{status="OPEN"} > 0
+        for: 10m
+        labels: {severity: medium, owner: platform-operator}
+        annotations: {summary: Poison messages in the dead-letter store, runbook: docs/operations/runbook-recovery.md}
+      - alert: FinAgentModelBudgetDenials
+        expr: increase(finagent_model_requests{status="BUDGET_DENIED"}[1h]) > 0
+        labels: {severity: medium, owner: sponsor-budget-owner}
+        annotations: {summary: Model budget limits stopped billable work, runbook: docs/operations/runbook-model-outage.md}
+      - alert: FinAgentModelFailures
+        expr: increase(finagent_model_requests{status=~"FAILED|TIMEOUT"}[15m]) > 5
+        labels: {severity: high, owner: platform-operator}
+        annotations: {summary: Model provider errors, runbook: docs/operations/runbook-model-outage.md}
+      - alert: FinAgentInvalidModelOutput
+        expr: increase(finagent_model_requests{status="INVALID_OUTPUT"}[1h]) > 3
+        labels: {severity: medium, owner: model-governance}
+        annotations: {summary: Repeated schema-invalid model output, runbook: docs/operations/runbook-model-outage.md}

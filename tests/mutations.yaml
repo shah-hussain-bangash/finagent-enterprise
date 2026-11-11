@@ -1,0 +1,583 @@
+# Security-control mutations run by scripts/mutation_check.py. Each must be CAUGHT by >=1 test.
+# `find` must occur exactly once in `file`. Keep snippets small and specific.
+
+- id: tenant-filter
+  control: unconditional tenant filter on case reads
+  file: src/finagent/services/case_service/queries.py
+  find: "        .where(Case.tenant_id == ctx.tenant_id)  # tenant filter is unconditional\n"
+  replace: "\n"
+  tests: [tests/security/test_tenant_isolation.py]
+
+- id: mfa-step-up
+  control: MFA step-up in require()
+  file: src/finagent/security/authorization/policy.py
+  find: "    if permission in ctx.step_up and not ctx.mfa_satisfied:"
+  replace: "    if False:"
+  tests: [tests/unit/test_access_policy.py, tests/security/test_access_controls.py]
+
+- id: optimistic-version
+  control: stale record_version rejected (FR-004)
+  file: src/finagent/services/case_service/transitions.py
+  find: "    if expected is not None and case.record_version != expected:"
+  replace: "    if False:"
+  tests: [tests/integration/test_case_commands.py]
+
+- id: row-lock
+  control: case row locked FOR UPDATE during commands
+  file: src/finagent/services/case_service/queries.py
+  find: "        stmt = stmt.with_for_update()"
+  replace: "        stmt = stmt"
+  tests: [tests/integration/test_case_commands.py::test_patch_waits_for_concurrent_writer_and_then_conflicts]
+
+- id: reassign-permission
+  control: only supervisors reassign (FR-009)
+  file: src/finagent/services/case_service/commands.py
+  find: "    require(ctx, Permission.CASE_ASSIGN)  # includes the MFA step-up (SPR-005)"
+  replace: "    pass"
+  tests: [tests/integration/test_case_commands.py]
+
+- id: reassign-sod
+  control: analyst and reviewer of a case must differ
+  file: src/finagent/services/case_service/commands.py
+  find: "    if other_role in active and active[other_role].principal_id == body.principal_id:"
+  replace: "    if False:"
+  tests: [tests/integration/test_case_commands.py]
+
+- id: escalation-once
+  control: one escalation per case/rule/episode
+  file: src/finagent/services/case_service/escalation.py
+  find: '        .on_conflict_do_nothing(constraint="uq_escalation_once")'
+  replace: '        .on_conflict_do_nothing(index_elements=["id"])'
+  tests: [tests/integration/test_case_commands.py]
+
+- id: delegation-window
+  control: delegation honoured only inside its window
+  file: src/finagent/security/authentication/resolver.py
+  find: "            Delegation.valid_to > now,"
+  replace: ""
+  tests: [tests/security/test_access_controls.py]
+
+- id: delegation-revocation
+  control: revoked delegation ignored
+  file: src/finagent/security/authentication/resolver.py
+  find: "            Delegation.revoked_at.is_(None),"
+  replace: ""
+  tests: [tests/security/test_access_controls.py]
+
+- id: delegator-still-holds-role
+  control: delegation void when delegator loses the role
+  file: src/finagent/security/authentication/resolver.py
+  find: "            or_(RoleAssignment.valid_to.is_(None), RoleAssignment.valid_to > now),\n        )\n        .order_by(Delegation.valid_from, Delegation.id)"
+  replace: "        )\n        .order_by(Delegation.valid_from, Delegation.id)"
+  tests: [tests/security/test_access_controls.py]
+
+- id: break-glass-expiry
+  control: break-glass grant auto-expiry
+  file: src/finagent/security/authentication/resolver.py
+  find: "            BreakGlassGrant.expires_at > now,  # auto-expiry: checked on every request"
+  replace: ""
+  tests: [tests/security/test_access_controls.py]
+
+- id: break-glass-flag
+  control: break-glass honoured only while enabled
+  file: src/finagent/security/authentication/resolver.py
+  find: "        if policy.break_glass_enabled and Role.BREAK_GLASS in assigned and mfa:"
+  replace: "        if Role.BREAK_GLASS in assigned and mfa:"
+  tests: [tests/security/test_access_controls.py]
+
+- id: emergency-role-not-from-db
+  control: EMERGENCY_READ cannot come from role_assignments
+  file: src/finagent/security/authentication/resolver.py
+  find: "    return roles - RESOLVER_ONLY_ROLES  # a database row can never grant emergency roles"
+  replace: "    return roles"
+  tests: [tests/security/test_access_controls.py]
+
+- id: break-glass-read-only
+  control: emergency role has no write permission
+  file: src/finagent/security/authorization/policy.py
+  find: "    Role.EMERGENCY_READ: frozenset({Permission.CASE_READ}),"
+  replace: "    Role.EMERGENCY_READ: frozenset({Permission.CASE_READ, Permission.CASE_ASSIGN, Permission.CASE_UPDATE}),"
+  tests: [tests/unit/test_access_policy.py, tests/security/test_access_controls.py]
+
+- id: rate-limit
+  control: quota enforcement returns 429
+  file: src/finagent/api/deps.py
+  find: "        if not decision.allowed:"
+  replace: "        if False:"
+  tests: [tests/security/test_access_controls.py]
+
+- id: audit-grants
+  control: app role has no UPDATE/DELETE/TRUNCATE on audit_events
+  file: src/finagent/database/grants.py
+  find: '    stmts += [f"REVOKE UPDATE, DELETE, TRUNCATE ON {table} FROM {APP_ROLE}" for table in APPEND_ONLY_TABLES]'
+  replace: "    stmts += []"
+  tests: [tests/security/test_access_controls.py::test_application_db_role_cannot_alter_audit_or_schema]
+
+# ---------------------------------------------------------------- P4 workflow foundation
+- id: lease-expiry-guard
+  control: a live lease cannot be claimed by another worker
+  file: src/finagent/worker/leases.py
+  find: "        where=(Lease.expires_at <= func.clock_timestamp()) | Lease.owner.is_(None),"
+  replace: "        where=None,"
+  tests: [tests/recovery/test_fault_recovery.py::test_concurrent_claims_have_one_winner_and_tokens_are_monotonic]
+
+- id: fencing-token-check
+  control: protected commits verify the fencing token
+  file: src/finagent/worker/leases.py
+  find: "    if row is None or row[0] != lease.owner or int(row[1]) != lease.token or not row[2]:"
+  replace: "    if row is None:"
+  tests: [tests/recovery/test_fault_recovery.py::test_stale_token_cannot_commit_steps_checkpoints_or_effects]
+
+- id: step-replay
+  control: a SUCCEEDED step is not re-executed on replay
+  file: src/finagent/orchestration/runtime.py
+  find: "            if step is not None and step.status == \"SUCCEEDED\":"
+  replace: "            if False:"
+  tests: [tests/recovery/test_fault_recovery.py]
+
+- id: ledger-confirmed-short-circuit
+  control: a confirmed external operation is never applied again
+  file: src/finagent/services/workflow_service/external_ops.py
+  find: "        if op.status in (\"CONFIRMED\", \"RECONCILED_APPLIED\"):"
+  replace: "        if False:"
+  tests: [tests/recovery/test_fault_recovery.py]
+
+- id: ledger-probe-before-retry
+  control: an unrecorded send is probed before any retry
+  file: src/finagent/services/workflow_service/external_ops.py
+  find: "            if probe is ProbeResult.APPLIED:\n                op.status, op.updated_at = \"CONFIRMED\", datetime.now(UTC)\n                _audit(s, op, \"EXTERNAL_OPERATION_CONFIRMED\", \"SUCCESS\", via=\"probe\")"
+  replace: "            if False:\n                pass"
+  tests: [tests/recovery/test_fault_recovery.py]
+
+- id: ambiguous-not-resent
+  control: ambiguous outcomes become OUTCOME_UNCERTAIN, never blind resend
+  file: src/finagent/services/workflow_service/external_ops.py
+  find: "                _mark_uncertain(s, op, f\"AMBIGUOUS_{error}\")"
+  replace: "                op.status = \"FAILED\""
+  tests: [tests/recovery/test_fault_recovery.py]
+
+- id: inbox-dedup
+  control: duplicate deliveries do not re-run handlers
+  file: src/finagent/worker/consumer.py
+  find: "                        .on_conflict_do_nothing(constraint=\"uq_inbox_event\")"
+  replace: "                        .on_conflict_do_update(constraint=\"uq_inbox_event\", set_={\"event_type\": env.event_type})"
+  tests: [tests/integration/test_workflows.py::test_duplicate_delivery_is_processed_once]
+
+- id: event-signature
+  control: consumers reject unsigned/forged events
+  file: src/finagent/worker/consumer.py
+  find: "        if not env.signature_valid(self._key):"
+  replace: "        if False:"
+  tests: [tests/integration/test_workflows.py]
+
+- id: cancel-discards-output
+  control: output arriving after cancellation is discarded
+  file: src/finagent/orchestration/runtime.py
+  find: "            if run.cancel_requested_at is not None:\n                step.status, step.error_code = \"DISCARDED\", \"CANCELLED_DURING_STEP\"  # NQ-021"
+  replace: "            if False:\n                pass"
+  tests: [tests/recovery/test_fault_recovery.py]
+
+- id: resume-after-cancel
+  control: resume rejected for cancelled runs
+  file: src/finagent/services/workflow_service/runs.py
+  find: "    if RunStatus(run.status) not in RESUMABLE or run.cancel_requested_at is not None:"
+  replace: "    if False:"
+  tests: [tests/recovery/test_fault_recovery.py]
+
+- id: graph-version-check
+  control: incompatible graph version is not resumed
+  file: src/finagent/worker/runner.py
+  find: "        if run.graph_version != spec.graph_version:"
+  replace: "        if False:"
+  tests: [tests/recovery/test_fault_recovery.py]
+
+- id: requester-reauthorization
+  control: background execution re-checks the requester's current rights
+  file: src/finagent/worker/runner.py
+  find: "        if not _requester_authorized(s, run):"
+  replace: "        if False:"
+  tests: [tests/recovery/test_fault_recovery.py]
+
+- id: checkpoint-tenant-scope
+  control: checkpoints readable only by their own tenant+run saver
+  file: src/finagent/orchestration/checkpointer.py
+  find: "            stmt = select(CheckpointRow).where(\n                CheckpointRow.tenant_id == self._tenant,\n                CheckpointRow.run_id == self._run,\n                CheckpointRow.checkpoint_ns == ns,\n            )"
+  replace: "            stmt = select(CheckpointRow).where(\n                CheckpointRow.run_id == self._run,\n                CheckpointRow.checkpoint_ns == ns,\n            )"
+  tests: [tests/recovery/test_fault_recovery.py::test_checkpoints_are_encrypted_tenant_bound_and_scope_checked]
+
+- id: late-cancel-honoured
+  control: cancellation after the last step boundary is not lost at an interrupt
+  file: src/finagent/worker/runner.py
+  find: "        if run.cancel_requested_at is not None:\n            # Cancellation arrived"
+  replace: "        if False:\n            # Cancellation arrived"
+  tests: [tests/recovery/test_fault_recovery.py::test_cancel_after_last_step_boundary_is_not_lost_at_interrupt]
+
+- id: step-budget
+  control: per-run step budget (MST:AG-002)
+  file: src/finagent/orchestration/runtime.py
+  find: "            if step is None and node not in self.budget_exempt and done + 1 > self.max_steps:"
+  replace: "            if False:"
+  tests: [tests/recovery/test_fault_recovery.py::test_step_budget_stops_runaway_runs]
+
+- id: step-commit-fencing
+  control: step commits verify the fencing token
+  file: src/finagent/orchestration/runtime.py
+  find: "        leases.assert_current(session, self.lease)"
+  replace: "        pass"
+  tests: [tests/recovery/test_fault_recovery.py::test_stale_token_cannot_commit_steps_checkpoints_or_effects]
+
+- id: checkpoint-fencing
+  control: checkpoint writes verify the fencing token
+  file: src/finagent/orchestration/checkpointer.py
+  find: "        assert_current(session, self._lease)"
+  replace: "        pass"
+  tests: [tests/recovery/test_fault_recovery.py::test_stale_token_cannot_commit_steps_checkpoints_or_effects]
+
+# ---------------------------------------------------------------- P5 connectors and tool gateway
+- id: tool-unknown-denied
+  control: tools outside the frozen registry are denied
+  file: src/finagent/integrations/tool_gateway/gateway.py
+  find: "        if tool is None:"
+  replace: "        if False:"
+  tests: [tests/security/test_tool_gateway.py]
+
+- id: tool-capability-allowlist
+  control: a capability can only call tools on its allowlist
+  file: src/finagent/integrations/tool_gateway/gateway.py
+  find: "        if not write and name not in ctx.allowed_tools:"
+  replace: "        if False:"
+  tests: [tests/security/test_tool_gateway.py]
+
+- id: tool-tenant-scope
+  control: case scope is loaded only from the execution tenant
+  file: src/finagent/integrations/tool_gateway/gateway.py
+  find: "            .where(Case.tenant_id == tenant_id, Case.id == case_id)"
+  replace: "            .where(Case.id == case_id)"
+  tests: [tests/security/test_tool_gateway.py]
+
+- id: tool-principal-rights
+  control: requester's current rights must cover the tool and case
+  file: src/finagent/integrations/tool_gateway/gateway.py
+  find: "        if not tool.required_permissions <= ctx.principal.permissions or not in_scope:"
+  replace: "        if False:"
+  tests: [tests/security/test_tool_gateway.py]
+
+- id: tool-subject-scope
+  control: model arguments cannot name a subject outside the case
+  file: src/finagent/integrations/tool_gateway/gateway.py
+  find: "        if tool.subject_field and getattr(args, tool.subject_field) not in scope.subject_refs:"
+  replace: "        if False:"
+  tests: [tests/security/test_tool_gateway.py]
+
+- id: tool-window-scope
+  control: model arguments cannot widen the time window
+  file: src/finagent/integrations/tool_gateway/gateway.py
+  find: "        if isinstance(args, TransactionArgs) and not window_within("
+  replace: "        if False and not window_within("
+  tests: [tests/security/test_tool_gateway.py]
+
+- id: tool-data-classes
+  control: tool data classes must be permitted for the capability
+  file: src/finagent/integrations/tool_gateway/gateway.py
+  find: "        if not tool.data_classes <= ctx.data_classes:"
+  replace: "        if False:"
+  tests: [tests/security/test_tool_gateway.py]
+
+- id: write-capability
+  control: only the finalization capability may write case status
+  file: src/finagent/integrations/tool_gateway/gateway.py
+  find: "        if ctx.capability_id != FINALIZATION_CAPABILITY:"
+  replace: "        if False:"
+  tests: [tests/security/test_tool_gateway.py::test_case_status_write_needs_finalization_setting_and_tenant_flag]
+
+- id: write-deployment-setting
+  control: case-status write requires the deployment setting
+  file: src/finagent/integrations/tool_gateway/gateway.py
+  find: "        if not self._settings.case_status_write_enabled:"
+  replace: "        if False:"
+  tests: [tests/security/test_tool_gateway.py::test_case_status_write_needs_finalization_setting_and_tenant_flag]
+
+- id: write-tenant-flag
+  control: case-status write requires the tenant feature flag
+  file: src/finagent/integrations/tool_gateway/gateway.py
+  find: "        if not flag:"
+  replace: "        if False:"
+  tests: [tests/security/test_tool_gateway.py::test_case_status_write_needs_finalization_setting_and_tenant_flag]
+
+- id: connector-param-validation
+  control: path parameters cannot traverse or change destination
+  file: src/finagent/integrations/http_client.py
+  find: "            if not _PARAM.fullmatch(value):"
+  replace: "            if False:"
+  tests: [tests/contract/test_connectors.py::test_parameters_cannot_change_path_host_or_traverse]
+
+- id: completeness-cursor
+  control: a truncated page sequence is never COMPLETE
+  file: src/finagent/integrations/sources.py
+  find: "        if not cursor_done:"
+  replace: "        if False:"
+  tests: [tests/contract/test_connectors.py::test_truncated_page_sequence_is_never_labelled_complete]
+
+- id: transaction-dedup
+  control: re-sent transactions are de-duplicated
+  file: src/finagent/integrations/sources.py
+  find: "                seen.setdefault(tx.source_transaction_id, tx)  # dedupe re-sent items, keep first"
+  replace: "                seen[f\"{tx.source_transaction_id}:{fetched}\"] = tx"
+  tests: [tests/contract/test_connectors.py::test_duplicate_items_are_removed_and_counted]
+
+- id: retry-only-transient
+  control: permanent connector errors are never retried
+  file: src/finagent/integrations/resilience.py
+  find: "            if not exc.transient or attempt >= policy.max_attempts:"
+  replace: "            if attempt >= policy.max_attempts:"
+  tests: [tests/contract/test_connectors.py::test_not_found_forbidden_and_revocation_are_permanent_and_not_retried]
+
+- id: circuit-open-fails-fast
+  control: an open circuit fails fast without calling the source
+  file: src/finagent/integrations/resilience.py
+  find: "            if state == \"OPEN\" or (state == \"HALF_OPEN\" and self._trial_in_flight):"
+  replace: "            if False:"
+  tests: [tests/contract/test_connectors.py::test_circuit_breaker_opens_fails_fast_and_is_isolated_per_tenant]
+
+# ---------------------------------------------------------------- P6 documents and evidence
+- id: upload-byte-counter
+  control: upload size enforced on actual bytes, not only on Content-Length (SPR-017)
+  file: src/finagent/api/routers/evidence.py
+  find: "        if len(buf) > limit:  # enforced on actual bytes, not on the header"
+  replace: "        if False:"
+  tests: [tests/integration/test_documents_evidence.py::test_byte_limit_holds_with_and_without_content_length]
+
+- id: signature-check
+  control: declared type must match the file signature (DIR-014)
+  file: src/finagent/documents/formats.py
+  find: "    if sig not in _EXPECTED[declared]:"
+  replace: "    if False:"
+  tests: [tests/unit/test_documents.py::test_declared_type_must_match_signature, tests/integration/test_documents_evidence.py::test_suspicious_files_are_quarantined_never_parsed_or_downloadable]
+
+- id: malware-verdict
+  control: an INFECTED scan quarantines the upload (FR-013)
+  file: src/finagent/services/document_service/ingest.py
+  find: "    if verdict is ScanVerdict.INFECTED:"
+  replace: "    if False:"
+  tests: [tests/integration/test_documents_evidence.py::test_suspicious_files_are_quarantined_never_parsed_or_downloadable]
+
+- id: quarantine-never-parsed
+  control: only STORED versions are handed to the parser
+  file: src/finagent/services/document_service/processing.py
+  find: "                    DocumentVersion.status == \"STORED\","
+  replace: "                    DocumentVersion.status.in_((\"STORED\", \"QUARANTINED\")),"
+  tests: [tests/integration/test_documents_evidence.py::test_suspicious_files_are_quarantined_never_parsed_or_downloadable]
+
+- id: docx-ratio-guard
+  control: decompression-ratio guard for DOCX (zip bombs)
+  file: src/finagent/documents/parsers.py
+  find: "        if info.compress_size and info.file_size / info.compress_size > limits.max_compression_ratio:"
+  replace: "        if False:"
+  tests: [tests/unit/test_documents.py::test_docx_bombs_macros_and_entities_are_refused]
+
+- id: parser-memory-cap
+  control: the parser child caps its own memory before reading the payload
+  file: src/finagent/documents/parse_worker.py
+  find: "    enforced = apply_memory_limit(int(header[\"memory_bytes\"]))"
+  replace: "    enforced = False"
+  tests: [tests/unit/test_documents.py::test_sandbox_isolates_parsing_with_time_and_memory_limits]
+
+- id: link-principal-binding
+  control: a download link works only for the principal it was issued to (SPR-012)
+  file: src/finagent/services/document_service/downloads.py
+  find: "    if claims.get(\"t\") != str(ctx.tenant_id) or claims.get(\"p\") != str(ctx.principal_id):"
+  replace: "    if claims.get(\"t\") != str(ctx.tenant_id):"
+  tests: [tests/integration/test_documents_evidence.py::test_download_links_are_short_lived_bound_and_rechecked]
+
+- id: link-expiry
+  control: expired download links are refused
+  file: src/finagent/services/document_service/downloads.py
+  find: "    if int(claims.get(\"exp\", 0)) < int(datetime.now(UTC).timestamp()):"
+  replace: "    if False:"
+  tests: [tests/integration/test_documents_evidence.py::test_download_links_are_short_lived_bound_and_rechecked]
+
+- id: document-row-scope
+  control: document reads are filtered by CURRENT case scope (SPR-011)
+  file: src/finagent/services/document_service/queries.py
+  find: "        .where(Document.tenant_id == ctx.tenant_id, Document.id == document_id, scope_filter(ctx))"
+  replace: "        .where(Document.tenant_id == ctx.tenant_id, Document.id == document_id)"
+  tests: [tests/integration/test_documents_evidence.py::test_download_links_are_short_lived_bound_and_rechecked]
+
+- id: snapshot-immutability-trigger
+  control: snapshots and reviewed content are immutable for every role (FR-016)
+  file: src/finagent/database/migrations/versions/0005_investigation_domain.py
+  find: "    for table in IMMUTABLE_TABLES:\n        op.execute(\n            f\"CREATE TRIGGER"
+  replace: "    for table in ():\n        op.execute(\n            f\"CREATE TRIGGER"
+  tests: [tests/integration/test_documents_evidence.py::test_snapshots_are_immutable_for_every_role]
+
+- id: conflict-detection
+  control: differing profile/document values become an explicit conflict (FR-015, AER-007)
+  file: src/finagent/services/evidence_service/snapshots.py
+  find: "            if _norm(values.get(key)) == _norm(f.get(\"value\")):"
+  replace: "            if True:"
+  tests: [tests/integration/test_documents_evidence.py::test_gathered_evidence_snapshot_conflict_and_resolution]
+
+- id: material-change-detection
+  control: content changes are reported as material (FR-006)
+  file: src/finagent/services/evidence_service/items.py
+  find: "    material = current is not None and current.content_hash != content_hash"
+  replace: "    material = False"
+  tests: [tests/integration/test_documents_evidence.py::test_refetch_versions_only_on_change_and_flags_material_changes, tests/integration/test_documents_evidence.py::test_field_correction_keeps_original_and_versions_evidence]
+
+# ---------------------------------------------------------------- P7 policy knowledge
+- id: retrieval-approved-only
+  control: only APPROVED policy versions are retrievable (FR-017)
+  file: src/finagent/services/knowledge_service/retrieval.py
+  find: "            PolicyVersion.approval_status == \"APPROVED\","
+  replace: "            PolicyVersion.approval_status != \"REVOKED\","
+  tests: [tests/integration/test_knowledge.py::test_only_approved_versions_are_retrievable_and_lifecycle_is_enforced]
+
+- id: retrieval-effective-date
+  control: only versions effective on the as-of date are retrievable (FR-018)
+  file: src/finagent/services/knowledge_service/retrieval.py
+  find: "            PolicyVersion.effective_from <= as_of,"
+  replace: "            PolicyVersion.effective_from <= date(9999, 1, 1),"
+  tests: [tests/integration/test_knowledge.py::test_effective_dates_select_the_applicable_version_and_label_history]
+
+- id: retrieval-role-acl
+  control: role ACL filters candidates before ranking (SPR-011)
+  file: src/finagent/services/knowledge_service/retrieval.py
+  find: "            PolicyVersion.allowed_roles.overlap(roles),"
+  replace: "            PolicyVersion.allowed_roles.isnot(None),"
+  tests: [tests/integration/test_knowledge.py::test_acl_tenant_and_applicability_filter_before_ranking]
+
+- id: retrieval-tenant
+  control: retrieval is restricted to the caller's tenant (MST:SEC-001)
+  file: src/finagent/services/knowledge_service/retrieval.py
+  find: "            KnowledgeChunk.tenant_id == ctx.tenant_id,  # trusted tenant, unconditional"
+  replace: "            KnowledgeChunk.tenant_id.isnot(None),"
+  tests: [tests/integration/test_knowledge.py::test_acl_tenant_and_applicability_filter_before_ranking]
+
+- id: conflicting-guidance
+  control: two effective versions of one policy surface as CONFLICTING_GUIDANCE (FR-020)
+  file: src/finagent/services/knowledge_service/retrieval.py
+  find: "if len(by_policy[cand.doc.id]) > 1}"
+  replace: "if len(by_policy[cand.doc.id]) > 99}"
+  tests: [tests/integration/test_knowledge.py::test_two_effective_versions_are_conflicting_guidance]
+
+- id: citation-access-recheck
+  control: citation validation re-checks current approval status and access (AER-013)
+  file: src/finagent/services/knowledge_service/citations.py
+  find: "        version.approval_status == \"APPROVED\"\n"
+  replace: "        True\n"
+  tests: [tests/integration/test_knowledge.py::test_citation_validation_reports_each_check]
+
+# ---------------------------------------------------------------- P8 model gateway and validation
+- id: validator-number-rule
+  control: every number in a claim must occur in its referenced sources (AER-009)
+  file: src/finagent/agents/validation.py
+  find: "            reasons.append(\"NUMBER_NOT_IN_REFERENCED_SOURCES\")"
+  replace: "            pass"
+  tests: [tests/integration/test_agents.py::test_invented_numbers_citations_and_evidence_are_rejected]
+
+- id: validator-deterministic-value
+  control: DETERMINISTIC_RESULT values must equal the calculation exactly (AER-009)
+  file: src/finagent/agents/validation.py
+  find: "        if f.value is None or f.value not in calc_values:"
+  replace: "        if False:"
+  tests: [tests/unit/test_model_layer.py::test_deterministic_value_must_equal_the_calculation]
+
+- id: validator-unknown-evidence
+  control: ev references must resolve to the bound snapshot (DIR-017)
+  file: src/finagent/agents/validation.py
+  find: "            if key not in ctx.evidence:"
+  replace: "            if False:"
+  tests: [tests/integration/test_agents.py::test_invented_numbers_citations_and_evidence_are_rejected]
+
+- id: validator-citation-provenance
+  control: cited passages must have been retrieved in this run (AER-013)
+  file: src/finagent/agents/validation.py
+  find: "                reasons.append(\"CITATION_NOT_RETRIEVED_IN_THIS_RUN\")"
+  replace: "                pass"
+  tests: [tests/integration/test_agents.py::test_invented_numbers_citations_and_evidence_are_rejected]
+
+- id: validator-boundary
+  control: authority-boundary claims reject the whole output (prompt §1, §9)
+  file: src/finagent/agents/validation.py
+  find: "    texts = [f.claim for f in output.findings] + list(output.recommendations)\n    violations = boundary_violations(texts)"
+  replace: "    texts = [f.claim for f in output.findings] + list(output.recommendations)\n    violations: list[str] = []"
+  tests: [tests/integration/test_agents.py::test_authority_boundary_and_obeyed_injection_escalate]
+
+- id: gateway-run-token-budget
+  control: per-run token budget stops billable work (NQ-048)
+  file: src/finagent/agents/gateway.py
+  find: "            if run_tokens >= self._s.run_token_budget:"
+  replace: "            if False:"
+  tests: [tests/integration/test_agents.py::test_budgets_stop_billable_work_and_are_recorded]
+
+- id: gateway-single-repair
+  control: at most one schema repair (prompt §10)
+  file: src/finagent/agents/gateway.py
+  find: "                if usage.repairs < self._s.model_max_repairs:"
+  replace: "                if True:"
+  tests: [tests/integration/test_agents.py::test_one_bounded_schema_repair_then_escalation]
+
+- id: gateway-transient-only-retry
+  control: only classified transient model errors are retried (FR-033)
+  file: src/finagent/agents/gateway.py
+  find: "                if exc.transient and transient_left > 0:"
+  replace: "                if transient_left > 0:"
+  tests: [tests/integration/test_agents.py::test_transient_errors_retry_bounded_and_every_attempt_is_recorded]
+
+- id: capability-fail-closed
+  control: non-ENABLED capabilities fail closed (AER-002)
+  file: src/finagent/agents/registry.py
+  find: "    if cap.status != \"ENABLED\":"
+  replace: "    if False:"
+  tests: [tests/integration/test_agents.py::test_future_capability_fails_closed_without_any_call]
+
+- id: context-minimization
+  control: AML capability context excludes name/DOB/nationality (prompt §11, AER-027)
+  file: src/finagent/agents/prep.py
+  find: "            \"customer\": {k: p.get(k) for k in (\"customer_type\", \"occupation\", \"expected_monthly_turnover\")},"
+  replace: "            \"customer\": dict(p),"
+  tests: [tests/integration/test_agents.py::test_context_is_minimized_and_carries_no_authority]
+
+# ---------------------------------------------------------------- P9/P10 review and finalization
+- id: review-separation-of-duties
+  control: submitter/author/analyst cannot decide, even via delegation (FR-003, SPR-033)
+  file: src/finagent/services/review_service/review.py
+  find: "    if ctx.principal_id in conflicted or (on_behalf is not None and on_behalf in conflicted):"
+  replace: "    if False:"
+  tests: [tests/e2e/test_acceptance_journey.py]
+
+- id: review-stale-version
+  control: a decision on a superseded report/snapshot is refused (UI-002)
+  file: src/finagent/services/review_service/review.py
+  find: "    if body.report_version_id != request.report_version_id or body.snapshot_id != request.snapshot_id:"
+  replace: "    if False:"
+  tests: [tests/e2e/test_acceptance_journey.py]
+
+- id: submission-open-conflicts
+  control: open evidence conflicts block submission (FR-015)
+  file: src/finagent/services/review_service/review.py
+  find: "    if open_conflicts:\n        problems.append"
+  replace: "    if False:\n        problems.append"
+  tests: [tests/e2e/test_acceptance_journey.py]
+
+- id: finalization-revalidation
+  control: finalization revalidates approval/versions/authority (FR-029)
+  file: src/finagent/services/review_service/finalization.py
+  find: "        if problems:\n            if fin is not None:"
+  replace: "        if False:\n            if fin is not None:"
+  tests: [tests/e2e/test_acceptance_journey.py]
+
+# ---------------------------------------------------------------- P12 governance
+- id: promotion-evaluation-gate
+  control: promotion needs a PASS_PROPOSED evaluation of the same configuration (AER-033)
+  file: src/finagent/services/governance_service/config.py
+  find: "    if run.gate != \"PASS_PROPOSED\":"
+  replace: "    if False:"
+  tests: [tests/integration/test_governance.py::test_evaluation_gate_promotion_and_rollback]
+
+- id: promoted-configuration-enforced
+  control: unpromoted configuration fails closed before any model call (AER-034)
+  file: src/finagent/agents/gateway.py
+  find: "            if not promoted:  # fail closed before any provider call (AER-031..034)"
+  replace: "            if False:"
+  tests: [tests/integration/test_governance.py::test_unpromoted_configuration_fails_closed]

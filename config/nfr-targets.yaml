@@ -1,0 +1,15 @@
+# Proposed service targets (NQ-001). Status PROPOSED until a named owner approves (NFR-D01..D09).
+# Measurement boundaries per FAE-NFR-007 section 1. None of these has been measured yet.
+targets:
+  - {id: NQ-005, metric: case_read_latency_p95_ms, value: 500, p99_ms: 1500, status: PROPOSED, owner: OPEN}
+  - {id: NQ-006, metric: command_ack_p95_ms, value: 1000, status: PROPOSED, owner: OPEN}
+  - {id: NQ-007, metric: policy_search_p95_ms, value: 2000, status: PROPOSED, owner: OPEN}
+  - {id: NQ-009, metric: unexpected_failure_rate_pct, value: 0.5, status: PROPOSED, owner: OPEN}
+  - {id: NQ-010, metric: ai_draft_p95_s, value: 300, status: PROPOSED, owner: OPEN}
+  - {id: NQ-011, metric: queue_wait_p95_s, value: 60, status: PROPOSED, owner: OPEN}
+  - {id: NQ-012, metric: document_extraction_p95_s, value: 120, status: PROPOSED, owner: OPEN}
+  - {id: NQ-015, metric: monthly_availability_pct, value: 99.9, status: PROPOSED, owner: OPEN}
+  - {id: NQ-024, metric: disaster_rto_minutes, value: 240, status: PROPOSED, owner: OPEN}
+  - {id: NQ-024, metric: disaster_rpo_minutes, value: 15, status: PROPOSED, owner: OPEN}
+  - {id: NQ-036, metric: critical_detection_minutes, value: 5, status: PROPOSED, owner: OPEN}
+  - {id: NQ-037, metric: p1_ack_minutes, value: 15, status: PROPOSED, owner: OPEN}

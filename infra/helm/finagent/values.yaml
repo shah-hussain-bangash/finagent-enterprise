@@ -1,0 +1,60 @@
+# Reference values. Secrets are NEVER placed here: they come from Azure Key Vault through the
+# Secrets Store CSI driver (secretProviderClass). Every number is PROPOSED (config/nfr-targets.yaml).
+image:
+  registry: REPLACE_ME.azurecr.io
+  tag: "0.1.0"
+  pullPolicy: IfNotPresent
+
+environment: staging          # local|test are refused by the application outside a laptop
+workloadIdentity:
+  clientIdApi: REPLACE_WITH_USER_ASSIGNED_IDENTITY_CLIENT_ID
+  clientIdWorker: REPLACE_WITH_USER_ASSIGNED_IDENTITY_CLIENT_ID
+
+secretProviderClass:
+  name: finagent-kv
+  keyVaultName: REPLACE_ME
+  tenantId: REPLACE_ME
+  # Key Vault secret names -> environment variables (values never in Git)
+  secrets:
+    FINAGENT_DATABASE_URL: finagent-database-url
+    FINAGENT_DATA_ENCRYPTION_KEY: finagent-data-encryption-key
+    FINAGENT_EVENT_SIGNING_KEY: finagent-event-signing-key
+    FINAGENT_CONNECTOR_CREDENTIALS: finagent-connector-credentials
+    FINAGENT_AZURE_SEARCH_API_KEY: finagent-azure-search-api-key
+    FINAGENT_AZURE_OPENAI_API_KEY: finagent-azure-openai-api-key
+    FINAGENT_WEB_SESSION_SECRET: finagent-web-session-secret
+
+config:   # non-secret settings
+  FINAGENT_AUTH_MODE: entra
+  FINAGENT_ENTRA_ISSUER: https://login.microsoftonline.com/REPLACE_ME/v2.0
+  FINAGENT_ENTRA_JWKS_URL: https://login.microsoftonline.com/REPLACE_ME/discovery/v2.0/keys
+  FINAGENT_QUEUE_BACKEND: servicebus
+  FINAGENT_SERVICEBUS_NAMESPACE: REPLACE_ME.servicebus.windows.net
+  FINAGENT_BLOB_BACKEND: azure
+  FINAGENT_AZURE_BLOB_ACCOUNT_URL: https://REPLACE_ME.blob.core.windows.net
+  FINAGENT_MALWARE_SCANNER: clamd
+  FINAGENT_CLAMD_HOST: clamav
+  FINAGENT_CLAMD_PORT: "3310"
+  FINAGENT_RETRIEVAL_BACKEND: azure
+  FINAGENT_AZURE_SEARCH_ENDPOINT: https://REPLACE_ME.search.windows.net
+  FINAGENT_MODEL_PROVIDER: azure_openai
+  FINAGENT_AZURE_OPENAI_ENDPOINT: https://REPLACE_ME.openai.azure.com
+  FINAGENT_AZURE_OPENAI_DEPLOYMENT: REPLACE_WITH_APPROVED_DEPLOYMENT
+  FINAGENT_REQUIRE_PROMOTED_CONFIGURATION: "true"
+  FINAGENT_BANK_BASE_URL: https://REPLACE_ME
+  FINAGENT_CASE_STATUS_WRITE_ENABLED: "false"   # DATA-D06: production refuses true from env
+
+api:
+  replicas: 2
+  resources: {requests: {cpu: 250m, memory: 512Mi}, limits: {cpu: "1", memory: 1Gi}}
+worker:
+  replicas: 2
+  resources: {requests: {cpu: 500m, memory: 1Gi}, limits: {cpu: "2", memory: 2Gi}}   # parser child capped separately
+web:
+  replicas: 2
+  resources: {requests: {cpu: 100m, memory: 256Mi}, limits: {cpu: 500m, memory: 512Mi}}
+
+ingress:
+  enabled: true
+  className: azure-application-gateway
+  host: finagent.REPLACE_ME

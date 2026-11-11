@@ -1,0 +1,104 @@
+﻿# Local development stack (prompt Â§32). SYNTHETIC data only; local-only credentials.
+#   docker compose up -d postgres redis mock-bank          dependencies only (develop on the host)
+#   docker compose --profile app up -d --build            full stack: migrate -> api, worker, web
+# Host ports are configurable because other projects often own 3000/5432/6379/8000.
+name: finagent
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: finagent
+      POSTGRES_PASSWORD: finagent      # local-only credential
+      POSTGRES_DB: finagent
+    ports: ["127.0.0.1:${FINAGENT_PG_HOST_PORT:-5432}:5432"]
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./infra/docker/postgres-init.sql:/docker-entrypoint-initdb.d/10-test-db.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U finagent"]
+      interval: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    command: ["redis-server", "--save", "", "--appendonly", "no"]   # disposable cache (prompt Â§2)
+    ports: ["127.0.0.1:${FINAGENT_REDIS_HOST_PORT:-6379}:6379"]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      retries: 10
+
+  mock-bank:   # SYNTHETIC stand-in for the institution's systems. Never deployed beyond local/test.
+    build: {context: ., dockerfile: apps/mock-bank/Dockerfile}
+    ports: ["127.0.0.1:${FINAGENT_MOCKBANK_HOST_PORT:-8100}:8100"]
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request,sys;urllib.request.urlopen('http://127.0.0.1:8100/docs');sys.exit(0)"]
+      interval: 10s
+      retries: 10
+
+  migrate:     # one-shot: schema owner applies migrations, enables the local app-role login, seeds
+    build: {context: ., dockerfile: apps/api/Dockerfile}
+    env_file: .env
+    environment:
+      FINAGENT_MIGRATION_DATABASE_URL: postgresql+psycopg://finagent:finagent@postgres:5432/finagent
+      FINAGENT_DATABASE_URL: postgresql+psycopg://finagent:finagent@postgres:5432/finagent
+    command: ["sh", "-c", "python -m alembic upgrade head && python -m finagent.database.seeds && python -m finagent.database.app_role"]
+    depends_on:
+      postgres: {condition: service_healthy}
+    profiles: ["app"]
+
+  api:
+    build: {context: ., dockerfile: apps/api/Dockerfile}
+    env_file: .env
+    environment:
+      FINAGENT_DATABASE_URL: postgresql+psycopg://finagent_app:${FINAGENT_APP_DB_PASSWORD:-unset}@postgres:5432/finagent
+      FINAGENT_BANK_BASE_URL: http://mock-bank:8100
+      FINAGENT_BLOB_LOCAL_ROOT: /data/blobs
+      FINAGENT_RATE_LIMIT_BACKEND: redis
+      FINAGENT_REDIS_URL: redis://redis:6379/0
+    volumes: ["blobs:/data/blobs"]
+    depends_on:
+      migrate: {condition: service_completed_successfully}
+      redis: {condition: service_healthy}
+      mock-bank: {condition: service_healthy}
+    ports: ["127.0.0.1:${FINAGENT_API_HOST_PORT:-8001}:8000"]
+    profiles: ["app"]
+
+  worker:
+    build: {context: ., dockerfile: apps/worker/Dockerfile}
+    env_file: .env
+    environment:
+      FINAGENT_DATABASE_URL: postgresql+psycopg://finagent_app:${FINAGENT_APP_DB_PASSWORD:-unset}@postgres:5432/finagent
+      FINAGENT_NOTIFICATION_BACKEND: file
+      FINAGENT_NOTIFICATION_DIR: /tmp/finagent-notifications
+      FINAGENT_BANK_BASE_URL: http://mock-bank:8100
+      FINAGENT_BLOB_LOCAL_ROOT: /data/blobs
+      FINAGENT_OCR_BACKEND: tesseract
+    volumes: ["blobs:/data/blobs"]
+    depends_on:
+      migrate: {condition: service_completed_successfully}
+      mock-bank: {condition: service_healthy}
+    stop_grace_period: 30s
+    profiles: ["app"]
+
+  web:
+    build: {context: ., dockerfile: apps/web/Dockerfile}
+    environment:
+      FINAGENT_API_URL: http://api:8000
+      FINAGENT_WEB_SESSION_SECRET: ${FINAGENT_WEB_SESSION_SECRET:-local-only-web-session-secret-change-me-0001}
+      FINAGENT_WEB_AUTH_MODE: ${FINAGENT_WEB_AUTH_MODE:-local}
+      FINAGENT_ENVIRONMENT: ${FINAGENT_ENVIRONMENT:-local}
+      FINAGENT_WEB_ORIGIN: ${FINAGENT_WEB_ORIGIN:-http://127.0.0.1:3001}
+      FINAGENT_WEB_AUTH_REDIS_URL: ${FINAGENT_WEB_AUTH_REDIS_URL:-redis://redis:6379/0}
+      FINAGENT_GOOGLE_WEB_CLIENT_ID: ${FINAGENT_GOOGLE_WEB_CLIENT_ID:-}
+      FINAGENT_GOOGLE_WEB_CLIENT_SECRET: ${FINAGENT_GOOGLE_WEB_CLIENT_SECRET:-}
+    depends_on:
+      api: {condition: service_healthy}
+      redis: {condition: service_healthy}
+    ports: ["127.0.0.1:${FINAGENT_WEB_HOST_PORT:-3001}:3000"]
+    profiles: ["app"]
+
+volumes:
+  pgdata: {}
+  blobs: {}   # shared document/export storage for api + worker (encrypted objects)
+

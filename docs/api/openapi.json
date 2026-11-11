@@ -1,0 +1,6487 @@
+{
+  "components": {
+    "schemas": {
+      "ActivationRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "duration_minutes": {
+            "default": 30,
+            "minimum": 5.0,
+            "title": "Duration Minutes",
+            "type": "integer"
+          },
+          "justification": {
+            "maxLength": 1000,
+            "minLength": 20,
+            "title": "Justification",
+            "type": "string"
+          }
+        },
+        "required": [
+          "justification"
+        ],
+        "title": "ActivationRequest",
+        "type": "object"
+      },
+      "AlertEnvelope": {
+        "additionalProperties": false,
+        "properties": {
+          "event_id": {
+            "maxLength": 200,
+            "minLength": 1,
+            "pattern": "^[A-Za-z0-9._:/-]+$",
+            "title": "Event Id",
+            "type": "string"
+          },
+          "payload": {
+            "$ref": "#/components/schemas/AlertPayload"
+          },
+          "schema_version": {
+            "const": "1.0",
+            "title": "Schema Version",
+            "type": "string"
+          },
+          "source_event_time": {
+            "format": "date-time",
+            "title": "Source Event Time",
+            "type": "string"
+          },
+          "source_system": {
+            "maxLength": 200,
+            "minLength": 1,
+            "pattern": "^[A-Za-z0-9._:/-]+$",
+            "title": "Source System",
+            "type": "string"
+          }
+        },
+        "required": [
+          "schema_version",
+          "event_id",
+          "source_system",
+          "source_event_time",
+          "payload"
+        ],
+        "title": "AlertEnvelope",
+        "type": "object"
+      },
+      "AlertPayload": {
+        "additionalProperties": false,
+        "properties": {
+          "alert_type": {
+            "maxLength": 64,
+            "minLength": 1,
+            "pattern": "^[A-Z0-9_]+$",
+            "title": "Alert Type",
+            "type": "string"
+          },
+          "occurred_at": {
+            "format": "date-time",
+            "title": "Occurred At",
+            "type": "string"
+          },
+          "rule_ref": {
+            "anyOf": [
+              {
+                "maxLength": 200,
+                "minLength": 1,
+                "pattern": "^[A-Za-z0-9._:/-]+$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rule Ref"
+          },
+          "severity": {
+            "anyOf": [
+              {
+                "enum": [
+                  "LOW",
+                  "MEDIUM",
+                  "HIGH",
+                  "CRITICAL"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Severity"
+          },
+          "source_alert_id": {
+            "maxLength": 200,
+            "minLength": 1,
+            "pattern": "^[A-Za-z0-9._:/-]+$",
+            "title": "Source Alert Id",
+            "type": "string"
+          },
+          "subject_refs": {
+            "items": {
+              "maxLength": 200,
+              "minLength": 1,
+              "pattern": "^[A-Za-z0-9._:/-]+$",
+              "type": "string"
+            },
+            "maxItems": 50,
+            "minItems": 1,
+            "title": "Subject Refs",
+            "type": "array"
+          },
+          "window_end": {
+            "format": "date-time",
+            "title": "Window End",
+            "type": "string"
+          },
+          "window_start": {
+            "format": "date-time",
+            "title": "Window Start",
+            "type": "string"
+          }
+        },
+        "required": [
+          "source_alert_id",
+          "alert_type",
+          "occurred_at",
+          "subject_refs",
+          "window_start",
+          "window_end"
+        ],
+        "title": "AlertPayload",
+        "type": "object"
+      },
+      "AssignmentRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "principal_id": {
+            "format": "uuid",
+            "title": "Principal Id",
+            "type": "string"
+          },
+          "reason": {
+            "maxLength": 300,
+            "minLength": 3,
+            "title": "Reason",
+            "type": "string"
+          },
+          "record_version": {
+            "anyOf": [
+              {
+                "minimum": 1.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Record Version"
+          },
+          "role": {
+            "enum": [
+              "ANALYST",
+              "REVIEWER"
+            ],
+            "title": "Role",
+            "type": "string"
+          }
+        },
+        "required": [
+          "principal_id",
+          "role",
+          "reason"
+        ],
+        "title": "AssignmentRequest",
+        "type": "object"
+      },
+      "CancelRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "reason": {
+            "maxLength": 300,
+            "minLength": 3,
+            "title": "Reason",
+            "type": "string"
+          }
+        },
+        "required": [
+          "reason"
+        ],
+        "title": "CancelRequest",
+        "type": "object"
+      },
+      "CasePatch": {
+        "additionalProperties": false,
+        "description": "Fields a user may change directly. Review/approval/finalization statuses are NOT here: they\nare reachable only through their own deterministic services (FR-028, FR-029).",
+        "properties": {
+          "blocked_owner_role": {
+            "anyOf": [
+              {
+                "enum": [
+                  "ANALYST",
+                  "AML_SUPERVISOR",
+                  "REVIEWER",
+                  "POLICY_ADMIN",
+                  "TENANT_ADMIN"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Blocked Owner Role"
+          },
+          "priority": {
+            "anyOf": [
+              {
+                "enum": [
+                  "LOW",
+                  "NORMAL",
+                  "HIGH",
+                  "URGENT"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Priority"
+          },
+          "reason": {
+            "anyOf": [
+              {
+                "maxLength": 300,
+                "minLength": 3,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reason"
+          },
+          "record_version": {
+            "anyOf": [
+              {
+                "minimum": 1.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Record Version"
+          },
+          "status": {
+            "anyOf": [
+              {
+                "enum": [
+                  "INVESTIGATING",
+                  "BLOCKED",
+                  "CANCELLED"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Status"
+          }
+        },
+        "title": "CasePatch",
+        "type": "object"
+      },
+      "ChangeRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "evaluation_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Evaluation Id"
+          },
+          "reason": {
+            "maxLength": 300,
+            "minLength": 10,
+            "title": "Reason",
+            "type": "string"
+          }
+        },
+        "required": [
+          "reason"
+        ],
+        "title": "ChangeRequest",
+        "type": "object"
+      },
+      "CitationValidationRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "citation": {
+            "additionalProperties": true,
+            "title": "Citation",
+            "type": "object"
+          },
+          "claim_text": {
+            "anyOf": [
+              {
+                "maxLength": 4000,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Claim Text"
+          }
+        },
+        "required": [
+          "citation"
+        ],
+        "title": "CitationValidationRequest",
+        "type": "object"
+      },
+      "ConflictResolution": {
+        "additionalProperties": false,
+        "properties": {
+          "rationale": {
+            "maxLength": 1000,
+            "minLength": 10,
+            "title": "Rationale",
+            "type": "string"
+          },
+          "resolution": {
+            "enum": [
+              "USE_A",
+              "USE_B",
+              "BOTH_RETAINED_EXPLAINED",
+              "SOURCE_CORRECTION_REQUESTED"
+            ],
+            "title": "Resolution",
+            "type": "string"
+          }
+        },
+        "required": [
+          "resolution",
+          "rationale"
+        ],
+        "title": "ConflictResolution",
+        "type": "object"
+      },
+      "DecisionRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "decision": {
+            "enum": [
+              "APPROVE",
+              "RETURN_FOR_REWORK",
+              "REQUEST_INFORMATION",
+              "REJECT"
+            ],
+            "title": "Decision",
+            "type": "string"
+          },
+          "rationale": {
+            "maxLength": 2000,
+            "minLength": 10,
+            "title": "Rationale",
+            "type": "string"
+          },
+          "report_version_id": {
+            "format": "uuid",
+            "title": "Report Version Id",
+            "type": "string"
+          },
+          "snapshot_id": {
+            "format": "uuid",
+            "title": "Snapshot Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "decision",
+          "rationale",
+          "report_version_id",
+          "snapshot_id"
+        ],
+        "title": "DecisionRequest",
+        "type": "object"
+      },
+      "DelegationRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "delegate_id": {
+            "format": "uuid",
+            "title": "Delegate Id",
+            "type": "string"
+          },
+          "delegator_id": {
+            "format": "uuid",
+            "title": "Delegator Id",
+            "type": "string"
+          },
+          "reason": {
+            "maxLength": 300,
+            "minLength": 10,
+            "title": "Reason",
+            "type": "string"
+          },
+          "role": {
+            "$ref": "#/components/schemas/Role"
+          },
+          "valid_from": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Valid From"
+          },
+          "valid_to": {
+            "format": "date-time",
+            "title": "Valid To",
+            "type": "string"
+          }
+        },
+        "required": [
+          "delegator_id",
+          "delegate_id",
+          "role",
+          "reason",
+          "valid_to"
+        ],
+        "title": "DelegationRequest",
+        "type": "object"
+      },
+      "EvaluationRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "dataset": {
+            "pattern": "^[a-z0-9-]{3,100}$",
+            "title": "Dataset",
+            "type": "string"
+          },
+          "purpose": {
+            "default": "development",
+            "enum": [
+              "development",
+              "validation",
+              "release"
+            ],
+            "title": "Purpose",
+            "type": "string"
+          }
+        },
+        "required": [
+          "dataset"
+        ],
+        "title": "EvaluationRequest",
+        "type": "object"
+      },
+      "ExportRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "case_id": {
+            "format": "uuid",
+            "title": "Case Id",
+            "type": "string"
+          },
+          "version_no": {
+            "anyOf": [
+              {
+                "minimum": 1.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Version No"
+          }
+        },
+        "required": [
+          "case_id"
+        ],
+        "title": "ExportRequest",
+        "type": "object"
+      },
+      "FieldCorrection": {
+        "additionalProperties": false,
+        "properties": {
+          "reason": {
+            "maxLength": 300,
+            "minLength": 10,
+            "title": "Reason",
+            "type": "string"
+          },
+          "value": {
+            "maxLength": 1000,
+            "minLength": 1,
+            "title": "Value",
+            "type": "string"
+          }
+        },
+        "required": [
+          "value",
+          "reason"
+        ],
+        "title": "FieldCorrection",
+        "type": "object"
+      },
+      "FlagUpdate": {
+        "additionalProperties": false,
+        "properties": {
+          "enabled": {
+            "title": "Enabled",
+            "type": "boolean"
+          },
+          "reason": {
+            "maxLength": 300,
+            "minLength": 10,
+            "title": "Reason",
+            "type": "string"
+          }
+        },
+        "required": [
+          "enabled",
+          "reason"
+        ],
+        "title": "FlagUpdate",
+        "type": "object"
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "title": "Detail",
+            "type": "array"
+          }
+        },
+        "title": "HTTPValidationError",
+        "type": "object"
+      },
+      "HoldRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "case_id": {
+            "format": "uuid",
+            "title": "Case Id",
+            "type": "string"
+          },
+          "reason": {
+            "maxLength": 500,
+            "minLength": 10,
+            "title": "Reason",
+            "type": "string"
+          }
+        },
+        "required": [
+          "case_id",
+          "reason"
+        ],
+        "title": "HoldRequest",
+        "type": "object"
+      },
+      "IncidentRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "capability_id": {
+            "maxLength": 64,
+            "minLength": 1,
+            "title": "Capability Id",
+            "type": "string"
+          },
+          "evidence_refs": {
+            "items": {
+              "maxLength": 64,
+              "pattern": "^(agent_output|model_request|tool_invocation):[0-9a-fA-F-]{36}$",
+              "type": "string"
+            },
+            "maxItems": 20,
+            "minItems": 1,
+            "title": "Evidence Refs",
+            "type": "array"
+          },
+          "owner_role": {
+            "enum": [
+              "AML_SUPERVISOR",
+              "TENANT_ADMIN",
+              "PLATFORM_OPERATOR"
+            ],
+            "title": "Owner Role",
+            "type": "string"
+          },
+          "reason": {
+            "maxLength": 500,
+            "minLength": 10,
+            "title": "Reason",
+            "type": "string"
+          }
+        },
+        "required": [
+          "capability_id",
+          "owner_role",
+          "reason",
+          "evidence_refs"
+        ],
+        "title": "IncidentRequest",
+        "type": "object"
+      },
+      "InvestigationRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "expected_version": {
+            "minimum": 1.0,
+            "title": "Expected Version",
+            "type": "integer"
+          },
+          "findings": {
+            "maxLength": 1000,
+            "minLength": 10,
+            "title": "Findings",
+            "type": "string"
+          },
+          "remediation_ref": {
+            "maxLength": 200,
+            "minLength": 3,
+            "title": "Remediation Ref",
+            "type": "string"
+          },
+          "verification_ref": {
+            "maxLength": 200,
+            "minLength": 3,
+            "title": "Verification Ref",
+            "type": "string"
+          }
+        },
+        "required": [
+          "expected_version",
+          "findings",
+          "remediation_ref",
+          "verification_ref"
+        ],
+        "title": "InvestigationRequest",
+        "type": "object"
+      },
+      "LifecycleRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "reason": {
+            "maxLength": 300,
+            "minLength": 5,
+            "title": "Reason",
+            "type": "string"
+          }
+        },
+        "required": [
+          "reason"
+        ],
+        "title": "LifecycleRequest",
+        "type": "object"
+      },
+      "PolicyVersionIn": {
+        "additionalProperties": false,
+        "properties": {
+          "alert_types": {
+            "items": {
+              "pattern": "^[A-Z0-9_]{2,64}$",
+              "type": "string"
+            },
+            "title": "Alert Types",
+            "type": "array"
+          },
+          "allowed_roles": {
+            "items": {
+              "enum": [
+                "ANALYST",
+                "REVIEWER",
+                "AML_SUPERVISOR",
+                "POLICY_ADMIN"
+              ],
+              "type": "string"
+            },
+            "minItems": 1,
+            "title": "Allowed Roles",
+            "type": "array"
+          },
+          "classification": {
+            "enum": [
+              "PUBLIC",
+              "INTERNAL",
+              "CONFIDENTIAL",
+              "RESTRICTED"
+            ],
+            "title": "Classification",
+            "type": "string"
+          },
+          "department": {
+            "maxLength": 64,
+            "minLength": 2,
+            "title": "Department",
+            "type": "string"
+          },
+          "effective_from": {
+            "format": "date",
+            "title": "Effective From",
+            "type": "string"
+          },
+          "effective_to": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Effective To"
+          },
+          "owner_label": {
+            "maxLength": 200,
+            "minLength": 2,
+            "title": "Owner Label",
+            "type": "string"
+          },
+          "policy_key": {
+            "pattern": "^[a-z0-9][a-z0-9._-]{1,99}$",
+            "title": "Policy Key",
+            "type": "string"
+          },
+          "sections": {
+            "items": {
+              "$ref": "#/components/schemas/SectionIn"
+            },
+            "maxItems": 500,
+            "minItems": 1,
+            "title": "Sections",
+            "type": "array"
+          },
+          "title": {
+            "maxLength": 300,
+            "minLength": 3,
+            "title": "Title",
+            "type": "string"
+          },
+          "version_label": {
+            "pattern": "^[0-9A-Za-z.\\-]{1,32}$",
+            "title": "Version Label",
+            "type": "string"
+          }
+        },
+        "required": [
+          "policy_key",
+          "title",
+          "department",
+          "owner_label",
+          "classification",
+          "version_label",
+          "effective_from",
+          "sections"
+        ],
+        "title": "PolicyVersionIn",
+        "type": "object"
+      },
+      "ReconcileRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "reason": {
+            "maxLength": 500,
+            "minLength": 10,
+            "title": "Reason",
+            "type": "string"
+          },
+          "resolution": {
+            "enum": [
+              "APPLIED",
+              "NOT_APPLIED"
+            ],
+            "title": "Resolution",
+            "type": "string"
+          }
+        },
+        "required": [
+          "resolution",
+          "reason"
+        ],
+        "title": "ReconcileRequest",
+        "type": "object"
+      },
+      "ReleaseRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "reason": {
+            "maxLength": 500,
+            "minLength": 10,
+            "title": "Reason",
+            "type": "string"
+          }
+        },
+        "required": [
+          "reason"
+        ],
+        "title": "ReleaseRequest",
+        "type": "object"
+      },
+      "ReopenRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "reason": {
+            "maxLength": 300,
+            "minLength": 3,
+            "title": "Reason",
+            "type": "string"
+          },
+          "record_version": {
+            "anyOf": [
+              {
+                "minimum": 1.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Record Version"
+          }
+        },
+        "required": [
+          "reason"
+        ],
+        "title": "ReopenRequest",
+        "type": "object"
+      },
+      "ReportEdit": {
+        "additionalProperties": false,
+        "properties": {
+          "base_version_no": {
+            "minimum": 1.0,
+            "title": "Base Version No",
+            "type": "integer"
+          },
+          "edit_note": {
+            "maxLength": 500,
+            "minLength": 3,
+            "title": "Edit Note",
+            "type": "string"
+          },
+          "sections": {
+            "items": {
+              "$ref": "#/components/schemas/SectionEdit"
+            },
+            "maxItems": 8,
+            "minItems": 1,
+            "title": "Sections",
+            "type": "array"
+          }
+        },
+        "required": [
+          "base_version_no",
+          "sections",
+          "edit_note"
+        ],
+        "title": "ReportEdit",
+        "type": "object"
+      },
+      "RestoreRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "expected_version": {
+            "minimum": 1.0,
+            "title": "Expected Version",
+            "type": "integer"
+          },
+          "reason": {
+            "maxLength": 500,
+            "minLength": 10,
+            "title": "Reason",
+            "type": "string"
+          }
+        },
+        "required": [
+          "expected_version",
+          "reason"
+        ],
+        "title": "RestoreRequest",
+        "type": "object"
+      },
+      "ResumeRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "action": {
+            "enum": [
+              "EVIDENCE_SUPPLIED",
+              "REANALYZE",
+              "RETRY"
+            ],
+            "title": "Action",
+            "type": "string"
+          },
+          "reason": {
+            "maxLength": 300,
+            "minLength": 5,
+            "title": "Reason",
+            "type": "string"
+          }
+        },
+        "required": [
+          "action",
+          "reason"
+        ],
+        "title": "ResumeRequest",
+        "type": "object"
+      },
+      "ReviewRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "note": {
+            "maxLength": 1000,
+            "minLength": 10,
+            "title": "Note",
+            "type": "string"
+          },
+          "outcome": {
+            "enum": [
+              "JUSTIFIED",
+              "NOT_JUSTIFIED"
+            ],
+            "title": "Outcome",
+            "type": "string"
+          }
+        },
+        "required": [
+          "outcome",
+          "note"
+        ],
+        "title": "ReviewRequest",
+        "type": "object"
+      },
+      "Role": {
+        "enum": [
+          "ANALYST",
+          "REVIEWER",
+          "AML_SUPERVISOR",
+          "TENANT_ADMIN",
+          "POLICY_ADMIN",
+          "AUDITOR",
+          "PLATFORM_OPERATOR",
+          "INTEGRATION",
+          "BREAK_GLASS",
+          "EMERGENCY_READ"
+        ],
+        "title": "Role",
+        "type": "string"
+      },
+      "SearchRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "alert_type": {
+            "anyOf": [
+              {
+                "pattern": "^[A-Z0-9_]{2,64}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Alert Type"
+          },
+          "as_of": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "As Of"
+          },
+          "case_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Case Id"
+          },
+          "query": {
+            "maxLength": 500,
+            "minLength": 3,
+            "title": "Query",
+            "type": "string"
+          },
+          "top_k": {
+            "default": 5,
+            "maximum": 10.0,
+            "minimum": 1.0,
+            "title": "Top K",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "query"
+        ],
+        "title": "SearchRequest",
+        "type": "object"
+      },
+      "SectionEdit": {
+        "additionalProperties": false,
+        "properties": {
+          "section_id": {
+            "pattern": "^[a-z_]{3,40}$",
+            "title": "Section Id",
+            "type": "string"
+          },
+          "text": {
+            "maxLength": 6000,
+            "minLength": 1,
+            "title": "Text",
+            "type": "string"
+          }
+        },
+        "required": [
+          "section_id",
+          "text"
+        ],
+        "title": "SectionEdit",
+        "type": "object"
+      },
+      "SectionIn": {
+        "additionalProperties": false,
+        "properties": {
+          "heading": {
+            "maxLength": 300,
+            "minLength": 1,
+            "title": "Heading",
+            "type": "string"
+          },
+          "page": {
+            "anyOf": [
+              {
+                "minimum": 1.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Page"
+          },
+          "section": {
+            "maxLength": 64,
+            "minLength": 1,
+            "title": "Section",
+            "type": "string"
+          },
+          "text": {
+            "maxLength": 50000,
+            "minLength": 1,
+            "title": "Text",
+            "type": "string"
+          }
+        },
+        "required": [
+          "section",
+          "heading",
+          "text"
+        ],
+        "title": "SectionIn",
+        "type": "object"
+      },
+      "StartRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "case_id": {
+            "format": "uuid",
+            "title": "Case Id",
+            "type": "string"
+          },
+          "workflow_type": {
+            "default": "aml_investigation",
+            "enum": [
+              "aml_investigation",
+              "durability_probe"
+            ],
+            "title": "Workflow Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "case_id"
+        ],
+        "title": "StartRequest",
+        "type": "object"
+      },
+      "SubmitRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "version_no": {
+            "title": "Version No",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "version_no"
+        ],
+        "title": "SubmitRequest",
+        "type": "object"
+      },
+      "ValidationError": {
+        "properties": {
+          "ctx": {
+            "title": "Context",
+            "type": "object"
+          },
+          "input": {
+            "title": "Input"
+          },
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "title": "Location",
+            "type": "array"
+          },
+          "msg": {
+            "title": "Message",
+            "type": "string"
+          },
+          "type": {
+            "title": "Error Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError",
+        "type": "object"
+      },
+      "WithdrawRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "reason": {
+            "maxLength": 300,
+            "minLength": 5,
+            "title": "Reason",
+            "type": "string"
+          }
+        },
+        "required": [
+          "reason"
+        ],
+        "title": "WithdrawRequest",
+        "type": "object"
+      }
+    }
+  },
+  "info": {
+    "title": "FinAgent Enterprise API",
+    "version": "0.1.0"
+  },
+  "openapi": "3.1.0",
+  "paths": {
+    "/api/v1/admin/break-glass": {
+      "get": {
+        "operationId": "list_break_glass_api_v1_admin_break_glass_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "minimum": 1,
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Limit"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response List Break Glass Api V1 Admin Break Glass Get",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List Break Glass",
+        "tags": [
+          "admin"
+        ]
+      },
+      "post": {
+        "operationId": "activate_break_glass_api_v1_admin_break_glass_post",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ActivationRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Activate Break Glass Api V1 Admin Break Glass Post",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Activate Break Glass",
+        "tags": [
+          "admin"
+        ]
+      }
+    },
+    "/api/v1/admin/break-glass/{grant_id}/review": {
+      "post": {
+        "operationId": "review_break_glass_api_v1_admin_break_glass__grant_id__review_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "grant_id",
+            "required": true,
+            "schema": {
+              "title": "Grant Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReviewRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Review Break Glass Api V1 Admin Break Glass  Grant Id  Review Post",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Review Break Glass",
+        "tags": [
+          "admin"
+        ]
+      }
+    },
+    "/api/v1/admin/break-glass/{grant_id}/revoke": {
+      "post": {
+        "operationId": "revoke_break_glass_api_v1_admin_break_glass__grant_id__revoke_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "grant_id",
+            "required": true,
+            "schema": {
+              "title": "Grant Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Revoke Break Glass Api V1 Admin Break Glass  Grant Id  Revoke Post",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Revoke Break Glass",
+        "tags": [
+          "admin"
+        ]
+      }
+    },
+    "/api/v1/admin/capability-incidents": {
+      "get": {
+        "operationId": "list_capability_incidents_api_v1_admin_capability_incidents_get",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response List Capability Incidents Api V1 Admin Capability Incidents Get",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List Capability Incidents",
+        "tags": [
+          "admin"
+        ]
+      },
+      "post": {
+        "operationId": "declare_capability_incident_api_v1_admin_capability_incidents_post",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/IncidentRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Declare Capability Incident Api V1 Admin Capability Incidents Post",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Declare Capability Incident",
+        "tags": [
+          "admin"
+        ]
+      }
+    },
+    "/api/v1/admin/capability-incidents/{incident_id}": {
+      "get": {
+        "operationId": "get_capability_incident_api_v1_admin_capability_incidents__incident_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "incident_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Incident Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Get Capability Incident Api V1 Admin Capability Incidents  Incident Id  Get",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Capability Incident",
+        "tags": [
+          "admin"
+        ]
+      }
+    },
+    "/api/v1/admin/capability-incidents/{incident_id}/investigate": {
+      "post": {
+        "operationId": "investigate_capability_incident_api_v1_admin_capability_incidents__incident_id__investigate_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "incident_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Incident Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/InvestigationRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Investigate Capability Incident Api V1 Admin Capability Incidents  Incident Id  Investigate Post",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Investigate Capability Incident",
+        "tags": [
+          "admin"
+        ]
+      }
+    },
+    "/api/v1/admin/capability-incidents/{incident_id}/restore": {
+      "post": {
+        "operationId": "restore_capability_incident_api_v1_admin_capability_incidents__incident_id__restore_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "incident_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Incident Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RestoreRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Restore Capability Incident Api V1 Admin Capability Incidents  Incident Id  Restore Post",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Restore Capability Incident",
+        "tags": [
+          "admin"
+        ]
+      }
+    },
+    "/api/v1/admin/capability-incidents/{incident_id}/retry-notification": {
+      "post": {
+        "operationId": "retry_capability_incident_notification_api_v1_admin_capability_incidents__incident_id__retry_notification_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "incident_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Incident Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RestoreRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Retry Capability Incident Notification Api V1 Admin Capability Incidents  Incident Id  Retry Notification Post",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Retry Capability Incident Notification",
+        "tags": [
+          "admin"
+        ]
+      }
+    },
+    "/api/v1/admin/config-versions": {
+      "get": {
+        "operationId": "list_config_versions_api_v1_admin_config_versions_get",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response List Config Versions Api V1 Admin Config Versions Get",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List Config Versions",
+        "tags": [
+          "admin"
+        ]
+      },
+      "post": {
+        "operationId": "register_config_version_api_v1_admin_config_versions_post",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Register Config Version Api V1 Admin Config Versions Post",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Register Config Version",
+        "tags": [
+          "admin"
+        ]
+      }
+    },
+    "/api/v1/admin/config-versions/{version_id}/promote": {
+      "post": {
+        "operationId": "promote_config_api_v1_admin_config_versions__version_id__promote_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "version_id",
+            "required": true,
+            "schema": {
+              "title": "Version Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChangeRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Promote Config Api V1 Admin Config Versions  Version Id  Promote Post",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Promote Config",
+        "tags": [
+          "admin"
+        ]
+      }
+    },
+    "/api/v1/admin/config-versions/{version_id}/rollback": {
+      "post": {
+        "operationId": "rollback_config_api_v1_admin_config_versions__version_id__rollback_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "version_id",
+            "required": true,
+            "schema": {
+              "title": "Version Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChangeRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Rollback Config Api V1 Admin Config Versions  Version Id  Rollback Post",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Rollback Config",
+        "tags": [
+          "admin"
+        ]
+      }
+    },
+    "/api/v1/admin/delegations": {
+      "get": {
+        "operationId": "list_delegations_api_v1_admin_delegations_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "minimum": 1,
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Limit"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response List Delegations Api V1 Admin Delegations Get",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List Delegations",
+        "tags": [
+          "admin"
+        ]
+      },
+      "post": {
+        "operationId": "create_delegation_api_v1_admin_delegations_post",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DelegationRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Create Delegation Api V1 Admin Delegations Post",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Create Delegation",
+        "tags": [
+          "admin"
+        ]
+      }
+    },
+    "/api/v1/admin/delegations/{delegation_id}/revoke": {
+      "post": {
+        "operationId": "revoke_delegation_api_v1_admin_delegations__delegation_id__revoke_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "delegation_id",
+            "required": true,
+            "schema": {
+              "title": "Delegation Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Revoke Delegation Api V1 Admin Delegations  Delegation Id  Revoke Post",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Revoke Delegation",
+        "tags": [
+          "admin"
+        ]
+      }
+    },
+    "/api/v1/admin/feature-flags/{flag_key}": {
+      "put": {
+        "description": "Tenant-scoped flag (prompt \u00a744). The case-status write also needs the deployment setting.",
+        "operationId": "put_feature_flag_api_v1_admin_feature_flags__flag_key__put",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "flag_key",
+            "required": true,
+            "schema": {
+              "title": "Flag Key",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FlagUpdate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Put Feature Flag Api V1 Admin Feature Flags  Flag Key  Put",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Put Feature Flag",
+        "tags": [
+          "admin"
+        ]
+      }
+    },
+    "/api/v1/admin/legal-holds": {
+      "get": {
+        "operationId": "legal_holds_api_v1_admin_legal_holds_get",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Legal Holds Api V1 Admin Legal Holds Get",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Legal Holds",
+        "tags": [
+          "admin"
+        ]
+      },
+      "post": {
+        "operationId": "place_legal_hold_api_v1_admin_legal_holds_post",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HoldRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Place Legal Hold Api V1 Admin Legal Holds Post",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Place Legal Hold",
+        "tags": [
+          "admin"
+        ]
+      }
+    },
+    "/api/v1/admin/legal-holds/{hold_id}/release": {
+      "post": {
+        "operationId": "release_legal_hold_api_v1_admin_legal_holds__hold_id__release_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "hold_id",
+            "required": true,
+            "schema": {
+              "title": "Hold Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReleaseRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Release Legal Hold Api V1 Admin Legal Holds  Hold Id  Release Post",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Release Legal Hold",
+        "tags": [
+          "admin"
+        ]
+      }
+    },
+    "/api/v1/admin/retention-rules": {
+      "get": {
+        "operationId": "retention_rules_api_v1_admin_retention_rules_get",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Retention Rules Api V1 Admin Retention Rules Get",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Retention Rules",
+        "tags": [
+          "admin"
+        ]
+      }
+    },
+    "/api/v1/admin/retention/evaluate": {
+      "post": {
+        "operationId": "retention_evaluate_api_v1_admin_retention_evaluate_post",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Retention Evaluate Api V1 Admin Retention Evaluate Post",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Retention Evaluate",
+        "tags": [
+          "admin"
+        ]
+      }
+    },
+    "/api/v1/agents": {
+      "get": {
+        "description": "Permitted registry view (prompt \u00a722): metadata only, no prompts' text.",
+        "operationId": "list_agents_api_v1_agents_get",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response List Agents Api V1 Agents Get",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List Agents",
+        "tags": [
+          "agents"
+        ]
+      }
+    },
+    "/api/v1/alerts": {
+      "post": {
+        "operationId": "post_alert_api_v1_alerts_post",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          },
+          {
+            "in": "header",
+            "name": "idempotency-key",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Idempotency-Key"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AlertEnvelope"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Post Alert",
+        "tags": [
+          "alerts"
+        ]
+      }
+    },
+    "/api/v1/approvals": {
+      "get": {
+        "operationId": "list_approvals_api_v1_approvals_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Status"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response List Approvals Api V1 Approvals Get",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List Approvals",
+        "tags": [
+          "approvals"
+        ]
+      }
+    },
+    "/api/v1/approvals/{approval_id}": {
+      "get": {
+        "operationId": "get_approval_api_v1_approvals__approval_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "approval_id",
+            "required": true,
+            "schema": {
+              "title": "Approval Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Get Approval Api V1 Approvals  Approval Id  Get",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Approval",
+        "tags": [
+          "approvals"
+        ]
+      }
+    },
+    "/api/v1/approvals/{approval_id}/decision": {
+      "post": {
+        "description": "FR-028: APPROVE / RETURN_FOR_REWORK / REQUEST_INFORMATION (+ REJECT, DEC-11). MFA step-up.",
+        "operationId": "decide_api_v1_approvals__approval_id__decision_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "approval_id",
+            "required": true,
+            "schema": {
+              "title": "Approval Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          },
+          {
+            "in": "header",
+            "name": "idempotency-key",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Idempotency-Key"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DecisionRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Decide",
+        "tags": [
+          "approvals"
+        ]
+      }
+    },
+    "/api/v1/audit-events": {
+      "get": {
+        "operationId": "get_audit_events_api_v1_audit_events_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "after_seq",
+            "required": false,
+            "schema": {
+              "default": 0,
+              "minimum": 0,
+              "title": "After Seq",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "case_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Case Id"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "minimum": 1,
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Limit"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Get Audit Events Api V1 Audit Events Get",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Audit Events",
+        "tags": [
+          "audit"
+        ]
+      }
+    },
+    "/api/v1/auth/config": {
+      "get": {
+        "description": "Public mode only. Never return client secrets, tokens, or identity lists here.",
+        "operationId": "sign_in_config_api_v1_auth_config_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": {
+                    "type": "string"
+                  },
+                  "title": "Response Sign In Config Api V1 Auth Config Get",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Sign In Config",
+        "tags": [
+          "authentication"
+        ]
+      }
+    },
+    "/api/v1/auth/session": {
+      "get": {
+        "description": "The callback presents its configured provider credential to the normal resolver.",
+        "operationId": "sign_in_identity_api_v1_auth_session_get",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Sign In Identity Api V1 Auth Session Get",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Sign In Identity",
+        "tags": [
+          "authentication"
+        ]
+      }
+    },
+    "/api/v1/cases": {
+      "get": {
+        "operationId": "get_cases_api_v1_cases_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Status"
+            }
+          },
+          {
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Cursor"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "minimum": 1,
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Limit"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Get Cases Api V1 Cases Get",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Cases",
+        "tags": [
+          "cases"
+        ]
+      }
+    },
+    "/api/v1/cases/{case_id}": {
+      "get": {
+        "operationId": "get_case_api_v1_cases__case_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "case_id",
+            "required": true,
+            "schema": {
+              "title": "Case Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Get Case Api V1 Cases  Case Id  Get",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Case",
+        "tags": [
+          "cases"
+        ]
+      },
+      "patch": {
+        "description": "Guarded update: send the record_version you read (If-Match or body). Stale -> 409.",
+        "operationId": "patch_case_api_v1_cases__case_id__patch",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "case_id",
+            "required": true,
+            "schema": {
+              "title": "Case Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          },
+          {
+            "in": "header",
+            "name": "if-match",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "If-Match"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CasePatch"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Patch Case Api V1 Cases  Case Id  Patch",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Patch Case",
+        "tags": [
+          "cases"
+        ]
+      }
+    },
+    "/api/v1/cases/{case_id}/activity": {
+      "get": {
+        "description": "Case audit timeline for people working the case (prompt \u00a723 case detail). Metadata only -\nthe same fields as /audit-events, limited to ONE case the caller may read.",
+        "operationId": "case_activity_api_v1_cases__case_id__activity_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "case_id",
+            "required": true,
+            "schema": {
+              "title": "Case Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Case Activity Api V1 Cases  Case Id  Activity Get",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Case Activity",
+        "tags": [
+          "audit"
+        ]
+      }
+    },
+    "/api/v1/cases/{case_id}/agent-outputs": {
+      "get": {
+        "operationId": "case_agent_outputs_api_v1_cases__case_id__agent_outputs_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "case_id",
+            "required": true,
+            "schema": {
+              "title": "Case Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Case Agent Outputs Api V1 Cases  Case Id  Agent Outputs Get",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Case Agent Outputs",
+        "tags": [
+          "agents"
+        ]
+      }
+    },
+    "/api/v1/cases/{case_id}/assignment": {
+      "post": {
+        "description": "Supervisor reassignment with a mandatory reason (FR-009).",
+        "operationId": "post_assignment_api_v1_cases__case_id__assignment_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "case_id",
+            "required": true,
+            "schema": {
+              "title": "Case Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          },
+          {
+            "in": "header",
+            "name": "if-match",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "If-Match"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AssignmentRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Post Assignment Api V1 Cases  Case Id  Assignment Post",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Post Assignment",
+        "tags": [
+          "cases"
+        ]
+      }
+    },
+    "/api/v1/cases/{case_id}/documents": {
+      "get": {
+        "operationId": "list_case_documents_api_v1_cases__case_id__documents_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "case_id",
+            "required": true,
+            "schema": {
+              "title": "Case Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response List Case Documents Api V1 Cases  Case Id  Documents Get",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List Case Documents",
+        "tags": [
+          "documents"
+        ]
+      }
+    },
+    "/api/v1/cases/{case_id}/evidence": {
+      "get": {
+        "operationId": "get_case_evidence_api_v1_cases__case_id__evidence_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "case_id",
+            "required": true,
+            "schema": {
+              "title": "Case Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Get Case Evidence Api V1 Cases  Case Id  Evidence Get",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Case Evidence",
+        "tags": [
+          "evidence"
+        ]
+      }
+    },
+    "/api/v1/cases/{case_id}/evidence-conflicts/{conflict_id}/resolution": {
+      "post": {
+        "operationId": "resolve_conflict_api_v1_cases__case_id__evidence_conflicts__conflict_id__resolution_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "case_id",
+            "required": true,
+            "schema": {
+              "title": "Case Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "conflict_id",
+            "required": true,
+            "schema": {
+              "title": "Conflict Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ConflictResolution"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Resolve Conflict Api V1 Cases  Case Id  Evidence Conflicts  Conflict Id  Resolution Post",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Resolve Conflict",
+        "tags": [
+          "evidence"
+        ]
+      }
+    },
+    "/api/v1/cases/{case_id}/reopen": {
+      "post": {
+        "description": "Supervisor reopening with a reason and optimistic version precondition (FR-006).",
+        "operationId": "reopen_case_api_v1_cases__case_id__reopen_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "case_id",
+            "required": true,
+            "schema": {
+              "title": "Case Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          },
+          {
+            "in": "header",
+            "name": "if-match",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "If-Match"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReopenRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Reopen Case Api V1 Cases  Case Id  Reopen Post",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Reopen Case",
+        "tags": [
+          "cases"
+        ]
+      }
+    },
+    "/api/v1/cases/{case_id}/reports": {
+      "get": {
+        "operationId": "get_reports_api_v1_cases__case_id__reports_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "case_id",
+            "required": true,
+            "schema": {
+              "title": "Case Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Get Reports Api V1 Cases  Case Id  Reports Get",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Reports",
+        "tags": [
+          "reports"
+        ]
+      }
+    },
+    "/api/v1/cases/{case_id}/reports/edits": {
+      "post": {
+        "description": "New analyst revision based on `base_version_no` (stale base -> 409).",
+        "operationId": "edit_report_api_v1_cases__case_id__reports_edits_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "case_id",
+            "required": true,
+            "schema": {
+              "title": "Case Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReportEdit"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Edit Report Api V1 Cases  Case Id  Reports Edits Post",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Edit Report",
+        "tags": [
+          "reports"
+        ]
+      }
+    },
+    "/api/v1/cases/{case_id}/reports/submit": {
+      "post": {
+        "operationId": "submit_report_api_v1_cases__case_id__reports_submit_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "case_id",
+            "required": true,
+            "schema": {
+              "title": "Case Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          },
+          {
+            "in": "header",
+            "name": "idempotency-key",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Idempotency-Key"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SubmitRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Submit Report",
+        "tags": [
+          "reports"
+        ]
+      }
+    },
+    "/api/v1/cases/{case_id}/reports/versions/{version_no}": {
+      "get": {
+        "operationId": "get_report_version_api_v1_cases__case_id__reports_versions__version_no__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "case_id",
+            "required": true,
+            "schema": {
+              "title": "Case Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "version_no",
+            "required": true,
+            "schema": {
+              "title": "Version No",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Get Report Version Api V1 Cases  Case Id  Reports Versions  Version No  Get",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Report Version",
+        "tags": [
+          "reports"
+        ]
+      }
+    },
+    "/api/v1/cases/{case_id}/reports/withdraw": {
+      "post": {
+        "operationId": "withdraw_report_api_v1_cases__case_id__reports_withdraw_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "case_id",
+            "required": true,
+            "schema": {
+              "title": "Case Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WithdrawRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Withdraw Report Api V1 Cases  Case Id  Reports Withdraw Post",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Withdraw Report",
+        "tags": [
+          "reports"
+        ]
+      }
+    },
+    "/api/v1/cases/{case_id}/snapshots": {
+      "get": {
+        "operationId": "list_snapshots_api_v1_cases__case_id__snapshots_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "case_id",
+            "required": true,
+            "schema": {
+              "title": "Case Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response List Snapshots Api V1 Cases  Case Id  Snapshots Get",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List Snapshots",
+        "tags": [
+          "evidence"
+        ]
+      },
+      "post": {
+        "description": "Freeze the current evidence set. Returns 200 with the latest snapshot if nothing changed.",
+        "operationId": "post_snapshot_api_v1_cases__case_id__snapshots_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "case_id",
+            "required": true,
+            "schema": {
+              "title": "Case Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Post Snapshot",
+        "tags": [
+          "evidence"
+        ]
+      }
+    },
+    "/api/v1/cases/{case_id}/snapshots/{snapshot_id}": {
+      "get": {
+        "operationId": "get_snapshot_api_v1_cases__case_id__snapshots__snapshot_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "case_id",
+            "required": true,
+            "schema": {
+              "title": "Case Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "snapshot_id",
+            "required": true,
+            "schema": {
+              "title": "Snapshot Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Get Snapshot Api V1 Cases  Case Id  Snapshots  Snapshot Id  Get",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Snapshot",
+        "tags": [
+          "evidence"
+        ]
+      }
+    },
+    "/api/v1/cases/{case_id}/workflows": {
+      "get": {
+        "operationId": "case_workflows_api_v1_cases__case_id__workflows_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "case_id",
+            "required": true,
+            "schema": {
+              "title": "Case Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Case Workflows Api V1 Cases  Case Id  Workflows Get",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Case Workflows",
+        "tags": [
+          "workflows"
+        ]
+      }
+    },
+    "/api/v1/document-downloads/{token}": {
+      "get": {
+        "operationId": "download_api_v1_document_downloads__token__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "token",
+            "required": true,
+            "schema": {
+              "title": "Token",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Download",
+        "tags": [
+          "documents"
+        ]
+      }
+    },
+    "/api/v1/documents": {
+      "post": {
+        "description": "Upload a PDF, DOCX or CSV (raw body). 201 with processing status; 413 / 415 on limits.",
+        "operationId": "upload_document_api_v1_documents_post",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "case_id",
+            "required": true,
+            "schema": {
+              "title": "Case Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "document_type",
+            "required": true,
+            "schema": {
+              "title": "Document Type",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "filename",
+            "required": true,
+            "schema": {
+              "title": "Filename",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "content-type",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Content-Type"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          },
+          {
+            "in": "header",
+            "name": "idempotency-key",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Idempotency-Key"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Upload Document",
+        "tags": [
+          "documents"
+        ]
+      }
+    },
+    "/api/v1/documents/{document_id}": {
+      "get": {
+        "operationId": "get_document_api_v1_documents__document_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "document_id",
+            "required": true,
+            "schema": {
+              "title": "Document Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Get Document Api V1 Documents  Document Id  Get",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Document",
+        "tags": [
+          "documents"
+        ]
+      }
+    },
+    "/api/v1/documents/{document_id}/download-link": {
+      "get": {
+        "operationId": "get_download_link_api_v1_documents__document_id__download_link_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "document_id",
+            "required": true,
+            "schema": {
+              "title": "Document Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Get Download Link Api V1 Documents  Document Id  Download Link Get",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Download Link",
+        "tags": [
+          "documents"
+        ]
+      }
+    },
+    "/api/v1/documents/{document_id}/fields/{field_id}/correction": {
+      "post": {
+        "operationId": "correct_field_api_v1_documents__document_id__fields__field_id__correction_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "document_id",
+            "required": true,
+            "schema": {
+              "title": "Document Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "field_id",
+            "required": true,
+            "schema": {
+              "title": "Field Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FieldCorrection"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Correct Field Api V1 Documents  Document Id  Fields  Field Id  Correction Post",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Correct Field",
+        "tags": [
+          "documents"
+        ]
+      }
+    },
+    "/api/v1/documents/{document_id}/versions": {
+      "post": {
+        "description": "Corrected re-upload as a new version; earlier versions and failures are preserved.",
+        "operationId": "upload_document_version_api_v1_documents__document_id__versions_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "document_id",
+            "required": true,
+            "schema": {
+              "title": "Document Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "content-type",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Content-Type"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          },
+          {
+            "in": "header",
+            "name": "idempotency-key",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Idempotency-Key"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Upload Document Version",
+        "tags": [
+          "documents"
+        ]
+      }
+    },
+    "/api/v1/escalations": {
+      "get": {
+        "operationId": "get_escalations_api_v1_escalations_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "include_resolved",
+            "required": false,
+            "schema": {
+              "default": false,
+              "title": "Include Resolved",
+              "type": "boolean"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "minimum": 1,
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Limit"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Get Escalations Api V1 Escalations Get",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Escalations",
+        "tags": [
+          "cases"
+        ]
+      }
+    },
+    "/api/v1/evaluations": {
+      "get": {
+        "operationId": "list_evaluations_api_v1_evaluations_get",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response List Evaluations Api V1 Evaluations Get",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List Evaluations",
+        "tags": [
+          "evaluations"
+        ]
+      },
+      "post": {
+        "operationId": "run_evaluation_api_v1_evaluations_post",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EvaluationRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Run Evaluation Api V1 Evaluations Post",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Run Evaluation",
+        "tags": [
+          "evaluations"
+        ]
+      }
+    },
+    "/api/v1/evaluations/{evaluation_id}": {
+      "get": {
+        "operationId": "get_evaluation_api_v1_evaluations__evaluation_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "evaluation_id",
+            "required": true,
+            "schema": {
+              "title": "Evaluation Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Get Evaluation Api V1 Evaluations  Evaluation Id  Get",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Evaluation",
+        "tags": [
+          "evaluations"
+        ]
+      }
+    },
+    "/api/v1/exports": {
+      "post": {
+        "operationId": "create_export_api_v1_exports_post",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ExportRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Create Export Api V1 Exports Post",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Create Export",
+        "tags": [
+          "exports"
+        ]
+      }
+    },
+    "/api/v1/exports/{export_id}/content": {
+      "get": {
+        "operationId": "export_content_api_v1_exports__export_id__content_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "export_id",
+            "required": true,
+            "schema": {
+              "title": "Export Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Export Content",
+        "tags": [
+          "exports"
+        ]
+      }
+    },
+    "/api/v1/knowledge/chunks/{chunk_id}": {
+      "get": {
+        "description": "Open the exact cited revision (access re-checked now).",
+        "operationId": "open_citation_api_v1_knowledge_chunks__chunk_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "chunk_id",
+            "required": true,
+            "schema": {
+              "title": "Chunk Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Open Citation Api V1 Knowledge Chunks  Chunk Id  Get",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Open Citation",
+        "tags": [
+          "knowledge"
+        ]
+      }
+    },
+    "/api/v1/knowledge/citations/validate": {
+      "post": {
+        "operationId": "validate_citation_api_v1_knowledge_citations_validate_post",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CitationValidationRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Validate Citation Api V1 Knowledge Citations Validate Post",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Validate Citation",
+        "tags": [
+          "knowledge"
+        ]
+      }
+    },
+    "/api/v1/knowledge/policies": {
+      "get": {
+        "operationId": "list_policies_api_v1_knowledge_policies_get",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response List Policies Api V1 Knowledge Policies Get",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List Policies",
+        "tags": [
+          "knowledge"
+        ]
+      },
+      "post": {
+        "description": "New DRAFT version (scanned, parsed, indexed). It is NOT retrievable until approved.",
+        "operationId": "create_policy_version_api_v1_knowledge_policies_post",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PolicyVersionIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Create Policy Version Api V1 Knowledge Policies Post",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Create Policy Version",
+        "tags": [
+          "knowledge"
+        ]
+      }
+    },
+    "/api/v1/knowledge/policy-versions/{version_id}": {
+      "get": {
+        "operationId": "get_policy_version_api_v1_knowledge_policy_versions__version_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "version_id",
+            "required": true,
+            "schema": {
+              "title": "Version Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Get Policy Version Api V1 Knowledge Policy Versions  Version Id  Get",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Policy Version",
+        "tags": [
+          "knowledge"
+        ]
+      }
+    },
+    "/api/v1/knowledge/policy-versions/{version_id}/reindex": {
+      "post": {
+        "operationId": "reindex_policy_version_api_v1_knowledge_policy_versions__version_id__reindex_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "version_id",
+            "required": true,
+            "schema": {
+              "title": "Version Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Reindex Policy Version Api V1 Knowledge Policy Versions  Version Id  Reindex Post",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Reindex Policy Version",
+        "tags": [
+          "knowledge"
+        ]
+      }
+    },
+    "/api/v1/knowledge/policy-versions/{version_id}/{action}": {
+      "post": {
+        "operationId": "policy_lifecycle_api_v1_knowledge_policy_versions__version_id___action__post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "version_id",
+            "required": true,
+            "schema": {
+              "title": "Version Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "action",
+            "required": true,
+            "schema": {
+              "enum": [
+                "approve",
+                "retire",
+                "revoke"
+              ],
+              "title": "Action",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LifecycleRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Policy Lifecycle Api V1 Knowledge Policy Versions  Version Id   Action  Post",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Policy Lifecycle",
+        "tags": [
+          "knowledge"
+        ]
+      }
+    },
+    "/api/v1/knowledge/search": {
+      "post": {
+        "description": "Permission-filtered, date-applicable search. Abstains with INSUFFICIENT_EVIDENCE.",
+        "operationId": "search_api_v1_knowledge_search_post",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SearchRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Search Api V1 Knowledge Search Post",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Search",
+        "tags": [
+          "knowledge"
+        ]
+      }
+    },
+    "/api/v1/knowledge/sync": {
+      "post": {
+        "description": "Pull the tenant's policy repository (SYNTHETIC mock bank locally) as DRAFT versions.",
+        "operationId": "sync_policies_api_v1_knowledge_sync_post",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Sync Policies Api V1 Knowledge Sync Post",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Sync Policies",
+        "tags": [
+          "knowledge"
+        ]
+      }
+    },
+    "/api/v1/operations": {
+      "get": {
+        "operationId": "list_operations_api_v1_operations_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": "OUTCOME_UNCERTAIN",
+              "title": "Status"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response List Operations Api V1 Operations Get",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List Operations",
+        "tags": [
+          "operations"
+        ]
+      }
+    },
+    "/api/v1/operations/{operation_id}": {
+      "get": {
+        "operationId": "get_operation_api_v1_operations__operation_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "operation_id",
+            "required": true,
+            "schema": {
+              "title": "Operation Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Get Operation Api V1 Operations  Operation Id  Get",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Operation",
+        "tags": [
+          "workflows",
+          "operations"
+        ]
+      }
+    },
+    "/api/v1/operations/{operation_id}/reconcile": {
+      "post": {
+        "description": "Operator records the verified outcome of an OUTCOME_UNCERTAIN operation (MST:REC-003).",
+        "operationId": "reconcile_operation_api_v1_operations__operation_id__reconcile_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "operation_id",
+            "required": true,
+            "schema": {
+              "title": "Operation Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReconcileRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Reconcile Operation Api V1 Operations  Operation Id  Reconcile Post",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Reconcile Operation",
+        "tags": [
+          "workflows",
+          "operations"
+        ]
+      }
+    },
+    "/api/v1/reporting/dashboard": {
+      "get": {
+        "operationId": "operations_dashboard_api_v1_reporting_dashboard_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "days",
+            "required": false,
+            "schema": {
+              "default": 7,
+              "maximum": 28,
+              "minimum": 1,
+              "title": "Days",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Operations Dashboard Api V1 Reporting Dashboard Get",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Operations Dashboard",
+        "tags": [
+          "reporting"
+        ]
+      }
+    },
+    "/api/v1/reporting/overview": {
+      "get": {
+        "operationId": "overview_api_v1_reporting_overview_get",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Overview Api V1 Reporting Overview Get",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Overview",
+        "tags": [
+          "reporting"
+        ]
+      }
+    },
+    "/api/v1/workflows": {
+      "post": {
+        "description": "Accepts the request (202) and returns a status URL; a worker executes the run.",
+        "operationId": "start_workflow_api_v1_workflows_post",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          },
+          {
+            "in": "header",
+            "name": "idempotency-key",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Idempotency-Key"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StartRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Start Workflow",
+        "tags": [
+          "workflows"
+        ]
+      }
+    },
+    "/api/v1/workflows/{run_id}": {
+      "get": {
+        "operationId": "get_workflow_api_v1_workflows__run_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "run_id",
+            "required": true,
+            "schema": {
+              "title": "Run Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Get Workflow Api V1 Workflows  Run Id  Get",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Workflow",
+        "tags": [
+          "workflows"
+        ]
+      }
+    },
+    "/api/v1/workflows/{run_id}/cancel": {
+      "post": {
+        "description": "Stops new work; committed effects are preserved (FR-035). A RUNNING run stops at its next\nstep boundary, so the response may still show RUNNING with cancel_requested=true.",
+        "operationId": "cancel_workflow_api_v1_workflows__run_id__cancel_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "run_id",
+            "required": true,
+            "schema": {
+              "title": "Run Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CancelRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Cancel Workflow Api V1 Workflows  Run Id  Cancel Post",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Cancel Workflow",
+        "tags": [
+          "workflows"
+        ]
+      }
+    },
+    "/api/v1/workflows/{run_id}/resume": {
+      "post": {
+        "description": "Deterministic human resume: evidence supplied, re-analysis, or retry after human review.",
+        "operationId": "resume_workflow_api_v1_workflows__run_id__resume_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "run_id",
+            "required": true,
+            "schema": {
+              "title": "Run Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ResumeRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Resume Workflow Api V1 Workflows  Run Id  Resume Post",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Resume Workflow",
+        "tags": [
+          "workflows"
+        ]
+      }
+    },
+    "/health/live": {
+      "get": {
+        "operationId": "live_health_live_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": {
+                    "type": "string"
+                  },
+                  "title": "Response Live Health Live Get",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Live",
+        "tags": [
+          "health"
+        ]
+      }
+    },
+    "/health/ready": {
+      "get": {
+        "operationId": "ready_health_ready_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": {
+                    "type": "string"
+                  },
+                  "title": "Response Ready Health Ready Get",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Ready",
+        "tags": [
+          "health"
+        ]
+      }
+    }
+  }
+}

@@ -1,0 +1,262 @@
+"""Browser test of the critical human-review journey through the REAL web UI (Chromium/Playwright).
+
+Runs the production web build (`next start`) against a live API (uvicorn, finagent_app role), a worker
+loop, the SYNTHETIC mock bank and PostgreSQL. Deselected from the default suite; run with
+`python scripts/tasks.py test-browser` (needs `npm run build` and `playwright install chromium`).
+
+UI-001, UI-002, MST:UI-001, NQ-040, FR-027, FR-028.
+"""
+
+from __future__ import annotations
+
+import contextlib
+import os
+import shutil
+import socket
+import subprocess
+import threading
+import time
+from collections.abc import Iterator
+from pathlib import Path
+from typing import Any
+
+import httpx
+import pytest
+
+from tests.helpers import assigned_analyst, ingest
+
+pytestmark = [pytest.mark.browser, pytest.mark.integration]
+WEB_DIR = Path(__file__).resolve().parents[2] / "apps" / "web"
+
+
+def free_port() -> int:
+    with socket.socket() as s:
+        s.bind(("127.0.0.1", 0))
+        return int(s.getsockname()[1])
+
+
+def wait_http(url: str, timeout: float = 60) -> None:
+    deadline = time.monotonic() + timeout
+    while time.monotonic() < deadline:
+        try:
+            if httpx.get(url, timeout=2).status_code < 500:
+                return
+        except httpx.HTTPError:
+            pass
+        time.sleep(0.5)
+    raise RuntimeError(f"{url} did not come up")
+
+
+@pytest.fixture
+def stack(make_settings, make_worker, bank) -> Iterator[dict[str, Any]]:  # type: ignore[no-untyped-def]
+    import uvicorn
+
+    from finagent.api.main import create_app
+
+    settings = make_settings(bank_base_url=bank.url)
+    api_port, web_port = free_port(), free_port()
+    server = uvicorn.Server(
+        uvicorn.Config(create_app(settings), host="127.0.0.1", port=api_port, log_level="warning")
+    )
+    threading.Thread(target=server.run, daemon=True).start()
+    wait_http(f"http://127.0.0.1:{api_port}/health/live")
+    npx = shutil.which("npx") or shutil.which("npx.cmd")
+    assert npx, "npx not found"
+    env = {
+        **os.environ,
+        "FINAGENT_API_URL": f"http://127.0.0.1:{api_port}",
+        "FINAGENT_WEB_SESSION_SECRET": "browser-test-only-session-secret-0123456789",
+        "NEXT_TELEMETRY_DISABLED": "1",
+    }
+    web = subprocess.Popen(  # noqa: S603 - fixed argv
+        [npx, "next", "start", "-p", str(web_port), "-H", "127.0.0.1"],
+        cwd=WEB_DIR,
+        env=env,
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+    )
+    worker = make_worker(bank_base_url=bank.url)
+    stop = threading.Event()
+
+    def loop() -> None:
+        while not stop.is_set():
+            with contextlib.suppress(Exception):  # keep ticking; failures surface as UI state
+                worker.tick()
+            stop.wait(0.5)
+
+    threading.Thread(target=loop, daemon=True).start()
+    try:
+        wait_http(f"http://127.0.0.1:{web_port}/signin", timeout=90)
+        yield {
+            "web": f"http://127.0.0.1:{web_port}",
+            "api": f"http://127.0.0.1:{api_port}",
+            "settings": settings,
+        }
+    finally:
+        stop.set()
+        web.terminate()
+        server.should_exit = True
+
+
+def sign_in(page: Any, web: str, who: str, *, mfa: str = "yes") -> None:
+    page.goto(f"{web}/signin")
+    page.get_by_label("Synthetic identity").select_option(who)
+    page.get_by_label("Multi-factor authentication satisfied").select_option(mfa)
+    page.get_by_role("button", name="Sign in").click()
+    page.wait_for_url(f"{web}/")
+
+
+def wait_text(page: Any, url: str, text: str, timeout: float = 120) -> None:
+    deadline = time.monotonic() + timeout
+    while time.monotonic() < deadline:
+        page.goto(url)
+        if text in page.locator("main").inner_text():
+            return
+        time.sleep(1.5)
+    raise AssertionError(f"'{text}' not shown at {url}")
+
+
+@pytest.mark.req(
+    "UI-001",
+    "UI-002",
+    "MST:UI-001",
+    "MST:UI-002",
+    "MST:UI-003",
+    "NQ-040",
+    "FR-027",
+    "FR-028",
+    "FR-010",
+    "FR-006",
+)
+def test_analyst_and_reviewer_complete_a_case_in_the_browser(stack, client, token) -> None:  # type: ignore[no-untyped-def]
+    from playwright.sync_api import sync_playwright
+
+    web = stack["web"]
+    case_id = ingest(client, token)["case_id"]
+    analyst = assigned_analyst(client, token, case_id)
+    with sync_playwright() as p:
+        browser = p.chromium.launch()
+        context = browser.new_context()
+        page = context.new_page()
+        page.goto(f"{web}/cases")
+        assert "/signin" in page.url  # no session: redirected, never shown data
+        sign_in(page, web, analyst)
+        assert page.locator("html").get_attribute("lang") == "en"
+        page.goto(f"{web}/cases")
+        page.get_by_role("link", name=case_id[:8]).click()
+        assert "Assigned" in page.locator("main").inner_text()
+        page.get_by_role("button", name="Start investigation").click()
+        # the confirmation comes from the server after the API accepted the command (never optimistic)
+        page.get_by_text("Investigation queued.").first.wait_for(timeout=30_000)
+        wait_text(page, f"{web}/cases/{case_id}", "WAITING_REVIEW")
+        page.goto(f"{web}/cases/{case_id}/evidence")
+        assert "date_of_birth" in page.locator("main").inner_text()  # contradiction shown with both values
+        page.get_by_label("Reason (recorded; neither source is deleted)").fill(
+            "core banking DOB verified at onboarding"
+        )
+        page.get_by_role("button", name="Record resolution").click()
+        page.get_by_text("Conflict resolved").first.wait_for(timeout=30_000)
+        page.goto(f"{web}/cases/{case_id}")
+        page.get_by_label("Re-analyse with fresh evidence (reason)").fill("conflict resolved")
+        page.get_by_role("button", name="Re-run evidence and analysis").click()
+        wait_text(page, f"{web}/cases/{case_id}/report", "version 2 of 2")
+        page.goto(f"{web}/cases/{case_id}/agents")
+        findings = page.locator("main").inner_text()
+        assert "Deterministic result" in findings and "AI interpretation" in findings  # labelled in text
+        page.goto(f"{web}/cases/{case_id}/report")
+        page.get_by_role("button", name="Submit version 2 for independent review").click()
+        page.get_by_text("Submitted for independent review.").first.wait_for(timeout=30_000)
+        page.get_by_role("button", name="Sign out").click()
+        sign_in(page, web, "a.reviewer1@synthetic")
+        page.goto(f"{web}/approvals")
+        page.locator("table a").first.click()
+        page.wait_for_url("**/approvals/*")
+        assert "frozen for this review" in page.locator("main").inner_text()
+        page.get_by_label("Approve").check()
+        page.get_by_label("Rationale (required, recorded with your identity and the reviewed versions)").fill(
+            "Evidence, calculations and policy citations reviewed."
+        )
+        page.get_by_role("button", name="Record decision").click()
+        page.get_by_text("Decision recorded.").first.wait_for(timeout=30_000)
+        wait_text(page, f"{web}/cases/{case_id}", "to COMPLETED")  # shown only after finalization
+        assert page.get_by_label("Case status: Completed").count() == 1  # text label, not colour only
+        # Reopening UI: no supervisor controls for analyst/reviewer identities.
+        supervisor = "a.supervisor1@synthetic"
+        case_url = f"{web}/cases/{case_id}"
+        reopen_form = page.get_by_role("form", name="Reopen completed case", exact=True)
+        assert reopen_form.count() == 0  # still signed in as the reviewer
+        old_version = client.get(f"/api/v1/cases/{case_id}/reports/versions/2", headers=token(supervisor))
+        assert old_version.status_code == 200, old_version.text
+        preserved_fields = ("version_id", "version_no", "content_hash", "snapshot_id", "sections", "claims")
+        previous = {field: old_version.json()[field] for field in preserved_fields}
+        before = client.get(f"/api/v1/cases/{case_id}", headers=token(supervisor)).json()
+        completions = [item for item in before["timeline"] if item["to"] == "COMPLETED"]
+        page.get_by_role("button", name="Sign out").click()
+        sign_in(page, web, analyst)
+        page.goto(case_url)
+        assert page.get_by_role("form", name="Reopen completed case", exact=True).count() == 0
+        page.get_by_role("button", name="Sign out").click()
+        sign_in(page, web, supervisor, mfa="no")
+        page.goto(case_url)
+        assert page.get_by_role("link", name="Sign in with MFA", exact=True).count() == 1
+        assert page.get_by_role("form", name="Reopen completed case", exact=True).count() == 0
+        page.get_by_role("button", name="Sign out").click()
+        sign_in(page, web, supervisor)
+        page.goto(case_url)
+        form = page.get_by_role("form", name="Reopen completed case", exact=True)
+        assert form.count() == 1
+        # Required input prevents empty submission; whitespace is rejected server-side too.
+        form.get_by_role("button", name="Reopen case", exact=True).click()
+        assert page.get_by_label("Reason for reopening").evaluate("e => e.validity.valueMissing")
+        page.get_by_label("Reason for reopening").fill("    ")
+        form.get_by_role("button", name="Reopen case", exact=True).click()
+        page.get_by_role("alert").filter(has_text="Enter a reason between 3 and 300 characters.").wait_for(
+            timeout=30_000
+        )
+        unchanged = client.get(f"/api/v1/cases/{case_id}", headers=token(supervisor)).json()
+        assert unchanged["status"] == "COMPLETED"
+        assert unchanged["record_version"] == before["record_version"]
+        # Both tabs hold the same case version. One succeeds; the stale form must fail.
+        stale = page.context.new_page()
+        stale.goto(case_url)
+        stale.get_by_label("Reason for reopening").fill("Another supervisor reviewed an older version")
+        reason = "New synthetic information requires a renewed investigation"
+        page.get_by_label("Reason for reopening").fill(reason)
+        page.get_by_role("button", name="Reopen case", exact=True).click()
+        page.get_by_text("Case reopened. A new draft requires review.", exact=False).first.wait_for(
+            timeout=30_000
+        )
+        assert "to REWORK" in page.locator("main").inner_text()
+        assert page.get_by_role("form", name="Reopen completed case", exact=True).count() == 0
+        stale.get_by_role("button", name="Reopen case", exact=True).click()
+        stale.get_by_role("alert").filter(has_text="VERSION_CONFLICT").wait_for(timeout=30_000)
+        assert stale.get_by_text("Case reopened. A new draft requires review.", exact=False).count() == 0
+        stale.close()
+        after = client.get(f"/api/v1/cases/{case_id}", headers=token(supervisor)).json()
+        assert after["status"] == "REWORK" and after["record_version"] == before["record_version"] + 1
+        assert [item for item in after["timeline"] if item["to"] == "COMPLETED"] == completions
+        assert after["timeline"][-1]["from"] == "COMPLETED"
+        assert after["timeline"][-1]["to"] == "REWORK"
+        assert after["timeline"][-1]["reason"] == reason
+        old_after = client.get(f"/api/v1/cases/{case_id}/reports/versions/2", headers=token(supervisor))
+        assert old_after.status_code == 200, old_after.text
+        assert {field: old_after.json()[field] for field in preserved_fields} == previous
+        report = client.get(f"/api/v1/cases/{case_id}/reports", headers=token(supervisor))
+        assert report.status_code == 200, report.text
+        assert report.json()["report"]["status"] == "DRAFT"
+        assert report.json()["report"]["current_version_no"] == 3
+        # Dashboard uses the same authorized session and never expands case scope.
+        page.get_by_role("button", name="Sign out").click()
+        sign_in(page, web, analyst)
+        page.goto(f"{web}/operations?days=7")
+        page.get_by_role("heading", name="Operational dashboard", exact=True).wait_for()
+        assert "assigned-cases" in page.locator("main").inner_text()
+        assert page.get_by_role("heading", name="Observed connector status", exact=True).count() == 0
+        page.get_by_role("button", name="Sign out").click()
+        sign_in(page, web, "a.operator1@synthetic")
+        page.goto(f"{web}/operations?days=7")
+        page.get_by_role("heading", name="Observed connector status", exact=True).wait_for()
+        assert "core-banking" in page.locator("main").inner_text()
+        assert page.get_by_role("link", name="Open permitted case", exact=True).count() == 0
+        assert page.get_by_role("heading", name="Unavailable measurements", exact=True).count() == 1
+        browser.close()

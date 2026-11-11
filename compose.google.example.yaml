@@ -1,0 +1,20 @@
+# Optional LOCAL Google login override. Do not combine with the Entra override.
+# Keep the client secret private in .env; never commit a populated configuration.
+services:
+  api:
+    environment:
+      FINAGENT_AUTH_MODE: google
+      FINAGENT_GOOGLE_WEB_CLIENT_ID: ${FINAGENT_GOOGLE_WEB_CLIENT_ID:?Set the dedicated Google web client ID}
+  worker:
+    environment:
+      FINAGENT_AUTH_MODE: google
+      FINAGENT_GOOGLE_WEB_CLIENT_ID: ${FINAGENT_GOOGLE_WEB_CLIENT_ID:?Set the dedicated Google web client ID}
+  web:
+    environment:
+      FINAGENT_ENVIRONMENT: local
+      FINAGENT_WEB_AUTH_MODE: google
+      FINAGENT_GOOGLE_WEB_CLIENT_ID: ${FINAGENT_GOOGLE_WEB_CLIENT_ID:?Set the dedicated Google web client ID}
+      FINAGENT_GOOGLE_WEB_CLIENT_SECRET: ${FINAGENT_GOOGLE_WEB_CLIENT_SECRET:?Set the replacement secret privately}
+      FINAGENT_WEB_ORIGIN: http://127.0.0.1:3001
+      FINAGENT_WEB_AUTH_REDIS_URL: redis://redis:6379/2
+      FINAGENT_API_URL: http://api:8000
