@@ -84,6 +84,45 @@ def _doc_field(doc: EvidenceItem, key: str) -> dict[str, Any] | None:
     )
 
 
+def _select_document(
+    docs: list[EvidenceItem], kind: str, subject: str | None, *, single_subject: bool, today: date
+) -> EvidenceItem | None:
+    """Choose usable evidence, never whichever UUID happens to sort first.
+
+    Unscoped case uploads can be considered only for a single-subject case. All
+    documents remain in the snapshot and capability inputs, including failures;
+    this selection does not resolve conflicts or verify a document's authenticity.
+    """
+    key = "expiry_date" if kind == "PASSPORT" else "issue_date"
+
+    def rank(doc: EvidenceItem) -> tuple[bool, bool, int, str, str]:
+        content = evidence_content(doc)
+        parsed = content.get("status") == "PARSED"
+        field = _doc_field(doc, key) if parsed else None
+        value = _parse_date(field.get("value")) if field else None
+        valid = bool(field and field.get("validation_status") == "VALID" and value is not None)
+        if kind == "PROOF_OF_ADDRESS" and value is not None and value > today:
+            valid = False
+        return (
+            parsed,
+            valid,
+            value.toordinal() if valid and value is not None else 0,
+            doc.source_ref,
+            str(doc.id),
+        )
+
+    candidates = []
+    for doc in docs:
+        content = evidence_content(doc)
+        owner = content.get("customer_ref")
+        if content.get("document_type") != kind:
+            continue
+        if subject is None or (owner != subject and not (owner is None and single_subject)):
+            continue
+        candidates.append(doc)
+    return max(candidates, key=rank, default=None)
+
+
 def _checklist(facts: CaseFacts, conflicts: list[EvidenceConflict], today: date) -> list[dict[str, Any]]:
     items, out = facts.items, []
     subject = facts.alert.subject_refs[0] if facts.alert.subject_refs else None
@@ -92,7 +131,9 @@ def _checklist(facts: CaseFacts, conflicts: list[EvidenceConflict], today: date)
     docs = [i for i in items if i.source_type == "DOCUMENT_EXTRACTION"]
 
     def doc_of(kind: str) -> EvidenceItem | None:
-        return next((d for d in docs if evidence_content(d).get("document_type") == kind), None)
+        return _select_document(
+            docs, kind, subject, single_subject=len(facts.alert.subject_refs) == 1, today=today
+        )
 
     def add(item: str, state: str, detail: str, refs: list[str]) -> None:
         out.append({"item": item, "state": state, "detail": detail, "refs": refs})
@@ -152,8 +193,16 @@ def _checklist(facts: CaseFacts, conflicts: list[EvidenceConflict], today: date)
             f"source status {source_poa.get('status')}; a current proof of address is needed",
             refs,
         )
-    elif issued is None:
+    elif (
+        poa is None
+        or issued is None
+        or evidence_content(poa).get("status") != "PARSED"
+        or issue_field is None
+        or issue_field.get("validation_status") != "VALID"
+    ):
         add("PROOF_OF_ADDRESS", "UNVERIFIED", "issue date not extracted", refs)
+    elif issued > today:
+        add("PROOF_OF_ADDRESS", "UNVERIFIED", "issue date is after the review date", refs)
     else:
         age = (today - issued).days
         facts.checklist_numbers.add(Decimal(age))
