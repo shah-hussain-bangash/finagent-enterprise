@@ -1282,6 +1282,7 @@ export default function Workspace() {
           )}
           {view === "Transactions" && (
             <>
+              <p><a href="/workspace/recorded-transactions">View recorded case transactions →</a></p>
               <div className="ws-toolbar">
                 <label className="ws-search">
                   <Icon name="search" />
