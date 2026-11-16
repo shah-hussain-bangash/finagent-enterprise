@@ -771,6 +771,7 @@ export default function Workspace() {
           )}
           {view === "Review comparison" && (
             <>
+              <p><a href="/workspace/recorded-review">View recorded report changes →</a></p>
               <div className="ws-section-note"><Icon name="Review comparison" /><div><strong>Independent review design preview</strong><p>Synthetic example only. No report, verification status, or review decision is loaded.</p></div></div>
               <div className="ws-equal-columns">
                 <Card title="Sample report changes" subtitle="Select an illustrative comparison">
