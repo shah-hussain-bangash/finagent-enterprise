@@ -1,0 +1,70 @@
+import Link from "next/link";
+import { Empty, ErrorState, When } from "@/components/ui";
+import { api, ApiRequestError, listCases } from "@/lib/api";
+import { requireSession } from "@/lib/session";
+
+export const dynamic = "force-dynamic";
+export const metadata = { title: "Recorded document provenance | FinAgent Enterprise" };
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+interface DocumentSummary { document_id: string; title: string; document_type: string; current_version_no: number; status: string | null; status_reason: string | null }
+interface Field { field_id: string; field_key: string; value: string | null; origin: string; page: number | null; row: number | null; section: string | null; correction_reason: string | null; validation_status: string }
+interface Version { version_id: string; version_no: number; status: string; status_reason: string | null; created_at: string; sha256: string; downloadable: boolean }
+interface DocumentDetail { document_id: string; case_id: string; title: string; versions: Version[]; fields: Field[]; field_history: Field[] }
+
+export default async function RecordedProvenance({ searchParams }: { searchParams: Promise<{ case?: string; document?: string; cursor?: string }> }) {
+  await requireSession();
+  const params = await searchParams;
+  const selected = typeof params.case === "string" ? params.case : "";
+  const document = typeof params.document === "string" ? params.document : "";
+  const cursor = typeof params.cursor === "string" ? params.cursor : undefined;
+  const valid = UUID.test(selected);
+  let cases: Awaited<ReturnType<typeof listCases>> | null = null;
+  let caseError: ApiRequestError | null = null;
+  let documents: DocumentSummary[] | null = null;
+  let documentsError: ApiRequestError | null = null;
+  let detail: DocumentDetail | null = null;
+  let detailError: ApiRequestError | null = null;
+  try { cases = await listCases(undefined, cursor); }
+  catch (error) { if (!(error instanceof ApiRequestError)) throw error; caseError = error; }
+  if (valid) {
+    try { documents = (await api<{ items: DocumentSummary[] }>(`/api/v1/cases/${selected}/documents`)).items; }
+    catch (error) { if (!(error instanceof ApiRequestError)) throw error; documentsError = error; }
+  }
+  // Fetch only a document returned by the authorized case list.
+  if (UUID.test(document) && documents?.some((item) => item.document_id === document)) {
+    try { detail = await api<DocumentDetail>(`/api/v1/documents/${document}`); }
+    catch (error) { if (!(error instanceof ApiRequestError)) throw error; detailError = error; }
+  }
+  const link = (value: Record<string, string>) => `/workspace/recorded-provenance?${new URLSearchParams(value)}`;
+  return <section aria-labelledby="provenance-title">
+    <p><Link href="/workspace" prefetch={false}>← Back to workspace preview</Link></p>
+    <h1 id="provenance-title">Recorded document provenance</h1>
+    <div className="panel"><strong>Connected, read-only view</strong><p>Review recorded versions and field history for an accessible case. Extracted values require human verification. This view does not change documents or determine authenticity.</p></div>
+    <section className="panel"><h2>Choose an accessible case</h2>
+      {caseError && <ErrorState error={caseError} what="Cases" />}
+      {cases?.items.length === 0 && <Empty>No cases are available on this page.</Empty>}
+      {cases && cases.items.length > 0 && <ul>{cases.items.map((item) => <li key={item.case_id}><Link prefetch={false} href={link({ case: item.case_id, ...(cursor ? { cursor } : {}) })}>Case {item.case_id.slice(0, 8)}</Link> · {item.status}</li>)}</ul>}
+      {cases?.next_cursor && <p><Link href={link({ cursor: cases.next_cursor })} prefetch={false}>Next cases →</Link></p>}
+      {cursor && <p><Link href="/workspace/recorded-provenance" prefetch={false}>← First cases</Link></p>}
+    </section>
+    {selected && !valid && <p role="alert">The selected case identifier is invalid.</p>}
+    {valid && <section className="panel"><h2>Case documents</h2>
+      {documentsError && <ErrorState error={documentsError} what="Case documents" />}
+      {documents?.length === 0 && <Empty>No documents were returned for this case.</Empty>}
+      {documents && documents.length > 0 && <ul>{documents.map((item) => <li key={item.document_id}><Link prefetch={false} href={link({ case: selected, document: item.document_id, ...(cursor ? { cursor } : {}) })}>{item.title}</Link> · {item.document_type} · v{item.current_version_no} · {item.status ?? "Unknown"}{item.status_reason ? ` · ${item.status_reason}` : ""}</li>)}</ul>}
+      {document && documents && (!UUID.test(document) || !documents.some((item) => item.document_id === document)) && <p role="alert">This document was not returned for the selected case.</p>}
+      {detailError && <ErrorState error={detailError} what="Document details" />}
+    </section>}
+    {detail && detail.case_id === selected && <section className="panel"><h2>{detail.title}</h2>
+      <p>Version history includes earlier processing failures; it does not by itself describe current case gaps.</p>
+      <h3>Recorded versions</h3>
+      {detail.versions.length === 0 ? <Empty>No versions were returned.</Empty> : <ul>{detail.versions.map((v) => <li key={v.version_id}>Version {v.version_no} · {v.status}{v.status_reason ? ` · ${v.status_reason}` : ""} · <When iso={v.created_at} /> · sha256 {v.sha256.slice(0, 12)}</li>)}</ul>}
+      <h3>Current extracted fields</h3>
+      {detail.fields.length === 0 ? <Empty>No current fields were returned.</Empty> : <ul>{detail.fields.map((f) => <li key={f.field_id}><strong>{f.field_key}</strong>: {f.value ?? "Not recorded"} · {f.origin} · {f.validation_status} · {f.page ? `page ${f.page}` : f.row ? `row ${f.row}` : f.section ?? "document"}{f.correction_reason ? ` · Correction: ${f.correction_reason}` : ""}</li>)}</ul>}
+      <h3>Previous field values</h3>
+      {detail.field_history.length === 0 ? <Empty>No previous field values were returned.</Empty> : <ul>{detail.field_history.map((f) => <li key={f.field_id}>{f.field_key}: {f.value ?? "Not recorded"} · {f.origin}</li>)}</ul>}
+      <p><Link href={`/documents/${detail.document_id}`} prefetch={false}>Open document review and authorized download →</Link></p>
+      <p><Link href={`/cases/${selected}/evidence`} prefetch={false}>Open current case gaps and evidence →</Link></p>
+    </section>}
+  </section>;
+}

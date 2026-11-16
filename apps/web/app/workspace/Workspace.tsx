@@ -872,6 +872,7 @@ export default function Workspace() {
           )}
           {view === "Evidence provenance" && (
             <>
+              <p><a href="/workspace/recorded-provenance">View recorded document provenance →</a></p>
               <div className="ws-section-note"><Icon name="Evidence provenance" /><div><strong>Synthetic document provenance</strong><p>Illustrative records only. No PDF, source coordinates, or case evidence are connected.</p></div></div>
               <div className="ws-equal-columns">
                 <Card title="Sample document history" subtitle="Choose an example version">
