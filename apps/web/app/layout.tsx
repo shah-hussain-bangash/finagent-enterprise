@@ -63,6 +63,7 @@ const NAV: readonly NavItem[] = [
       "CASE_READ",
     ],
   },
+  { href: "/workspace", label: "Workspace preview", anyPermission: ["CASE_READ", "PLATFORM_OPERATE", "APPROVAL_DECIDE"] },
   {
     href: "/audit",
     label: "Audit",
@@ -150,6 +151,7 @@ export default async function RootLayout({
                   <Link
                     key={href}
                     href={href}
+                    className={href === "/workspace" ? "workspace-nav-button" : undefined}
                   >
                     {label}
                   </Link>
@@ -191,3 +193,4 @@ export default async function RootLayout({
     </html>
   );
 }
+
