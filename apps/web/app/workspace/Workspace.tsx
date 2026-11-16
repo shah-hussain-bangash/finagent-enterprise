@@ -1555,6 +1555,7 @@ export default function Workspace() {
           )}
           {view === "Agent monitor" && (
             <>
+              <p><a href="/workspace/recorded-monitor">View recorded investigation runs →</a></p>
               <div className="ws-section-note">
                 <Icon name="Agent monitor" />
                 <span>Illustrative execution trace · DEMO-001</span>
