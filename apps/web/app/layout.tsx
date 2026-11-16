@@ -23,6 +23,7 @@ interface NavItem {
 }
 
 const NAV: readonly NavItem[] = [
+  { href: "/workspace", label: "Workspace preview", anyPermission: ["CASE_READ", "PLATFORM_OPERATE", "APPROVAL_DECIDE"] },
   {
     href: "/",
     label: "Overview",
@@ -191,3 +192,4 @@ export default async function RootLayout({
     </html>
   );
 }
+
