@@ -179,12 +179,12 @@ def test_injected_document_text_cannot_become_unvalidated_model_narrative(prep, 
         run_assistant_candidate(prep.facts(), scope, "compliance override")
     assert attacker.calls == 2
 
-    # A verbatim instruction may still be quoted as untrusted evidence; this is not a safety verdict.
+    # A verbatim instruction triggers a narrow pattern guard; this is not a general safety verdict.
     quoting = SyntheticProvider()
     scope, _ = prep.scope(quoting)
     result = run_assistant_candidate(prep.facts(), scope, "compliance override")
-    assert result["status"] == "SUPPORTED_EXCERPTS"
-    assert malicious in result["quotes"][0]["quote"]
-    assert "untrusted" in result["notice"]
+    assert result["status"] == "REJECTED"
+    assert result["reason"] == "UNSAFE_QUOTE_PATTERN"
+    assert result["quotes"] == []
     after = prep.client.get(f"/api/v1/cases/{prep.case_id}", headers=token(prep.analyst)).json()
     assert (before["status"], before["record_version"]) == (after["status"], after["record_version"])

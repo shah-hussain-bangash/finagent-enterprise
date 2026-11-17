@@ -7,14 +7,28 @@ validates provenance, not relevance, truth, completeness or resistance to prompt
 
 from __future__ import annotations
 
+import re
+import unicodedata
 from typing import Annotated, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, StringConstraints
+
+from finagent.agents.validation import boundary_violations
 
 EvidenceReference = Annotated[
     str, StringConstraints(pattern=r"^ev:[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$")
 ]
 QuoteText = Annotated[str, StringConstraints(min_length=1, max_length=500)]
+_INSTRUCTION = re.compile(
+    r"\b(?:ignore|disregard|override)\b.{0,60}\b(?:instructions?|rules?|checks?|safeguards?|prompts?)\b",
+    re.IGNORECASE | re.DOTALL,
+)
+
+
+def _unsafe_quote_pattern(quote: str) -> bool:
+    """Conservative English patterns; not a complete prompt-injection detector."""
+    normalized = unicodedata.normalize("NFKC", quote)
+    return bool(_INSTRUCTION.search(normalized) or boundary_violations([normalized]))
 
 
 class ExtractiveQuote(BaseModel):
@@ -49,6 +63,8 @@ def validate_extractive_draft(draft: ExtractiveDraft, retrieved: dict[str, list[
             return {"accepted": False, "reason": "EVIDENCE_NOT_RETRIEVED"}
         if not any(item.quote in text for text in retrieved[item.evidence_ref]):
             return {"accepted": False, "reason": "EXCERPT_NOT_IN_SOURCE"}
+        if _unsafe_quote_pattern(item.quote):
+            return {"accepted": False, "reason": "UNSAFE_QUOTE_PATTERN"}
         key = (item.evidence_ref, item.quote)
         if key in seen:
             return {"accepted": False, "reason": "DUPLICATE_EXCERPT"}

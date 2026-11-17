@@ -8,7 +8,7 @@ from finagent.evaluation.assistant_grounding import evaluate_grounding_suite
 
 
 def test_synthetic_suite_scores_and_reports_its_limits() -> None:
-    path = Path(__file__).resolve().parents[1] / "fixtures" / "assistant-grounding-v1.json"
+    path = Path(__file__).resolve().parents[1] / "fixtures" / "assistant-grounding-v1_1.json"
     suite = json.loads(path.read_text(encoding="utf-8"))
     original = copy.deepcopy(suite)
     result = evaluate_grounding_suite(suite)
@@ -22,3 +22,8 @@ def test_synthetic_suite_scores_and_reports_its_limits() -> None:
     changed = evaluate_grounding_suite(altered)
     assert changed["passed"] == 11
     assert changed["dataset_sha256"] != result["dataset_sha256"]
+    original_path = Path(__file__).resolve().parents[1] / "fixtures" / "assistant-grounding-v1.json"
+    original_suite = json.loads(original_path.read_text(encoding="utf-8"))
+    original_result = evaluate_grounding_suite(original_suite)
+    assert original_result["passed"] == 11  # v1 expected the instruction-like quote to be returned
+    assert original_result["dataset_sha256"] != result["dataset_sha256"]
