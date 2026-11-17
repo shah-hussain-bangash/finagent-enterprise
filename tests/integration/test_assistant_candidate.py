@@ -141,3 +141,7 @@ def test_broad_question_requests_clarification_without_calling_model(prep, monke
     assert result["quotes"] == []
     assert result["retrieval"]["terms_used"] == 1
     assert provider.calls == 0
+    duplicate_concept = run_assistant_candidate(prep.facts(), scope, "monthly الشهري")
+    assert duplicate_concept["status"] == "NEEDS_CLARIFICATION"
+    assert duplicate_concept["retrieval"]["terms_used"] == 1
+    assert provider.calls == 0

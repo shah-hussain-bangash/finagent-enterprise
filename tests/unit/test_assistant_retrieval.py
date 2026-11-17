@@ -36,6 +36,9 @@ def test_bilingual_aliases_match_in_both_directions_without_double_counting() ->
     assert english_query["bilingual_aliases_used"] is True
     only_one_concept = item("one", "monthly الشهري")
     assert retrieve_snapshot_excerpts({"items": [only_one_concept]}, "monthly turnover")["matches"] == []
+    duplicate_concept = retrieve_snapshot_excerpts({"items": [only_one_concept]}, "monthly الشهري")
+    assert duplicate_concept["terms_used"] == 1
+    assert duplicate_concept["top_matched_terms"] == 1
 
 
 def test_terms_may_match_different_fields_but_never_different_records() -> None:

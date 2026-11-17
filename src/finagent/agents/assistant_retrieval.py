@@ -9,13 +9,14 @@ from finagent.services.evidence_service.search import MAX_MATCHES, search_curren
 
 STOPWORDS = frozenset({"what", "which", "when", "where", "from", "that", "does", "have", "with", "about", "the", "and", "for", "are", "was"})
 MAX_TERMS = 5
-BILINGUAL_LEXICON_VERSION = "assistant-keywords-0.1-SYNTHETIC"
+BILINGUAL_LEXICON_VERSION = "assistant-keywords-0.2-SYNTHETIC"
 # Deliberately small, hand-authored exact aliases for development; not a translation service.
 _ALIASES = {
     "monthly": ("الشهري",), "الشهري": ("monthly",),
     "turnover": ("الإيراد",), "الإيراد": ("turnover",),
     "expected": ("المتوقع",), "المتوقع": ("expected",),
 }
+_CANONICAL = {"الشهري": "monthly", "الإيراد": "turnover", "المتوقع": "expected"}
 
 
 def retrieve_snapshot_excerpts(evidence: dict[str, Any], question: str) -> dict[str, Any]:
@@ -25,7 +26,7 @@ def retrieve_snapshot_excerpts(evidence: dict[str, Any], question: str) -> dict[
     synthetic bilingual keyword list expands selected terms. Each term counts once, even
     if its alias also matches. Require two query words when two or more are available.
     """
-    words = list(dict.fromkeys(word for word in re.findall(r"[^\W_]+", question.casefold()) if len(word) >= 3 and word not in STOPWORDS))
+    words = list(dict.fromkeys(_CANONICAL.get(word, word) for word in re.findall(r"[^\W_]+", question.casefold()) if len(word) >= 3 and word not in STOPWORDS))
     terms = words[:MAX_TERMS]
     if not terms:
         return {"matches": [], "search_limited": False, "terms_used": 0, "matching_records": 0, "top_matched_terms": 0, "top_tie_count": 0, "bilingual_aliases_used": False, "lexicon_version": BILINGUAL_LEXICON_VERSION}
