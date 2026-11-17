@@ -53,7 +53,7 @@ def test_candidate_is_disabled_by_default(prep) -> None:  # type: ignore[no-unty
     provider = SyntheticProvider()
     scope, _ = prep.scope(provider)
     with pytest.raises(CapabilityUnavailableError):
-        run_assistant_candidate(prep.facts(), scope, "customer")
+        run_assistant_candidate(prep.facts(), scope, "customer test")
     assert provider.calls == 0
 
 
@@ -63,11 +63,11 @@ def test_candidate_accepts_only_snapshot_excerpts_and_abstains_on_missing(prep, 
     scope, _ = prep.scope(provider)
     facts = prep.facts()
     facts.items = []  # Caller-provided evidence is ignored; the stored snapshot is reloaded.
-    result = run_assistant_candidate(facts, scope, "customer")
+    result = run_assistant_candidate(facts, scope, "customer test")
     assert result["status"] == "SUPPORTED_EXCERPTS"
     assert result["snapshot_id"] == str(prep.snapshot_id)
     assert result["quotes"] and provider.calls == 1
-    missing = run_assistant_candidate(prep.facts(), scope, "zzzxqplm")
+    missing = run_assistant_candidate(prep.facts(), scope, "zzzxqplm yyyqvblm")
     assert missing["status"] == "INSUFFICIENT_EVIDENCE" and provider.calls == 1
 
 
@@ -75,12 +75,12 @@ def test_candidate_rejects_invented_reference_and_tenant_mismatch(prep, monkeypa
     enable_candidate(monkeypatch)
     provider = SyntheticProvider(invent_reference=True)
     scope, _ = prep.scope(provider)
-    result = run_assistant_candidate(prep.facts(), scope, "customer")
+    result = run_assistant_candidate(prep.facts(), scope, "customer test")
     assert result["status"] == "REJECTED" and result["quotes"] == []
     facts = prep.facts()
     facts.tenant_id = uuid.uuid4()
     with pytest.raises(PermissionError):
-        run_assistant_candidate(facts, scope, "customer")
+        run_assistant_candidate(facts, scope, "customer test")
     assert provider.calls == 1
 
 
@@ -88,7 +88,7 @@ def test_candidate_rejects_fabricated_quote_from_real_source(prep, monkeypatch) 
     enable_candidate(monkeypatch)
     provider = SyntheticProvider(invent_quote=True)
     scope, _ = prep.scope(provider)
-    result = run_assistant_candidate(prep.facts(), scope, "customer")
+    result = run_assistant_candidate(prep.facts(), scope, "customer test")
     assert result["status"] == "REJECTED"
     assert result["reason"] == "EXCERPT_NOT_IN_SOURCE"
     assert result["quotes"] == []
@@ -99,7 +99,7 @@ def test_candidate_rejects_unstructured_narrative_after_repair(prep, monkeypatch
     provider = SyntheticProvider(add_prose=True)
     scope, _ = prep.scope(provider)
     with pytest.raises(ModelOutputInvalidError):
-        run_assistant_candidate(prep.facts(), scope, "customer")
+        run_assistant_candidate(prep.facts(), scope, "customer test")
     assert provider.calls == 2  # initial attempt and one bounded repair
 
 
@@ -111,8 +111,18 @@ def test_unassigned_and_cross_tenant_principals_cannot_invoke_provider(prep, mon
     assigned = scope.principal
     scope.principal = replace(assigned, principal_id=uuid.uuid4(), delegations=(), break_glass_grant_id=None)
     with pytest.raises(PermissionError):
-        run_assistant_candidate(facts, scope, "customer")
+        run_assistant_candidate(facts, scope, "customer test")
     scope.principal = replace(assigned, tenant_id=uuid.uuid4(), delegations=(), break_glass_grant_id=None)
     with pytest.raises(PermissionError):
-        run_assistant_candidate(facts, scope, "customer")
+        run_assistant_candidate(facts, scope, "customer test")
+    assert provider.calls == 0
+
+
+def test_broad_question_requests_clarification_without_calling_model(prep, monkeypatch) -> None:  # type: ignore[no-untyped-def]
+    enable_candidate(monkeypatch)
+    provider = SyntheticProvider()
+    scope, _ = prep.scope(provider)
+    result = run_assistant_candidate(prep.facts(), scope, "customer")
+    assert result["status"] == "NEEDS_CLARIFICATION"
+    assert result["quotes"] == []
     assert provider.calls == 0

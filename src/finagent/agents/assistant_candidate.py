@@ -44,6 +44,11 @@ def run_assistant_candidate(facts: CaseFacts, scope: RunScope, question: str) ->
 
     evidence = {"items": [item_view(item) for item in facts.items if item.source_type in capability.permitted_source_types]}
     search = retrieve_snapshot_excerpts(evidence, query)
+    if search["terms_used"] < 2:
+        return {
+            "status": "NEEDS_CLARIFICATION", "quotes": [], "search_limited": search["search_limited"],
+            "notice": "Ask a more specific question with at least two meaningful words. No model was called.",
+        }
     retrieved: dict[str, list[str]] = {}
     for match in search["matches"]:
         retrieved.setdefault(match["evidence_ref"], []).append(match["excerpt"])
