@@ -807,6 +807,7 @@ export default function Workspace() {
           )}
           {view === "AI evaluation lab" && (
             <>
+              <p><a href="/workspace/evaluation-comparison">Compare recorded evaluation runs →</a></p>
               <div className="ws-section-note"><Icon name="AI evaluation lab" /><div><strong>Evaluation design preview</strong><p>Sample scenarios only. No tests are run and no results are generated here.</p></div></div>
               <div className="ws-equal-columns">
                 <Card title="Synthetic evaluation scenarios" subtitle="Choose a proposed check">
