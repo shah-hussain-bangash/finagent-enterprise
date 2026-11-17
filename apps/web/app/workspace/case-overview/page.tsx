@@ -8,7 +8,7 @@ export const dynamic = "force-dynamic";
 export const metadata = { title: "Case investigation overview | FinAgent Enterprise" };
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 interface CaseDetail { case_id: string; status: string; priority: string; alert_type: string; due_at: string | null; assigned_analyst_id: string | null; blocked_reason: string | null }
-interface Evidence { items: { evidence_item_id: string; source_type: string; freshness: string; completeness: string }[]; gaps: { code: string; severity: string; detail: string }[] }
+interface Evidence { items: { evidence_item_id: string; source_type: string; freshness: string; completeness: string }[]; gaps: { code: string; severity: string; detail: string; source_type: string; source_ref: string | null }[] }
 
 export default async function CaseOverview({ searchParams }: { searchParams: Promise<{ case?: string; cursor?: string }> }) {
   await requireSession();
@@ -50,7 +50,7 @@ export default async function CaseOverview({ searchParams }: { searchParams: Pro
       <section className="panel"><h2>Current evidence and gaps</h2>
         {evidence?.error && <ErrorState error={evidence.error} what="Evidence" />}
         {evidence?.data && <><p>{evidence.data.items.length} current evidence source(s) · {evidence.data.gaps.length} checklist gap(s)</p>
-          {evidence.data.gaps.length > 0 && <ul>{evidence.data.gaps.map((gap, index) => <li key={index}>{gap.severity} · {gap.code}: {gap.detail}</li>)}</ul>}
+          {evidence.data.gaps.length > 0 && <><p>Checklist gaps are reported per source or document record. A document processing warning does not by itself identify the document selected for investigation.</p><ul>{evidence.data.gaps.map((gap, index) => <li key={index}>{gap.severity} · {gap.code}: {gap.detail}<br /><small>Source: {gap.source_type}{gap.source_ref ? ` · ${gap.source_ref}` : " · Reference not recorded"}</small></li>)}</ul></>}
           <p><Link prefetch={false} href={link("/workspace/evidence-briefing")}>Review evidence briefing →</Link></p></>}
       </section>
       <section className="panel"><h2>Previously recorded risk indicators</h2>

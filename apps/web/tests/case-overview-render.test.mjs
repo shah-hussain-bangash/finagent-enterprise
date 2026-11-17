@@ -18,7 +18,7 @@ function loadPage(deny = false) {
     "@/lib/api": { ApiRequestError: class extends Error {}, listCases: async () => ({ items: [], next_cursor: null }), load: async (path) => {
       calls.push(path);
       if (path.endsWith(caseId)) return deny ? { data: null, error: {} } : { data: { case_id: caseId, status: "INVESTIGATING", priority: "HIGH", alert_type: "AML", due_at: null, assigned_analyst_id: null, blocked_reason: null }, error: null };
-      if (path.endsWith("/evidence")) return { data: { items: [], gaps: [{ code: "MISSING", severity: "BLOCKING", detail: "Document missing" }] }, error: null };
+      if (path.endsWith("/evidence")) return { data: { items: [], gaps: [{ code: "MISSING", severity: "BLOCKING", detail: "Document missing", source_type: "DOCUMENT_EXTRACTION", source_ref: "doc-example" }] }, error: null };
       return { data: { items: [{ output_id: "out1", snapshot_id: "snapshot-1", findings: [{ claim_id: "sample", claim: "Synthetic indicator", support_status: "SUPPORTED" }] }] }, error: null };
     } },
   };
@@ -31,7 +31,7 @@ function loadPage(deny = false) {
 test("brings recorded evidence, indicator snapshot and case links together", async () => {
   const { page } = loadPage();
   const html = renderToStaticMarkup(await page({ searchParams: Promise.resolve({ case: caseId }) }));
-  for (const expected of ["INVESTIGATING", "Document missing", "Synthetic indicator", "snapshot-1", `/workspace/recorded-transactions?case=${caseId}`]) assert.ok(html.includes(expected));
+  for (const expected of ["INVESTIGATING", "Document missing", "DOCUMENT_EXTRACTION", "doc-example", "does not by itself identify", "Synthetic indicator", "snapshot-1", `/workspace/recorded-transactions?case=${caseId}`]) assert.ok(html.includes(expected));
 });
 test("does not request evidence or agent outputs after case access fails", async () => {
   const { page, calls } = loadPage(true);

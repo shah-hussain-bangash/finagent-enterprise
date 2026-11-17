@@ -7,7 +7,7 @@ export const dynamic = "force-dynamic";
 export const metadata = { title: "Case evidence briefing | FinAgent Enterprise" };
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 interface Item { evidence_item_id: string; source_type: string; source_ref: string; source_system: string; version_no: number; freshness: string; completeness: string; as_of: string | null }
-interface Gap { code: string; severity: string; source_type: string; detail: string }
+interface Gap { code: string; severity: string; source_type: string; source_ref: string | null; detail: string }
 interface Conflict { conflict_id: string; field_key: string; status: string }
 interface Evidence { items: Item[]; gaps: Gap[]; conflicts: Conflict[]; latest_snapshot: { snapshot_id: string; created_at: string } | null }
 
@@ -47,7 +47,7 @@ export default async function EvidenceBriefing({ searchParams }: { searchParams:
           {evidence.items.length === 0 ? <Empty>No current evidence was returned. This does not establish that no evidence exists.</Empty> : <ul>{evidence.items.map((item) => <li key={item.evidence_item_id}><strong>{item.source_type}</strong> · {item.source_ref} · {item.source_system} · version {item.version_no} · {item.freshness} / {item.completeness} · as of <When iso={item.as_of} /> · evidence ID {item.evidence_item_id}</li>)}</ul>}
         </div>
         <div className="panel"><h3>Recorded evidence gaps</h3>
-          {evidence.gaps.length === 0 ? <Empty>No gaps were returned by the current evidence checklist. This is not a finding that the case is complete or risk-free.</Empty> : <ul>{evidence.gaps.map((gap, index) => <li key={index}><strong>{gap.severity}: {gap.code}</strong> · {gap.source_type} · {gap.detail}</li>)}</ul>}
+          {evidence.gaps.length === 0 ? <Empty>No gaps were returned by the current evidence checklist. This is not a finding that the case is complete or risk-free.</Empty> : <><p>These warnings are associated with individual source records; they do not by themselves identify the document selected for investigation.</p><ul>{evidence.gaps.map((gap, index) => <li key={index}><strong>{gap.severity}: {gap.code}</strong> · {gap.source_type}{gap.source_ref ? ` · ${gap.source_ref}` : " · Reference not recorded"} · {gap.detail}</li>)}</ul></>}
           <h3>Recorded conflicts</h3>
           {evidence.conflicts.length === 0 ? <Empty>No conflicts were returned.</Empty> : <ul>{evidence.conflicts.map((conflict) => <li key={conflict.conflict_id}>{conflict.field_key} · {conflict.status} · conflict ID {conflict.conflict_id}</li>)}</ul>}
         </div>

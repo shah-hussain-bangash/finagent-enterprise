@@ -23,9 +23,9 @@ function loadPage(evidence) {
   return exports.default;
 }
 test("shows source identifiers, gaps and snapshot limitations", async () => {
-  const evidence = { items: [{ evidence_item_id: "evidence-1", source_type: "TRANSACTIONS", source_ref: "source-1", source_system: "synthetic", version_no: 2, freshness: "STALE", completeness: "INCOMPLETE", as_of: null }], gaps: [{ severity: "BLOCKING", code: "MISSING", source_type: "KYC", detail: "Document missing" }], conflicts: [], latest_snapshot: { snapshot_id: "snapshot-1", created_at: "2026-01-01" } };
+  const evidence = { items: [{ evidence_item_id: "evidence-1", source_type: "TRANSACTIONS", source_ref: "source-1", source_system: "synthetic", version_no: 2, freshness: "STALE", completeness: "INCOMPLETE", as_of: null }], gaps: [{ severity: "BLOCKING", code: "MISSING", source_type: "KYC", source_ref: "doc-1", detail: "Document missing" }], conflicts: [], latest_snapshot: { snapshot_id: "snapshot-1", created_at: "2026-01-01" } };
   const html = renderToStaticMarkup(await loadPage(evidence)({ searchParams: Promise.resolve({ case: caseId }) }));
-  for (const expected of ["evidence-1", "STALE", "INCOMPLETE", "Document missing", "snapshot-1", "not represented as snapshot contents", "does not use an AI model"]) assert.ok(html.includes(expected));
+  for (const expected of ["evidence-1", "STALE", "INCOMPLETE", "Document missing", "doc-1", "do not by themselves identify", "snapshot-1", "not represented as snapshot contents", "does not use an AI model"]) assert.ok(html.includes(expected));
 });
 test("does not claim missing evidence means no risk", async () => {
   const html = renderToStaticMarkup(await loadPage({ items: [], gaps: [], conflicts: [], latest_snapshot: null })({ searchParams: Promise.resolve({ case: caseId }) }));
