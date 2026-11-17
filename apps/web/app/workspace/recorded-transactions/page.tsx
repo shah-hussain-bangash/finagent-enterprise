@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Empty, ErrorState, When } from "@/components/ui";
 import { api, ApiRequestError, listCases } from "@/lib/api";
 import { requireSession } from "@/lib/session";
+import { summarizePosted } from "@/lib/transaction-summary";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Recorded transactions | FinAgent Enterprise" };
@@ -78,10 +79,15 @@ export default async function RecordedTransactionsPage({ searchParams }: {
             if (!Number.isFinite(second)) return -1;
             return first - second;
           });
+          const summary = summarizePosted(filtered);
           return <article className="panel" key={source.evidence_item_id}>
             <h3>Evidence source: {source.source_ref}</h3>
             <p>{source.source_system} · Version {source.version_no} · {source.freshness} / {source.completeness} · As of <When iso={source.as_of} /></p>
             <p>Ordered by booking time, oldest first. Unavailable dates appear last. Each evidence source is shown separately.</p>
+            <h4>Filtered posted amounts by currency and direction</h4>
+            <p>Calculated from the filtered rows in this evidence source; not a balance or a risk assessment. Evidence may be incomplete.</p>
+            {summary.totals.length ? <ul>{summary.totals.map((total) => <li key={`${total.currency}-${total.direction}`}>{total.currency} · {total.direction}: {total.amount} ({total.count} posted transaction(s))</li>)}</ul> : <p>No summarizable posted amounts match the filters.</p>}
+            <p>Pending or reversed rows excluded: {summary.excluded}. Rows not summarized due to unrecognized status, currency, direction or amount: {summary.unrecognized}.</p>
             {filtered.length === 0 ? <Empty>{rows.length ? "No recorded transactions match this search." : "This evidence source contains no transaction rows."}</Empty> :
               <div style={{ overflowX: "auto" }}><table><caption>Transactions from this evidence source</caption><thead><tr><th>Transaction</th><th>Booked</th><th>Counterparty</th><th>Direction</th><th>Amount</th><th>Status</th></tr></thead>
                 <tbody>{filtered.map((row, index) => <tr key={`${row.source_transaction_id}-${index}`}><td>{row.source_transaction_id}</td><td>{row.booking_time}</td><td>{row.counterparty_ref ?? "Not recorded"}</td><td>{row.direction}</td><td>{row.currency} {row.amount}</td><td>{row.status}</td></tr>)}</tbody></table></div>}

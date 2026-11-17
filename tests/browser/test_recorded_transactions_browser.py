@@ -32,6 +32,7 @@ def test_case_transactions_are_visible_only_to_assigned_analyst(stack, make_clie
             main = page.locator("main")
             assert main.get_by_text("Connected, read-only view").count() == 1
             assert main.get_by_role("table", name="Transactions from this evidence source").count() >= 1
+            assert main.get_by_role("heading", name="Filtered posted amounts by currency and direction").count() >= 1
             assert "COMPLETE" in main.inner_text()
             page.get_by_label("Search transaction ID, counterparty, date, direction or status").fill("no-such-synthetic-transaction")
             page.get_by_role("button", name="Apply filters").click()
