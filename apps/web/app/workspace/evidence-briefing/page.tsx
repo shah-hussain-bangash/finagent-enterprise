@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Empty, ErrorState, When } from "@/components/ui";
 import { api, ApiRequestError, listCases } from "@/lib/api";
 import { requireSession } from "@/lib/session";
+import { EvidenceSearch } from "./EvidenceSearch";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Case evidence briefing | FinAgent Enterprise" };
@@ -43,6 +44,7 @@ export default async function EvidenceBriefing({ searchParams }: { searchParams:
     {validCase && <section><h2>Briefing for case {selected.slice(0, 8)}</h2>
       {evidenceError && <ErrorState error={evidenceError} what="Case evidence" />}
       {evidence && <>
+        <EvidenceSearch key={selected} caseId={selected} />
         <div className="panel"><h3>Current evidence sources</h3>
           {evidence.items.length === 0 ? <Empty>No current evidence was returned. This does not establish that no evidence exists.</Empty> : <ul>{evidence.items.map((item) => <li key={item.evidence_item_id}><strong>{item.source_type}</strong> · {item.source_ref} · {item.source_system} · version {item.version_no} · {item.freshness} / {item.completeness} · as of <When iso={item.as_of} /> · evidence ID {item.evidence_item_id}</li>)}</ul>}
         </div>

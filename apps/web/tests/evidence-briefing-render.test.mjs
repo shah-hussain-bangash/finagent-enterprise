@@ -14,6 +14,7 @@ function loadPage(evidence) {
     "next/link": { __esModule: true, default: ({ href, children }) => React.createElement("a", { href }, children) },
     "@/components/ui": { Empty: ({ children }) => React.createElement("p", null, children), ErrorState: () => React.createElement("p", null, "Access unavailable"), When: ({ iso }) => React.createElement("time", null, iso) },
     "@/lib/session": { requireSession: async () => { authenticated = true; } },
+    "./EvidenceSearch": { EvidenceSearch: () => React.createElement("p", null, "Search current case evidence") },
     "@/lib/api": { ApiRequestError: class extends Error {}, listCases: async () => ({ items: [], next_cursor: null }), api: async (path) => { assert.ok(authenticated); assert.equal(path, `/api/v1/cases/${caseId}/evidence`); return evidence; } },
   };
   const source = readFileSync(new URL("../app/workspace/evidence-briefing/page.tsx", import.meta.url), "utf8");

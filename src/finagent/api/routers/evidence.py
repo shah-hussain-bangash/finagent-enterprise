@@ -13,7 +13,7 @@ from typing import Annotated, Any
 
 from fastapi import APIRouter, Header, Query, Request, Response
 from fastapi.responses import JSONResponse
-from pydantic import ValidationError
+from pydantic import BaseModel, ConfigDict, Field, ValidationError, field_validator
 from starlette.concurrency import run_in_threadpool
 
 from finagent.api.deps import AppSettings, Factory, IdempotencyKey, Principal, charge
@@ -28,6 +28,7 @@ from finagent.services.document_service.corrections import FieldCorrection
 from finagent.services.document_service.ingest import DocumentPorts, UploadMeta
 from finagent.services.evidence_service import conflicts as conflict_service
 from finagent.services.evidence_service import queries as evidence_queries
+from finagent.services.evidence_service.search import search_current_evidence
 from finagent.services.evidence_service.conflicts import ConflictResolution
 from finagent.services.evidence_service.queries import snapshot_view
 from finagent.services.evidence_service.snapshots import create_snapshot
@@ -171,6 +172,30 @@ def get_case_evidence(
 ) -> dict[str, Any]:
     with transaction(factory) as s:
         return evidence_queries.case_evidence(s, ctx, case_id, _max_age(settings))
+
+
+class EvidenceSearchRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid", frozen=True)
+    query: str = Field(min_length=3, max_length=80)
+
+    @field_validator("query")
+    @classmethod
+    def trim_query(cls, value: str) -> str:
+        value = value.strip()
+        if len(value) < 3:
+            raise ValueError("Search text must contain at least three non-space characters")
+        return value
+
+
+@evidence.post("/cases/{case_id}/evidence-search", tags=["evidence"])
+def search_case_evidence(
+    case_id: str, body: EvidenceSearchRequest, request: Request, ctx: Principal, factory: Factory, settings: AppSettings
+) -> dict[str, Any]:
+    """Literal retrieval from current evidence under the existing case-read scope."""
+    charge(request, ctx, 3)
+    with transaction(factory) as s:
+        authorized = evidence_queries.case_evidence(s, ctx, case_id, _max_age(settings))
+        return search_current_evidence(authorized, body.query)
 
 
 @evidence.get("/cases/{case_id}/snapshots", tags=["evidence"])

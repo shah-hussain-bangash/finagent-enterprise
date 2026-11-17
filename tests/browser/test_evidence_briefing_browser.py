@@ -1,5 +1,7 @@
 """Exercise the connected briefing with a disposable synthetic case."""
 
+import re
+
 import pytest
 
 from tests.agent_helpers import prepared_case
@@ -36,6 +38,11 @@ def test_briefing_requires_case_access(stack, make_client, make_settings, token,
             assert "TRANSACTIONS" in main.inner_text()
             assert "does not use an AI model" in main.inner_text()
             assert main.get_by_role("link", name="Open case evidence and source details").count() == 1
+            page.get_by_label("Search text (3–80 characters)").fill("customer")
+            page.get_by_role("button", name="Search evidence").click()
+            main.get_by_text(re.compile(r"\d+ match\(es\)")).wait_for(timeout=30_000)
+            assert "ev:" in main.inner_text()
+            assert "customer" not in page.url
             other = "a.analyst2@synthetic" if prep.analyst == "a.analyst1@synthetic" else "a.analyst1@synthetic"
             other_page = browser.new_page()
             sign_in(other_page, web, other)
