@@ -74,5 +74,12 @@ def test_document_provenance_requires_case_access(stack, make_client, make_setti
             sign_in(other_page, web, other)
             other_page.goto(path)
             assert other_page.locator("main").get_by_role("heading", name="Recorded versions").count() == 0
+            snapshot_path = f"{web}/workspace/snapshot-selection?case={prep.case_id}&output={result.output_id}"
+            other_page.goto(snapshot_path)
+            assert str(prep.snapshot_id) not in other_page.locator("main").inner_text()
+            tenant_page = browser.new_page()
+            sign_in(tenant_page, web, "b.supervisor1@synthetic")
+            tenant_page.goto(snapshot_path)
+            assert str(prep.snapshot_id) not in tenant_page.locator("main").inner_text()
         finally:
             browser.close()
