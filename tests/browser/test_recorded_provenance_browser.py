@@ -62,6 +62,13 @@ def test_document_provenance_requires_case_access(stack, make_client, make_setti
             assert "kyc-document-selection-0.1-SYNTHETIC" in main.inner_text()
             assert "Selection does not verify authenticity" in main.inner_text()
             assert main.get_by_role("link", name="Open current case gaps and evidence").count() == 1
+            main.get_by_role("link", name="Inspect this recorded selection in its snapshot").first.click()
+            page.get_by_role("heading", name="Recorded snapshot document selection").wait_for(timeout=30_000)
+            assert "Recorded snapshot document selection" in page.locator("main").inner_text()
+            assert str(prep.snapshot_id) in page.locator("main").inner_text()
+            for selected in selection["items"]:
+                if selected["selection"] == "SELECTED":
+                    assert selected["evidence_ref"] in page.locator("main").inner_text()
             other = "a.analyst2@synthetic" if prep.analyst == "a.analyst1@synthetic" else "a.analyst1@synthetic"
             other_page = browser.new_page()
             sign_in(other_page, web, other)
