@@ -10,6 +10,7 @@ interface DocumentSummary { document_id: string; title: string; document_type: s
 interface Field { field_id: string; field_key: string; value: string | null; origin: string; page: number | null; row: number | null; section: string | null; correction_reason: string | null; validation_status: string }
 interface Version { version_id: string; version_no: number; status: string; status_reason: string | null; created_at: string; sha256: string; downloadable: boolean }
 interface DocumentDetail { document_id: string; case_id: string; title: string; versions: Version[]; fields: Field[]; field_history: Field[] }
+interface KycOutput { output_id: string; capability_id: string; status: string; snapshot_id: string; created_at: string; findings: { claim_id: string; claim: string; claim_type: string; support_status: string; evidence_refs: string[] }[] }
 
 export default async function RecordedProvenance({ searchParams }: { searchParams: Promise<{ case?: string; document?: string; cursor?: string }> }) {
   await requireSession();
@@ -22,6 +23,8 @@ export default async function RecordedProvenance({ searchParams }: { searchParam
   let caseError: ApiRequestError | null = null;
   let documents: DocumentSummary[] | null = null;
   let documentsError: ApiRequestError | null = null;
+  let kycOutputs: KycOutput[] | null = null;
+  let kycError: ApiRequestError | null = null;
   let detail: DocumentDetail | null = null;
   let detailError: ApiRequestError | null = null;
   try { cases = await listCases(undefined, cursor); }
@@ -29,6 +32,10 @@ export default async function RecordedProvenance({ searchParams }: { searchParam
   if (valid) {
     try { documents = (await api<{ items: DocumentSummary[] }>(`/api/v1/cases/${selected}/documents`)).items; }
     catch (error) { if (!(error instanceof ApiRequestError)) throw error; documentsError = error; }
+    if (documents) {
+      try { kycOutputs = (await api<{ items: KycOutput[] }>(`/api/v1/cases/${selected}/agent-outputs`)).items.filter((item) => item.capability_id === "AG-KYC"); }
+      catch (error) { if (!(error instanceof ApiRequestError)) throw error; kycError = error; }
+    }
   }
   // Fetch only a document returned by the authorized case list.
   if (UUID.test(document) && documents?.some((item) => item.document_id === document)) {
@@ -54,6 +61,16 @@ export default async function RecordedProvenance({ searchParams }: { searchParam
       {documents && documents.length > 0 && <ul>{documents.map((item) => <li key={item.document_id}><Link prefetch={false} href={link({ case: selected, document: item.document_id, ...(cursor ? { cursor } : {}) })}>{item.title}</Link> · {item.document_type} · v{item.current_version_no} · {item.status ?? "Unknown"}{item.status_reason ? ` · ${item.status_reason}` : ""}</li>)}</ul>}
       {document && documents && (!UUID.test(document) || !documents.some((item) => item.document_id === document)) && <p role="alert">This document was not returned for the selected case.</p>}
       {detailError && <ErrorState error={detailError} what="Document details" />}
+    </section>}
+    {documents && <section className="panel"><h2>Recorded KYC checklist findings</h2>
+      <p>These findings and references belong to their recorded snapshots; they may not describe current documents. A reference alone does not establish which document was selected or verify its authenticity.</p>
+      {kycError && <ErrorState error={kycError} what="Recorded KYC findings" />}
+      {kycOutputs?.length === 0 && <Empty>No recorded KYC outputs were returned.</Empty>}
+      {kycOutputs?.map((output) => <article key={output.output_id}><h3>KYC output · {output.status}</h3>
+        <p>Recorded <When iso={output.created_at} /> · Evidence snapshot: {output.snapshot_id}</p>
+        {!Array.isArray(output.findings) || output.findings.length === 0 ? <Empty>No findings were returned for this output.</Empty> : <ul>{output.findings.map((finding, index) => <li key={`${finding.claim_id}-${index}`}><strong>{finding.claim_type} · {finding.support_status}</strong>: {finding.claim}<br /><small>Evidence references: {Array.isArray(finding.evidence_refs) && finding.evidence_refs.length ? finding.evidence_refs.join(", ") : "None recorded"}</small></li>)}</ul>}
+      </article>)}
+      <p><Link href={`/cases/${selected}/agents`} prefetch={false}>Open complete recorded agent findings →</Link></p>
     </section>}
     {detail && detail.case_id === selected && <section className="panel"><h2>{detail.title}</h2>
       <p>Version history includes earlier processing failures; it does not by itself describe current case gaps.</p>

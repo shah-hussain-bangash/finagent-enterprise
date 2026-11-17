@@ -2,6 +2,7 @@
 
 import pytest
 
+from finagent.agents.runner import run_simple
 from tests.agent_helpers import prepared_case
 from tests.browser.test_ui_journey import sign_in, stack  # noqa: F401
 
@@ -18,6 +19,8 @@ def test_document_provenance_requires_case_access(stack, make_client, make_setti
     from playwright.sync_api import sync_playwright
 
     prep = prepared_case(make_client(bank_base_url=bank.url), token, make_settings(bank_base_url=bank.url))
+    scope, _ = prep.scope()
+    run_simple("AG-KYC", prep.facts(), scope)
     response = prep.client.get(f"/api/v1/cases/{prep.case_id}/documents", headers=token(prep.analyst))
     assert response.status_code == 200
     documents = response.json()["items"]
@@ -36,6 +39,9 @@ def test_document_provenance_requires_case_access(stack, make_client, make_setti
             main = page.locator("main")
             assert main.get_by_role("heading", name="Recorded versions").count() == 1
             assert main.get_by_role("heading", name="Current extracted fields").count() == 1
+            assert main.get_by_role("heading", name="Recorded KYC checklist findings").count() == 1
+            assert "Checklist item" in main.inner_text()
+            assert str(prep.snapshot_id) in main.inner_text()
             assert main.get_by_role("link", name="Open current case gaps and evidence").count() == 1
             other = "a.analyst2@synthetic" if prep.analyst == "a.analyst1@synthetic" else "a.analyst1@synthetic"
             other_page = browser.new_page()
