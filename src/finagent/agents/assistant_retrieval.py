@@ -12,7 +12,7 @@ MAX_TERMS = 5
 
 
 def retrieve_snapshot_excerpts(evidence: dict[str, Any], question: str) -> dict[str, Any]:
-    """Match up to five distinct query words within each source field.
+    """Match up to five distinct query words within each evidence record.
 
     This lexical fallback has no semantic or translation capability. Require at least two
     query words when two or more are available; all omissions and limits remain explicit.
@@ -21,16 +21,16 @@ def retrieve_snapshot_excerpts(evidence: dict[str, Any], question: str) -> dict[
     terms = words[:MAX_TERMS]
     if not terms:
         return {"matches": [], "search_limited": False, "terms_used": 0}
-    grouped: dict[tuple[str, str], dict[str, Any]] = {}
+    grouped: dict[str, dict[str, Any]] = {}
     limited = len(words) > MAX_TERMS
     for term in terms:
         result = search_current_evidence(evidence, term)
         limited = limited or result["search_limited"]
         for match in result["matches"]:
-            key = (match["evidence_ref"], match["field_path"])
+            key = match["evidence_ref"]
             group = grouped.setdefault(key, {"terms": set(), "excerpts": []})
             group["terms"].add(term)
-            if not any(entry["excerpt"] == match["excerpt"] for entry in group["excerpts"]):
+            if not any(entry["field_path"] == match["field_path"] and entry["excerpt"] == match["excerpt"] for entry in group["excerpts"]):
                 group["excerpts"].append(match)
     minimum = min(2, len(terms))
     ranked = sorted((value for value in grouped.values() if len(value["terms"]) >= minimum), key=lambda value: -len(value["terms"]))
