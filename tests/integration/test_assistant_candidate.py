@@ -33,10 +33,12 @@ class SyntheticProvider:
         self.invent_reference = invent_reference
         self.invent_quote = invent_quote
         self.add_prose = add_prose
+        self.seen_evidence_refs = set()
 
     def complete(self, request):  # type: ignore[no-untyped-def]
         self.calls += 1
         payload = json.loads(request.user.partition("\n<repair>")[0])
+        self.seen_evidence_refs = {item["ref"] for item in payload["evidence"]["evidence_refs"]}
         first = payload["facts"]["retrieved_excerpts"][0]
         ref = "ev:aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa" if self.invent_reference else first["evidence_ref"]
         quote = "A completely fabricated claim" if self.invent_quote else first["excerpt"].strip()
@@ -57,6 +59,13 @@ def enable_candidate(monkeypatch):  # type: ignore[no-untyped-def]
     monkeypatch.setattr(registry, "CAPABILITIES", MappingProxyType(caps))
 
 
+def run_with_selection(facts, scope, question):  # type: ignore[no-untyped-def]
+    result = run_assistant_candidate(facts, scope, question)
+    if result["status"] == "NEEDS_EVIDENCE_SELECTION":
+        return run_assistant_candidate(facts, scope, question, selected_evidence_refs=[result["choices"][0]["evidence_ref"]])
+    return result
+
+
 def test_candidate_is_disabled_by_default(prep) -> None:  # type: ignore[no-untyped-def]
     provider = SyntheticProvider()
     scope, _ = prep.scope(provider)
@@ -72,7 +81,7 @@ def test_candidate_accepts_only_snapshot_excerpts_and_abstains_on_missing(prep, 
     facts = prep.facts()
     original_sources = {f"ev:{item.id}": item for item in facts.items}
     facts.items = []  # Caller-provided evidence is ignored; the stored snapshot is reloaded.
-    result = run_assistant_candidate(facts, scope, "customer test")
+    result = run_with_selection(facts, scope, "customer test")
     assert result["status"] == "SUPPORTED_EXCERPTS"
     assert result["snapshot_id"] == str(prep.snapshot_id)
     assert result["quotes"] and provider.calls == 1
@@ -97,7 +106,7 @@ def test_candidate_rejects_invented_reference_and_tenant_mismatch(prep, monkeypa
     enable_candidate(monkeypatch)
     provider = SyntheticProvider(invent_reference=True)
     scope, _ = prep.scope(provider)
-    result = run_assistant_candidate(prep.facts(), scope, "customer test")
+    result = run_with_selection(prep.facts(), scope, "customer test")
     assert result["status"] == "REJECTED" and result["quotes"] == []
     facts = prep.facts()
     facts.tenant_id = uuid.uuid4()
@@ -110,7 +119,7 @@ def test_candidate_rejects_fabricated_quote_from_real_source(prep, monkeypatch) 
     enable_candidate(monkeypatch)
     provider = SyntheticProvider(invent_quote=True)
     scope, _ = prep.scope(provider)
-    result = run_assistant_candidate(prep.facts(), scope, "customer test")
+    result = run_with_selection(prep.facts(), scope, "customer test")
     assert result["status"] == "REJECTED"
     assert result["reason"] == "EXCERPT_NOT_IN_SOURCE"
     assert result["quotes"] == []
@@ -121,7 +130,7 @@ def test_candidate_rejects_unstructured_narrative_after_repair(prep, monkeypatch
     provider = SyntheticProvider(add_prose=True)
     scope, _ = prep.scope(provider)
     with pytest.raises(ModelOutputInvalidError):
-        run_assistant_candidate(prep.facts(), scope, "customer test")
+        run_with_selection(prep.facts(), scope, "customer test")
     assert provider.calls == 2  # initial attempt and one bounded repair
 
 
@@ -189,6 +198,42 @@ def test_broad_question_requests_clarification_without_calling_model(prep, monke
     assert duplicate_concept["status"] == "NEEDS_CLARIFICATION"
     assert duplicate_concept["retrieval"]["terms_used"] == 1
     assert provider.calls == 0
+
+
+def test_tied_evidence_requires_authorized_explicit_selection(prep, monkeypatch) -> None:  # type: ignore[no-untyped-def]
+    enable_candidate(monkeypatch)
+    now = datetime.now(UTC)
+    tenant_id = prep.principal().tenant_id
+    with transaction(prep.factory) as session:
+        for suffix in ("a", "b"):
+            record_item(
+                session, tenant_id=tenant_id, case_id=uuid.UUID(prep.case_id),
+                data=EvidenceInput(
+                    source_type="DOCUMENT_EXTRACTION", source_ref=f"synthetic-ambiguity-{suffix}",
+                    content={"document_type": "OTHER", "status": "PARSED", "text": f"Ambiguity probe record {suffix}.", "fields": []},
+                    source_system="synthetic-test", retrieved_at=now, as_of=now, freshness="FRESH",
+                    completeness="COMPLETE", classification="CONFIDENTIAL",
+                ), created_by="synthetic-test",
+            )
+        snapshot, _ = create_snapshot(
+            session, tenant_id=tenant_id, case_id=uuid.UUID(prep.case_id),
+            created_by="synthetic-test", max_age=timedelta(hours=prep.settings.source_max_age_hours),
+        )
+        prep.snapshot_id = snapshot.id
+    provider = SyntheticProvider()
+    scope, _ = prep.scope(provider)
+    facts = prep.facts()
+    result = run_assistant_candidate(facts, scope, "ambiguity probe")
+    assert result["status"] == "NEEDS_EVIDENCE_SELECTION"
+    assert len(result["choices"]) == 2 and provider.calls == 0
+    with pytest.raises(PermissionError):
+        run_assistant_candidate(facts, scope, "ambiguity probe", selected_evidence_refs=[f"ev:{uuid.uuid4()}"])
+    assert provider.calls == 0
+    selected = result["choices"][0]["evidence_ref"]
+    answered = run_assistant_candidate(facts, scope, "ambiguity probe", selected_evidence_refs=[selected])
+    assert answered["status"] == "SUPPORTED_EXCERPTS"
+    assert provider.seen_evidence_refs == {selected}
+    assert {quote["evidence_ref"] for quote in answered["quotes"]} == {selected}
 
 
 def test_injected_document_text_cannot_become_unvalidated_model_narrative(prep, monkeypatch, token) -> None:  # type: ignore[no-untyped-def]

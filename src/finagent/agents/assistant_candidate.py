@@ -22,7 +22,9 @@ from finagent.services.evidence_service.queries import item_view
 from finagent.services.evidence_service.snapshots import snapshot_items
 
 
-def run_assistant_candidate(facts: CaseFacts, scope: RunScope, question: str) -> dict[str, Any]:
+def run_assistant_candidate(
+    facts: CaseFacts, scope: RunScope, question: str, *, selected_evidence_refs: list[str] | None = None
+) -> dict[str, Any]:
     """Experimental internal path. The caller must prepare facts from the authorized snapshot."""
     capability = require_enabled("AG-ASSISTANT")  # FUTURE in the normal registry; fail closed.
     query = question.strip()
@@ -61,6 +63,27 @@ def run_assistant_candidate(facts: CaseFacts, scope: RunScope, question: str) ->
             "status": "NEEDS_CLARIFICATION", "quotes": [], "retrieval": retrieval_context,
             "notice": "Ask a more specific question with at least two meaningful words. No model was called.",
         }
+    available_refs = {match["evidence_ref"] for match in search["matches"]}
+    if selected_evidence_refs is not None:
+        if not selected_evidence_refs or len(selected_evidence_refs) > 5 or len(set(selected_evidence_refs)) != len(selected_evidence_refs):
+            raise ValueError("Select between one and five distinct evidence references")
+        if any(ref not in available_refs for ref in selected_evidence_refs):
+            raise PermissionError("Selected evidence was not retrieved from this snapshot")
+        selected_refs = set(selected_evidence_refs)
+        search["matches"] = [match for match in search["matches"] if match["evidence_ref"] in selected_refs]
+    elif search["top_tie_count"] > 1:
+        choices: dict[str, dict[str, Any]] = {}
+        for match in search["matches"]:
+            choices[match["evidence_ref"]] = {
+                "evidence_ref": match["evidence_ref"], "source_type": match["source_type"],
+                "source_ref": match["source_ref"], "version_no": match["version_no"],
+                "freshness": match["freshness"], "completeness": match["completeness"],
+            }
+        return {
+            "status": "NEEDS_EVIDENCE_SELECTION", "quotes": [], "retrieval": retrieval_context,
+            "choices": list(choices.values()),
+            "notice": "Multiple records tie. Select evidence for review; a match does not prove relevance. No model was called.",
+        }
     retrieved: dict[str, list[str]] = {}
     source_context: dict[str, dict[str, Any]] = {}
     for match in search["matches"]:
@@ -73,8 +96,10 @@ def run_assistant_candidate(facts: CaseFacts, scope: RunScope, question: str) ->
     if not retrieved:
         return {"status": "INSUFFICIENT_EVIDENCE", "quotes": [], "retrieval": retrieval_context}
 
+    # Give the provider metadata only for the evidence actually retrieved and selected.
+    input_facts = replace(facts, items=[item for item in facts.items if f"ev:{item.id}" in retrieved])
     candidate_input = _input(
-        "AG-ASSISTANT", facts, scope,
+        "AG-ASSISTANT", input_facts, scope,
         {"task_type": "AG-ASSISTANT", "objective": capability.purpose},
         {"question": query, "retrieved_excerpts": search["matches"]},
     )
