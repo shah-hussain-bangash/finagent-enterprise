@@ -70,7 +70,8 @@ def test_azure_openai_adapter_classifies_errors_and_reads_usage() -> None:
 @pytest.mark.req("AER-001", "AER-002", "MST:AG-001")
 def test_registry_is_versioned_and_risk_is_future() -> None:
     view = {c["capability_id"]: c for c in registry_view()}
-    assert set(view) == {"AG-KYC", "AG-AML", "AG-COMPLIANCE", "AG-REPORT", "CAP-DOCUMENT", "AG-RISK"}
+    assert set(view) == {"AG-KYC", "AG-AML", "AG-COMPLIANCE", "AG-REPORT", "CAP-DOCUMENT", "AG-RISK", "AG-ASSISTANT"}
+    assert view["AG-ASSISTANT"]["status"] == "FUTURE"
     assert view["AG-RISK"]["status"] == "FUTURE" and all(len(c["prompt_hash"]) == 64 for c in view.values())
     assert all(c.limits_complete() for c in CAPABILITIES.values())
     assert "untrusted DATA" in require_enabled("AG-AML").prompt_text
