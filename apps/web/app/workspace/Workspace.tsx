@@ -1461,6 +1461,7 @@ export default function Workspace() {
                 title="Ask about the evidence"
                 subtitle="Scripted UI demonstration · no model connected"
               >
+                <p><a href="/workspace/evidence-briefing">Open connected evidence briefing →</a></p>
                 <div className="ws-assistant-welcome">
                   <span className="ws-assistant-icon">
                     <Icon name="Investigation assistant" />
