@@ -20,7 +20,24 @@ def test_document_provenance_requires_case_access(stack, make_client, make_setti
 
     prep = prepared_case(make_client(bank_base_url=bank.url), token, make_settings(bank_base_url=bank.url))
     scope, _ = prep.scope()
-    run_simple("AG-KYC", prep.facts(), scope)
+    result = run_simple("AG-KYC", prep.facts(), scope)
+    output_response = prep.client.get(
+        f"/api/v1/cases/{prep.case_id}/agent-outputs", headers=token(prep.analyst)
+    )
+    assert output_response.status_code == 200
+    output = next(
+        item for item in output_response.json()["items"] if item["output_id"] == str(result.output_id)
+    )
+    selection = output["lineage"]["document_selection"]
+    assert selection["rule_version"] == "kyc-document-selection-0.1-SYNTHETIC"
+    snapshot = prep.client.get(
+        f"/api/v1/cases/{prep.case_id}/snapshots/{prep.snapshot_id}", headers=token(prep.analyst)
+    )
+    assert snapshot.status_code == 200
+    snapshot_refs = {f"ev:{item['evidence_item_id']}" for item in snapshot.json()["items"]}
+    for selected in selection["items"]:
+        if selected["selection"] == "SELECTED":
+            assert selected["evidence_ref"] in snapshot_refs
     response = prep.client.get(f"/api/v1/cases/{prep.case_id}/documents", headers=token(prep.analyst))
     assert response.status_code == 200
     documents = response.json()["items"]
@@ -42,6 +59,8 @@ def test_document_provenance_requires_case_access(stack, make_client, make_setti
             assert main.get_by_role("heading", name="Recorded KYC checklist findings").count() == 1
             assert "Checklist item" in main.inner_text()
             assert str(prep.snapshot_id) in main.inner_text()
+            assert "kyc-document-selection-0.1-SYNTHETIC" in main.inner_text()
+            assert "Selection does not verify authenticity" in main.inner_text()
             assert main.get_by_role("link", name="Open current case gaps and evidence").count() == 1
             other = "a.analyst2@synthetic" if prep.analyst == "a.analyst1@synthetic" else "a.analyst1@synthetic"
             other_page = browser.new_page()

@@ -20,7 +20,7 @@ function loadPage() {
     "@/lib/api": { ApiRequestError: class extends Error {}, listCases: async () => ({ items: [], next_cursor: null }), api: async (path) => {
       assert.ok(authenticated); calls.push(path);
       if (path.endsWith("/documents")) return { items: [{ document_id: documentId, title: "Sample document", document_type: "OTHER", current_version_no: 2, status: "READY" }] };
-      if (path.endsWith("/agent-outputs")) return { items: [{ output_id: "o1", capability_id: "AG-KYC", status: "PARTIAL", snapshot_id: "snapshot-example", created_at: "2026-01-01", findings: [{ claim_id: "k1", claim_type: "GAP", claim: "Synthetic KYC checklist", support_status: "NOT_APPLICABLE", evidence_refs: ["ev:example"] }] }, { output_id: "o2", capability_id: "AG-AML", findings: [] }] };
+      if (path.endsWith("/agent-outputs")) return { items: [{ output_id: "o1", capability_id: "AG-KYC", status: "PARTIAL", snapshot_id: "snapshot-example", created_at: "2026-01-01", lineage: { document_selection: { rule_version: "selection-test", review_date: "2026-01-01", basis: "Synthetic rule", items: [{ document_type: "PASSPORT", selection: "SELECTED", evidence_ref: "ev:selected", source_ref: "doc:selected", processing_status: "QUARANTINED" }] } }, findings: [{ claim_id: "k1", claim_type: "GAP", claim: "Synthetic KYC checklist", support_status: "NOT_APPLICABLE", evidence_refs: ["ev:example"] }] }, { output_id: "o3", capability_id: "AG-KYC", status: "PARTIAL", snapshot_id: "snapshot-older", created_at: "2025-01-01", findings: [] }, { output_id: "o2", capability_id: "AG-AML", findings: [] }] };
       return { document_id: documentId, case_id: caseId, title: "Sample document", versions: [{ version_id: "v1", version_no: 1, status: "FAILED", status_reason: "Unreadable", created_at: "2026-01-01", sha256: "abcdef123456789", downloadable: false }], fields: [{ field_id: "f1", field_key: "name", value: "Example", origin: "CORRECTION", validation_status: "VALID", page: 1, row: null, section: null, correction_reason: "Verified manually" }], field_history: [] };
     } },
   };
@@ -33,7 +33,7 @@ function loadPage() {
 test("shows recorded versions and corrections with historical context", async () => {
   const { page } = loadPage();
   const html = renderToStaticMarkup(await page({ searchParams: Promise.resolve({ case: caseId, document: documentId }) }));
-  for (const expected of ["Unreadable", "CORRECTION", "Verified manually", "page 1", "earlier processing failures", "Synthetic KYC checklist", "ev:example", "snapshot-example", "does not establish which document was selected"]) assert.ok(html.includes(expected));
+  for (const expected of ["Unreadable", "CORRECTION", "Verified manually", "page 1", "earlier processing failures", "Synthetic KYC checklist", "ev:example", "snapshot-example", "does not establish which document was selected", "ev:selected", "QUARANTINED", "Selection details were not recorded"]) assert.ok(html.includes(expected));
 });
 test("does not request a document absent from the authorized case list", async () => {
   const { page, calls } = loadPage();

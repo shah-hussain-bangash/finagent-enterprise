@@ -10,7 +10,7 @@ interface DocumentSummary { document_id: string; title: string; document_type: s
 interface Field { field_id: string; field_key: string; value: string | null; origin: string; page: number | null; row: number | null; section: string | null; correction_reason: string | null; validation_status: string }
 interface Version { version_id: string; version_no: number; status: string; status_reason: string | null; created_at: string; sha256: string; downloadable: boolean }
 interface DocumentDetail { document_id: string; case_id: string; title: string; versions: Version[]; fields: Field[]; field_history: Field[] }
-interface KycOutput { output_id: string; capability_id: string; status: string; snapshot_id: string; created_at: string; findings: { claim_id: string; claim: string; claim_type: string; support_status: string; evidence_refs: string[] }[] }
+interface KycOutput { output_id: string; capability_id: string; status: string; snapshot_id: string; created_at: string; lineage?: { document_selection?: { rule_version: string; review_date: string; basis: string; items: { document_type: string; selection: string; evidence_ref: string | null; source_ref: string | null; processing_status: string | null }[] } }; findings: { claim_id: string; claim: string; claim_type: string; support_status: string; evidence_refs: string[] }[] }
 
 export default async function RecordedProvenance({ searchParams }: { searchParams: Promise<{ case?: string; document?: string; cursor?: string }> }) {
   await requireSession();
@@ -68,6 +68,8 @@ export default async function RecordedProvenance({ searchParams }: { searchParam
       {kycOutputs?.length === 0 && <Empty>No recorded KYC outputs were returned.</Empty>}
       {kycOutputs?.map((output) => <article key={output.output_id}><h3>KYC output · {output.status}</h3>
         <p>Recorded <When iso={output.created_at} /> · Evidence snapshot: {output.snapshot_id}</p>
+        <h4>Document selection at this snapshot</h4>
+        {output.lineage?.document_selection && Array.isArray(output.lineage.document_selection.items) ? <><p>Rule: {output.lineage.document_selection.rule_version} · Review date: {output.lineage.document_selection.review_date}. {output.lineage.document_selection.basis} Selection does not verify authenticity or mean the checklist passed.</p><ul>{output.lineage.document_selection.items.map((item, index) => <li key={index}><strong>{item.document_type}</strong> · {item.selection} · Evidence: {item.evidence_ref ?? "None recorded"} · Source: {item.source_ref ?? "None recorded"} · Processing: {item.processing_status ?? "Not recorded"}</li>)}</ul></> : <p>Selection details were not recorded for this output.</p>}
         {!Array.isArray(output.findings) || output.findings.length === 0 ? <Empty>No findings were returned for this output.</Empty> : <ul>{output.findings.map((finding, index) => <li key={`${finding.claim_id}-${index}`}><strong>{finding.claim_type} · {finding.support_status}</strong>: {finding.claim}<br /><small>Evidence references: {Array.isArray(finding.evidence_refs) && finding.evidence_refs.length ? finding.evidence_refs.join(", ") : "None recorded"}</small></li>)}</ul>}
       </article>)}
       <p><Link href={`/cases/${selected}/agents`} prefetch={false}>Open complete recorded agent findings →</Link></p>

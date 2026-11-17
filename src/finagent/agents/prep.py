@@ -23,6 +23,7 @@ from finagent.services.evidence_service.items import evidence_content
 from finagent.services.evidence_service.snapshots import snapshot_items
 
 CHECKLIST_VERSION = "kyc-checklist-0.1-SYNTHETIC"
+KYC_SELECTION_VERSION = "kyc-document-selection-0.1-SYNTHETIC"
 INDICATOR_VERSION = "aml-indicators-0.1-SYNTHETIC"
 POA_MAX_AGE_DAYS = 90  # SYNTHETIC policy pol-kyc-refresh s3; the approved rule is AI-D02
 KYC_REVIEW_MAX_DAYS = 365
@@ -40,6 +41,7 @@ class CaseFacts:
     indicators: list[dict[str, Any]] = field(default_factory=list)
     documents: list[dict[str, Any]] = field(default_factory=list)
     checklist_numbers: set[Decimal] = field(default_factory=set)
+    document_selection: dict[str, Any] | None = None
 
     def ref(self, item: EvidenceItem) -> str:
         return f"ev:{item.id}"
@@ -173,6 +175,23 @@ def _checklist(facts: CaseFacts, conflicts: list[EvidenceConflict], today: date)
                 [facts.ref(passport)],
             )
     poa = doc_of("PROOF_OF_ADDRESS")
+    # Record precisely the candidates used for this checklist. An absent candidate and an
+    # unreadable selected candidate remain distinct; selection does not establish validity.
+    facts.document_selection = {
+        "rule_version": KYC_SELECTION_VERSION,
+        "review_date": today.isoformat(),
+        "basis": "Subject-scoped candidates ranked by parsed status, valid date and deterministic tie-breakers.",
+        "items": [
+            {
+                "document_type": kind,
+                "selection": "SELECTED" if doc is not None else "NO_CANDIDATE",
+                "evidence_ref": facts.ref(doc) if doc is not None else None,
+                "source_ref": doc.source_ref if doc is not None else None,
+                "processing_status": evidence_content(doc).get("status") if doc is not None else None,
+            }
+            for kind, doc in (("PASSPORT", passport), ("PROOF_OF_ADDRESS", poa))
+        ],
+    }
     source_poa = next(
         (
             d

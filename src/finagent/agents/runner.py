@@ -219,6 +219,11 @@ def _lineage(
         "snapshot_version": facts.snapshot.version_no,
         "calculation_rules": RULE_VERSION,
         "checklist_version": CHECKLIST_VERSION,
+        **(
+            {"document_selection": facts.document_selection}
+            if cap_id == "AG-KYC" and facts.document_selection is not None
+            else {}
+        ),
         "usage": usage,
         **extra,
     }

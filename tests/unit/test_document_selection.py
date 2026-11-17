@@ -80,6 +80,12 @@ def test_corrected_poa_wins_independent_of_evidence_order() -> None:
         assert result["state"] == "PRESENT"
         assert result["detail"] == "issued 2026-11-10 (1 days before the review date)"
         assert result["refs"] == [case_facts.ref(corrected)]
+        selection = case_facts.document_selection
+        assert selection is not None
+        poa = next(item for item in selection["items"] if item["document_type"] == "PROOF_OF_ADDRESS")
+        assert poa["evidence_ref"] == case_facts.ref(corrected)
+        assert poa["source_ref"] == corrected.source_ref
+        assert selection["review_date"] == TODAY.isoformat()
         # Selection never deletes failures, changes the snapshot or marks a field verified.
         assert case_facts.items == list(ordered)
     assert [d.content for d in (unreadable, older, corrected)] == before
@@ -128,10 +134,14 @@ def test_invalid_date_validation_is_not_treated_as_current() -> None:
 
 
 def test_unreadable_date_alone_is_not_treated_as_current() -> None:
-    result = checklist_item(
-        facts([document("quarantined", "2026-11-10", status="QUARANTINED")]), "PROOF_OF_ADDRESS"
-    )
+    case_facts = facts([document("quarantined", "2026-11-10", status="QUARANTINED")])
+    result = checklist_item(case_facts, "PROOF_OF_ADDRESS")
     assert result["state"] == "UNVERIFIED"
+    assert case_facts.document_selection is not None
+    poa = next(
+        item for item in case_facts.document_selection["items"] if item["document_type"] == "PROOF_OF_ADDRESS"
+    )
+    assert poa["selection"] == "SELECTED" and poa["processing_status"] == "QUARANTINED"
 
 
 def test_stale_poa_remains_missing() -> None:
