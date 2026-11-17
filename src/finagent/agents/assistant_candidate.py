@@ -65,7 +65,13 @@ def run_assistant_candidate(
         }
     available_refs = {match["evidence_ref"] for match in search["matches"]}
     if selected_evidence_refs is not None:
-        if not selected_evidence_refs or len(selected_evidence_refs) > 5 or len(set(selected_evidence_refs)) != len(selected_evidence_refs):
+        if (
+            not isinstance(selected_evidence_refs, list)
+            or not selected_evidence_refs
+            or len(selected_evidence_refs) > 5
+            or any(not isinstance(ref, str) or not ref.strip() for ref in selected_evidence_refs)
+            or len(set(selected_evidence_refs)) != len(selected_evidence_refs)
+        ):
             raise ValueError("Select between one and five distinct evidence references")
         if any(ref not in available_refs for ref in selected_evidence_refs):
             raise PermissionError("Selected evidence was not retrieved from this snapshot")

@@ -226,6 +226,11 @@ def test_tied_evidence_requires_authorized_explicit_selection(prep, monkeypatch)
     result = run_assistant_candidate(facts, scope, "ambiguity probe")
     assert result["status"] == "NEEDS_EVIDENCE_SELECTION"
     assert len(result["choices"]) == 2 and provider.calls == 0
+    ref = result["choices"][0]["evidence_ref"]
+    for invalid in ([], [ref, ref], [""], [None], [ref] * 6):
+        with pytest.raises(ValueError):
+            run_assistant_candidate(facts, scope, "ambiguity probe", selected_evidence_refs=invalid)
+    assert provider.calls == 0
     with pytest.raises(PermissionError):
         run_assistant_candidate(facts, scope, "ambiguity probe", selected_evidence_refs=[f"ev:{uuid.uuid4()}"])
     assert provider.calls == 0
