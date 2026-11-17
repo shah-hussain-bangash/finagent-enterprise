@@ -19,7 +19,7 @@ interface EvidenceItem {
 interface Evidence { items: EvidenceItem[]; gaps: { source_type: string; detail: string }[] }
 
 export default async function RecordedTransactionsPage({ searchParams }: {
-  searchParams: Promise<{ case?: string; cursor?: string; q?: string }>;
+  searchParams: Promise<{ case?: string; cursor?: string; q?: string; direction?: string; status?: string }>;
 }) {
   await requireSession();
   const params = await searchParams;
@@ -27,6 +27,9 @@ export default async function RecordedTransactionsPage({ searchParams }: {
   const valid = CASE_ID.test(selected);
   const cursor = typeof params.cursor === "string" ? params.cursor : undefined;
   const query = typeof params.q === "string" ? params.q.trim().slice(0, 100) : "";
+  const direction = ["CREDIT", "DEBIT"].includes(params.direction ?? "") ? params.direction! : "";
+  const status = ["POSTED", "PENDING", "REVERSED"].includes(params.status ?? "") ? params.status! : "";
+  const invalidFilters = Boolean((params.direction && !direction) || (params.status && !status));
   let cases: Awaited<ReturnType<typeof listCases>> | null = null;
   let caseError: ApiRequestError | null = null;
   let evidence: Evidence | null = null;
@@ -60,16 +63,25 @@ export default async function RecordedTransactionsPage({ searchParams }: {
         <form className="panel" method="get"><input type="hidden" name="case" value={selected} />
           {cursor && <input type="hidden" name="cursor" value={cursor} />}
           <label htmlFor="transaction-search">Search transaction ID, counterparty, date, direction or status</label>{" "}
-          <input id="transaction-search" name="q" defaultValue={query} maxLength={100} />{" "}<button type="submit">Search</button>
+          <input id="transaction-search" name="q" defaultValue={query} maxLength={100} />{" "}
+          <label htmlFor="transaction-direction">Direction</label>{" "}<select id="transaction-direction" name="direction" defaultValue={direction}><option value="">All directions</option><option value="CREDIT">Credit</option><option value="DEBIT">Debit</option></select>{" "}
+          <label htmlFor="transaction-status">Status</label>{" "}<select id="transaction-status" name="status" defaultValue={status}><option value="">All statuses</option><option value="POSTED">Posted</option><option value="PENDING">Pending</option><option value="REVERSED">Reversed</option></select>{" "}<button type="submit">Apply filters</button>
         </form>
+        {invalidFilters && <p role="alert">An unrecognized filter was ignored. Choose a direction and status from the lists.</p>}
         {evidence.gaps.filter((gap) => gap.source_type === "TRANSACTIONS").map((gap, index) => <p role="status" key={index}>Evidence gap: {gap.detail}</p>)}
         {sources.length === 0 && <Empty>No current transaction evidence is available for this case. This does not establish that no transactions exist.</Empty>}
         {sources.map((source) => {
           const rows = Array.isArray(source.content?.items) ? source.content.items : [];
-          const filtered = rows.filter((row) => [row.source_transaction_id, row.counterparty_ref, row.booking_time, row.direction, row.status].some((value) => typeof value === "string" && value.toLocaleLowerCase().includes(search)));
+          const filtered = rows.filter((row) => (!direction || row.direction === direction) && (!status || row.status === status) && [row.source_transaction_id, row.counterparty_ref, row.booking_time, row.direction, row.status].some((value) => typeof value === "string" && value.toLocaleLowerCase().includes(search))).slice().sort((a, b) => {
+            const first = Date.parse(a.booking_time), second = Date.parse(b.booking_time);
+            if (!Number.isFinite(first)) return Number.isFinite(second) ? 1 : 0;
+            if (!Number.isFinite(second)) return -1;
+            return first - second;
+          });
           return <article className="panel" key={source.evidence_item_id}>
             <h3>Evidence source: {source.source_ref}</h3>
             <p>{source.source_system} · Version {source.version_no} · {source.freshness} / {source.completeness} · As of <When iso={source.as_of} /></p>
+            <p>Ordered by booking time, oldest first. Unavailable dates appear last. Each evidence source is shown separately.</p>
             {filtered.length === 0 ? <Empty>{rows.length ? "No recorded transactions match this search." : "This evidence source contains no transaction rows."}</Empty> :
               <div style={{ overflowX: "auto" }}><table><caption>Transactions from this evidence source</caption><thead><tr><th>Transaction</th><th>Booked</th><th>Counterparty</th><th>Direction</th><th>Amount</th><th>Status</th></tr></thead>
                 <tbody>{filtered.map((row, index) => <tr key={`${row.source_transaction_id}-${index}`}><td>{row.source_transaction_id}</td><td>{row.booking_time}</td><td>{row.counterparty_ref ?? "Not recorded"}</td><td>{row.direction}</td><td>{row.currency} {row.amount}</td><td>{row.status}</td></tr>)}</tbody></table></div>}

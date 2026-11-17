@@ -34,8 +34,13 @@ def test_case_transactions_are_visible_only_to_assigned_analyst(stack, make_clie
             assert main.get_by_role("table", name="Transactions from this evidence source").count() >= 1
             assert "COMPLETE" in main.inner_text()
             page.get_by_label("Search transaction ID, counterparty, date, direction or status").fill("no-such-synthetic-transaction")
-            page.get_by_role("button", name="Search").click()
+            page.get_by_role("button", name="Apply filters").click()
             assert "No recorded transactions match this search" in main.inner_text()
+            page.goto(path)
+            page.get_by_label("Direction", exact=True).select_option("DEBIT")
+            page.get_by_role("button", name="Apply filters").click()
+            for row in page.get_by_role("table", name="Transactions from this evidence source").locator("tbody tr").all():
+                assert row.locator("td").nth(3).inner_text() == "DEBIT"
             other = "a.analyst2@synthetic" if prep.analyst == "a.analyst1@synthetic" else "a.analyst1@synthetic"
             other_page = browser.new_page()
             sign_in(other_page, web, other)

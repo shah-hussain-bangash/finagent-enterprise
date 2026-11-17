@@ -38,3 +38,18 @@ test("explains absent evidence without claiming no transactions exist", async ()
   const html = renderToStaticMarkup(await loadPage({ items: [], gaps: [] })({ searchParams: Promise.resolve({ case: caseId }) }));
   assert.ok(html.includes("does not establish that no transactions exist"));
 });
+
+test("filters by direction and status without hiding other statuses by default", async () => {
+  const page = loadPage();
+  const html = renderToStaticMarkup(await page({ searchParams: Promise.resolve({ case: caseId, direction: "DEBIT", status: "PENDING" }) }));
+  assert.ok(html.includes("tx-two"));
+  assert.ok(!html.includes("tx-one"));
+  const all = renderToStaticMarkup(await page({ searchParams: Promise.resolve({ case: caseId }) }));
+  assert.ok(all.includes("tx-one") && all.includes("tx-two"));
+  assert.ok(all.indexOf("tx-one") < all.indexOf("tx-two"));
+});
+
+test("reports invalid filters instead of silently treating them as valid", async () => {
+  const html = renderToStaticMarkup(await loadPage()({ searchParams: Promise.resolve({ case: caseId, status: "INVALID" }) }));
+  assert.ok(html.includes("unrecognized filter was ignored"));
+});
