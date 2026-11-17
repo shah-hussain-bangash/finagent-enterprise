@@ -43,6 +43,12 @@ def test_briefing_requires_case_access(stack, make_client, make_settings, token,
             main.get_by_text(re.compile(r"\d+ match\(es\)")).wait_for(timeout=30_000)
             assert "ev:" in main.inner_text()
             assert "customer" not in page.url
+            source_link = main.get_by_role("link", name="Open source evidence").first
+            href = source_link.get_attribute("href")
+            assert href and "#evidence-" in href
+            source_link.click()
+            page.wait_for_url(re.compile(r"/cases/.*/evidence#evidence-"), timeout=30_000)
+            assert page.locator(f"[id='{href.split('#', 1)[1]}']").count() == 1
             other = "a.analyst2@synthetic" if prep.analyst == "a.analyst1@synthetic" else "a.analyst1@synthetic"
             other_page = browser.new_page()
             sign_in(other_page, web, other)

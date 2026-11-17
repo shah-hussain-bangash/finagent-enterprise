@@ -83,7 +83,7 @@ export default async function EvidencePage({ params, searchParams }: {
               <thead><tr><th>Source</th><th>Version</th><th>Freshness / completeness</th><th>As of</th><th>Content</th></tr></thead>
               <tbody>
                 {data.items.map((i) => (
-                  <tr key={i.evidence_item_id}>
+                  <tr id={`evidence-${i.evidence_item_id}`} key={i.evidence_item_id}>
                     <td>{i.source_type}<div className="muted">{i.source_ref} - {i.source_system}</div></td>
                     <td>v{i.version_no}{i.change_reason ? <div className="muted">{i.change_reason}</div> : null}
                       <div className="muted">sha256 {i.content_hash.slice(0, 12)}</div></td>

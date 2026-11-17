@@ -25,3 +25,13 @@ def test_bounds_are_disclosed_and_empty_results_are_not_assertions() -> None:
     result = search_current_evidence({"items": [item({"text": "x" * (MAX_CHARS_PER_VALUE + 1)})]}, "absent")
     assert result["matches"] == []
     assert result["search_limited"] is True
+
+
+def test_excerpt_contains_long_distance_and_unicode_casefold_matches() -> None:
+    text = "x" * 300 + " Straße " + "y" * 300
+    result = search_current_evidence({"items": [item({"text": text})]}, "strasse")
+    assert len(result["matches"]) == 1
+    match = result["matches"][0]
+    assert "Straße" in match["excerpt"]
+    assert len(match["excerpt"]) <= 200
+    assert match["excerpt_truncated"] is True

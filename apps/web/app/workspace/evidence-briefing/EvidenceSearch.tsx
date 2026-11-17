@@ -14,7 +14,7 @@ export function EvidenceSearch({ caseId }: { caseId: string }) {
     </form>
     {state.error && <p role="alert">{state.error}</p>}
     {state.matches && <div aria-live="polite"><p>{state.matches.length} match(es). {state.limited ? "Search limits were reached; results may be incomplete." : "No completeness or risk conclusion is implied."}</p>
-      {state.matches.length === 0 ? <p>No matching text was returned; this does not prove the information is absent.</p> : <ul>{state.matches.map((match, index) => <li key={`${match.evidence_ref}-${index}`}><strong>{match.source_type}</strong> · {match.source_ref} · {match.evidence_ref} · v{match.version_no} · {match.freshness} / {match.completeness}<p>Field: {match.field_path}. Beginning of matching field{match.excerpt_truncated ? " (truncated; the match may be outside this excerpt)" : ""}: <q>{match.excerpt}</q></p></li>)}</ul>}
+      {state.matches.length === 0 ? <p>No matching text was returned; this does not prove the information is absent.</p> : <ul>{state.matches.map((match, index) => <li key={`${match.evidence_ref}-${index}`}><strong>{match.source_type}</strong> · {match.source_ref} · {match.evidence_ref} · v{match.version_no} · {match.freshness} / {match.completeness}<p>Field: {match.field_path}. Context excerpt{match.excerpt_truncated ? " (truncated)" : ""}: <q>{match.excerpt}</q></p>{/^ev:[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(match.evidence_ref) && <p><a href={`/cases/${caseId}/evidence#evidence-${match.evidence_ref.slice(3)}`}>Open source evidence →</a></p>}</li>)}</ul>}
     </div>}
   </section>;
 }
