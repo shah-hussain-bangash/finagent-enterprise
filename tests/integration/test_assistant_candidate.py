@@ -68,6 +68,11 @@ def test_candidate_accepts_only_snapshot_excerpts_and_abstains_on_missing(prep, 
     assert result["status"] == "SUPPORTED_EXCERPTS"
     assert result["snapshot_id"] == str(prep.snapshot_id)
     assert result["quotes"] and provider.calls == 1
+    retrieval = result["retrieval"]
+    assert retrieval["terms_used"] == 2
+    assert retrieval["matching_records"] >= 1
+    assert retrieval["top_tie_count"] >= 1
+    assert "Tied matches need human review" in result["notice"]
     quoted = result["quotes"][0]
     assert quoted["evidence_ref"].startswith("ev:")
     assert {"source_type", "source_ref", "version_no", "freshness", "completeness", "as_of"} <= set(quoted["source"])
@@ -134,4 +139,5 @@ def test_broad_question_requests_clarification_without_calling_model(prep, monke
     result = run_assistant_candidate(prep.facts(), scope, "customer")
     assert result["status"] == "NEEDS_CLARIFICATION"
     assert result["quotes"] == []
+    assert result["retrieval"]["terms_used"] == 1
     assert provider.calls == 0

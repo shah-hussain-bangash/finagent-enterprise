@@ -44,9 +44,15 @@ def run_assistant_candidate(facts: CaseFacts, scope: RunScope, question: str) ->
 
     evidence = {"items": [item_view(item) for item in facts.items if item.source_type in capability.permitted_source_types]}
     search = retrieve_snapshot_excerpts(evidence, query)
+    retrieval_context = {
+        "terms_used": search["terms_used"], "matching_records": search["matching_records"],
+        "top_matched_terms": search["top_matched_terms"], "top_tie_count": search["top_tie_count"],
+        "search_limited": search["search_limited"], "lexicon_version": search["lexicon_version"],
+        "bilingual_aliases_used": search["bilingual_aliases_used"],
+    }
     if search["terms_used"] < 2:
         return {
-            "status": "NEEDS_CLARIFICATION", "quotes": [], "search_limited": search["search_limited"],
+            "status": "NEEDS_CLARIFICATION", "quotes": [], "retrieval": retrieval_context,
             "notice": "Ask a more specific question with at least two meaningful words. No model was called.",
         }
     retrieved: dict[str, list[str]] = {}
@@ -59,7 +65,7 @@ def run_assistant_candidate(facts: CaseFacts, scope: RunScope, question: str) ->
             "completeness": match["completeness"], "as_of": match["as_of"],
         }
     if not retrieved:
-        return {"status": "INSUFFICIENT_EVIDENCE", "quotes": [], "search_limited": search["search_limited"], "lexicon_version": search["lexicon_version"]}
+        return {"status": "INSUFFICIENT_EVIDENCE", "quotes": [], "retrieval": retrieval_context}
 
     candidate_input = _input(
         "AG-ASSISTANT", facts, scope,
@@ -72,12 +78,11 @@ def run_assistant_candidate(facts: CaseFacts, scope: RunScope, question: str) ->
     )
     checked = validate_extractive_draft(draft, retrieved)
     if not checked["accepted"]:
-        return {"status": "REJECTED", "reason": checked["reason"], "quotes": [], "usage": usage.as_dict()}
+        return {"status": "REJECTED", "reason": checked["reason"], "quotes": [], "usage": usage.as_dict(), "retrieval": retrieval_context}
     verified_quotes = cast(list[dict[str, str]], checked["quotes"])
     quotes = [{**quote, "source": source_context[quote["evidence_ref"]]} for quote in verified_quotes]
     return {
         "status": checked["status"], "quotes": quotes, "usage": usage.as_dict(),
-        "snapshot_id": str(facts.snapshot.id), "search_limited": search["search_limited"],
-        "lexicon_version": search["lexicon_version"], "bilingual_aliases_used": search["bilingual_aliases_used"],
-        "notice": "Lexical retrieval uses a small synthetic bilingual keyword list; it is not semantic search or general translation. Quoted source text is untrusted. Exact matching does not establish relevance, truth or completeness.",
+        "snapshot_id": str(facts.snapshot.id), "retrieval": retrieval_context,
+        "notice": "Lexical retrieval uses a small synthetic bilingual keyword list; it is not semantic search or general translation. Tied matches need human review. Quoted source text is untrusted. Exact matching does not establish relevance, truth or completeness.",
     }

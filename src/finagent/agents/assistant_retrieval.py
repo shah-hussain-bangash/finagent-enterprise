@@ -28,7 +28,7 @@ def retrieve_snapshot_excerpts(evidence: dict[str, Any], question: str) -> dict[
     words = list(dict.fromkeys(word for word in re.findall(r"[^\W_]+", question.casefold()) if len(word) >= 3 and word not in STOPWORDS))
     terms = words[:MAX_TERMS]
     if not terms:
-        return {"matches": [], "search_limited": False, "terms_used": 0, "bilingual_aliases_used": False, "lexicon_version": BILINGUAL_LEXICON_VERSION}
+        return {"matches": [], "search_limited": False, "terms_used": 0, "matching_records": 0, "top_matched_terms": 0, "top_tie_count": 0, "bilingual_aliases_used": False, "lexicon_version": BILINGUAL_LEXICON_VERSION}
     grouped: dict[str, dict[str, Any]] = {}
     limited = len(words) > MAX_TERMS
     aliases_used = False
@@ -46,7 +46,9 @@ def retrieve_snapshot_excerpts(evidence: dict[str, Any], question: str) -> dict[
                     group["excerpts"].append(match)
     minimum = min(2, len(terms))
     ranked = sorted((value for value in grouped.values() if len(value["terms"]) >= minimum), key=lambda value: -len(value["terms"]))
+    top_matched_terms = len(ranked[0]["terms"]) if ranked else 0
+    top_tie_count = sum(len(group["terms"]) == top_matched_terms for group in ranked)
     matches = [entry for group in ranked for entry in group["excerpts"]]
     if len(matches) > MAX_MATCHES:
         limited = True
-    return {"matches": matches[:MAX_MATCHES], "search_limited": limited, "terms_used": len(terms), "bilingual_aliases_used": aliases_used, "lexicon_version": BILINGUAL_LEXICON_VERSION}
+    return {"matches": matches[:MAX_MATCHES], "search_limited": limited, "terms_used": len(terms), "matching_records": len(ranked), "top_matched_terms": top_matched_terms, "top_tie_count": top_tie_count, "bilingual_aliases_used": aliases_used, "lexicon_version": BILINGUAL_LEXICON_VERSION}

@@ -46,3 +46,12 @@ def test_terms_may_match_different_fields_but_never_different_records() -> None:
     result = retrieve_snapshot_excerpts({"items": [first, second, third]}, "customer turnover")
     assert {match["evidence_ref"] for match in result["matches"]} == {"ev:first"}
     assert {match["field_path"] for match in result["matches"]} == {"content.name", "content.turnover"}
+
+
+def test_equal_scoring_records_are_disclosed_without_treating_them_as_verified() -> None:
+    evidence = {"items": [item("first", "Customer details for Example A."), item("other", "Customer details for an unrelated example.")]}
+    result = retrieve_snapshot_excerpts(evidence, "customer details")
+    assert result["terms_used"] == 2
+    assert result["matching_records"] == 2
+    assert result["top_matched_terms"] == 2
+    assert result["top_tie_count"] == 2
