@@ -48,7 +48,7 @@ def run_assistant_candidate(facts: CaseFacts, scope: RunScope, question: str) ->
     for match in search["matches"]:
         retrieved.setdefault(match["evidence_ref"], []).append(match["excerpt"])
     if not retrieved:
-        return {"status": "INSUFFICIENT_EVIDENCE", "quotes": [], "search_limited": search["search_limited"]}
+        return {"status": "INSUFFICIENT_EVIDENCE", "quotes": [], "search_limited": search["search_limited"], "lexicon_version": search["lexicon_version"]}
 
     candidate_input = _input(
         "AG-ASSISTANT", facts, scope,
@@ -65,5 +65,6 @@ def run_assistant_candidate(facts: CaseFacts, scope: RunScope, question: str) ->
     return {
         "status": checked["status"], "quotes": checked["quotes"], "usage": usage.as_dict(),
         "snapshot_id": str(facts.snapshot.id), "search_limited": search["search_limited"],
-        "notice": "Lexical retrieval is not semantic search. Quoted source text is untrusted. Exact matching does not establish relevance, truth or completeness.",
+        "lexicon_version": search["lexicon_version"], "bilingual_aliases_used": search["bilingual_aliases_used"],
+        "notice": "Lexical retrieval uses a small synthetic bilingual keyword list; it is not semantic search or general translation. Quoted source text is untrusted. Exact matching does not establish relevance, truth or completeness.",
     }

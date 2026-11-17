@@ -22,7 +22,20 @@ def test_requires_two_terms_when_available_and_discloses_dropped_terms() -> None
 
 
 def test_no_useful_words_abstains_without_inventing_results() -> None:
-    assert retrieve_snapshot_excerpts({"items": []}, "what is the") == {"matches": [], "search_limited": False, "terms_used": 0}
+    result = retrieve_snapshot_excerpts({"items": []}, "what is the")
+    assert result["matches"] == [] and result["terms_used"] == 0
+
+
+def test_bilingual_aliases_match_in_both_directions_without_double_counting() -> None:
+    arabic = item("arabic", "الإيراد الشهري المتوقع ١٠٠٠ درهم")
+    english = item("english", "Expected monthly turnover AED 1000")
+    english_query = retrieve_snapshot_excerpts({"items": [arabic]}, "monthly turnover")
+    arabic_query = retrieve_snapshot_excerpts({"items": [english]}, "الإيراد الشهري")
+    assert {match["evidence_ref"] for match in english_query["matches"]} == {"ev:arabic"}
+    assert {match["evidence_ref"] for match in arabic_query["matches"]} == {"ev:english"}
+    assert english_query["bilingual_aliases_used"] is True
+    only_one_concept = item("one", "monthly الشهري")
+    assert retrieve_snapshot_excerpts({"items": [only_one_concept]}, "monthly turnover")["matches"] == []
 
 
 def test_terms_may_match_different_fields_but_never_different_records() -> None:
