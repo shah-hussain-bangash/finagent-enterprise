@@ -62,11 +62,20 @@ def test_candidate_accepts_only_snapshot_excerpts_and_abstains_on_missing(prep, 
     provider = SyntheticProvider()
     scope, _ = prep.scope(provider)
     facts = prep.facts()
+    original_sources = {f"ev:{item.id}": item for item in facts.items}
     facts.items = []  # Caller-provided evidence is ignored; the stored snapshot is reloaded.
     result = run_assistant_candidate(facts, scope, "customer test")
     assert result["status"] == "SUPPORTED_EXCERPTS"
     assert result["snapshot_id"] == str(prep.snapshot_id)
     assert result["quotes"] and provider.calls == 1
+    quoted = result["quotes"][0]
+    assert quoted["evidence_ref"].startswith("ev:")
+    assert {"source_type", "source_ref", "version_no", "freshness", "completeness", "as_of"} <= set(quoted["source"])
+    assert quoted["source"]["source_type"] in registry.CAPABILITIES["AG-ASSISTANT"].permitted_source_types
+    source = original_sources[quoted["evidence_ref"]]
+    assert quoted["source"]["freshness"] == source.freshness
+    assert quoted["source"]["completeness"] == source.completeness
+    assert quoted["source"]["version_no"] == source.version_no
     missing = run_assistant_candidate(prep.facts(), scope, "zzzxqplm yyyqvblm")
     assert missing["status"] == "INSUFFICIENT_EVIDENCE" and provider.calls == 1
 

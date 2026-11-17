@@ -6,7 +6,7 @@ No API exposes this candidate. It returns only validated excerpts, not a generat
 from __future__ import annotations
 
 from dataclasses import replace
-from typing import Any
+from typing import Any, cast
 
 from finagent.agents.assistant_grounding import ExtractiveDraft, validate_extractive_draft
 from finagent.agents.assistant_retrieval import retrieve_snapshot_excerpts
@@ -50,8 +50,14 @@ def run_assistant_candidate(facts: CaseFacts, scope: RunScope, question: str) ->
             "notice": "Ask a more specific question with at least two meaningful words. No model was called.",
         }
     retrieved: dict[str, list[str]] = {}
+    source_context: dict[str, dict[str, Any]] = {}
     for match in search["matches"]:
         retrieved.setdefault(match["evidence_ref"], []).append(match["excerpt"])
+        source_context[match["evidence_ref"]] = {
+            "source_type": match["source_type"], "source_ref": match["source_ref"],
+            "version_no": match["version_no"], "freshness": match["freshness"],
+            "completeness": match["completeness"], "as_of": match["as_of"],
+        }
     if not retrieved:
         return {"status": "INSUFFICIENT_EVIDENCE", "quotes": [], "search_limited": search["search_limited"], "lexicon_version": search["lexicon_version"]}
 
@@ -67,8 +73,10 @@ def run_assistant_candidate(facts: CaseFacts, scope: RunScope, question: str) ->
     checked = validate_extractive_draft(draft, retrieved)
     if not checked["accepted"]:
         return {"status": "REJECTED", "reason": checked["reason"], "quotes": [], "usage": usage.as_dict()}
+    verified_quotes = cast(list[dict[str, str]], checked["quotes"])
+    quotes = [{**quote, "source": source_context[quote["evidence_ref"]]} for quote in verified_quotes]
     return {
-        "status": checked["status"], "quotes": checked["quotes"], "usage": usage.as_dict(),
+        "status": checked["status"], "quotes": quotes, "usage": usage.as_dict(),
         "snapshot_id": str(facts.snapshot.id), "search_limited": search["search_limited"],
         "lexicon_version": search["lexicon_version"], "bilingual_aliases_used": search["bilingual_aliases_used"],
         "notice": "Lexical retrieval uses a small synthetic bilingual keyword list; it is not semantic search or general translation. Quoted source text is untrusted. Exact matching does not establish relevance, truth or completeness.",
