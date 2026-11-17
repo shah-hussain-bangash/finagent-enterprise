@@ -13,10 +13,14 @@ from finagent.agents.assistant_candidate import run_assistant_candidate
 from finagent.agents.gateway import ModelOutputInvalidError
 from finagent.agents.providers import ProviderResponse
 from finagent.agents.registry import CapabilityUnavailableError
+from finagent.core.errors import AppError, ErrorCode
+from finagent.database.seeds import sid
 from finagent.database.session import transaction
+from finagent.security.authentication.resolver import resolve_principal_by_id
 from finagent.services.evidence_service.items import EvidenceInput, record_item
 from finagent.services.evidence_service.snapshots import create_snapshot
 from tests.agent_helpers import prepared_case
+from tests.helpers import assigned_analyst, ingest, principal, start_run
 
 pytestmark = pytest.mark.integration
 
@@ -133,6 +137,42 @@ def test_unassigned_and_cross_tenant_principals_cannot_invoke_provider(prep, mon
     scope.principal = replace(assigned, tenant_id=uuid.uuid4(), delegations=(), break_glass_grant_id=None)
     with pytest.raises(PermissionError):
         run_assistant_candidate(facts, scope, "customer test")
+    assert provider.calls == 0
+
+
+def test_unknown_run_cannot_be_used_for_usage_attribution(prep, monkeypatch) -> None:  # type: ignore[no-untyped-def]
+    enable_candidate(monkeypatch)
+    provider = SyntheticProvider()
+    scope, _ = prep.scope(provider)
+    scope.run_id = uuid.uuid4()
+    with pytest.raises(PermissionError, match="Run does not belong to this case"):
+        run_assistant_candidate(prep.facts(), scope, "customer test")
+    assert provider.calls == 0
+
+
+def test_role_without_case_read_is_rejected_before_model_call(prep, monkeypatch) -> None:  # type: ignore[no-untyped-def]
+    enable_candidate(monkeypatch)
+    provider = SyntheticProvider()
+    scope, _ = prep.scope(provider)
+    with transaction(prep.factory) as session:
+        scope.principal = resolve_principal_by_id(session, sid("tenant:a"), principal("a", "operator1"))
+    with pytest.raises(AppError) as error:
+        run_assistant_candidate(prep.facts(), scope, "customer test")
+    assert error.value.code == ErrorCode.FORBIDDEN
+    assert provider.calls == 0
+
+
+def test_run_from_another_case_cannot_be_used_for_usage_attribution(prep, monkeypatch, token) -> None:  # type: ignore[no-untyped-def]
+    enable_candidate(monkeypatch)
+    other_case = ingest(prep.client, token, ref=f"ASSISTANT-OTHER-{uuid.uuid4().hex}")["case_id"]
+    other_analyst = assigned_analyst(prep.client, token, other_case)
+    created = start_run(prep.client, token, other_case, other_analyst)
+    assert created.status_code == 202
+    provider = SyntheticProvider()
+    scope, _ = prep.scope(provider)
+    scope.run_id = uuid.UUID(created.json()["run_id"])
+    with pytest.raises(PermissionError, match="Run does not belong to this case"):
+        run_assistant_candidate(prep.facts(), scope, "customer test")
     assert provider.calls == 0
 
 

@@ -15,7 +15,8 @@ from finagent.agents.prep import CaseFacts
 from finagent.agents.registry import require_enabled
 from finagent.agents.runner import RunScope, _input
 from finagent.database.session import transaction
-from finagent.database.models import EvidenceSnapshot
+from finagent.database.models import EvidenceSnapshot, WorkflowRun
+from finagent.security.authorization.policy import Permission, require
 from finagent.services.case_service.queries import load_scoped_case
 from finagent.services.evidence_service.queries import item_view
 from finagent.services.evidence_service.snapshots import snapshot_items
@@ -27,6 +28,7 @@ def run_assistant_candidate(facts: CaseFacts, scope: RunScope, question: str) ->
     query = question.strip()
     if not 3 <= len(query) <= 80:
         raise ValueError("Question must contain between 3 and 80 characters")
+    require(scope.principal, Permission.CASE_READ)
     with transaction(scope.factory) as session:
         case = load_scoped_case(session, scope.principal, str(facts.case.id))
         if case is None or scope.principal.tenant_id != facts.tenant_id:
@@ -36,6 +38,10 @@ def run_assistant_candidate(facts: CaseFacts, scope: RunScope, question: str) ->
         snapshot = session.get(EvidenceSnapshot, facts.snapshot.id)
         if snapshot is None or snapshot.case_id != case.id or snapshot.tenant_id != scope.principal.tenant_id:
             raise PermissionError("Snapshot does not belong to this case")
+        if scope.run_id is not None:
+            run = session.get(WorkflowRun, scope.run_id)
+            if run is None or run.case_id != case.id or run.tenant_id != scope.principal.tenant_id:
+                raise PermissionError("Run does not belong to this case")
         authoritative_items = snapshot_items(session, scope.principal.tenant_id, snapshot.id)
         session.expunge_all()
 
