@@ -40,7 +40,8 @@ def test_workflow_monitor_requires_case_access(stack, client, token):
             page.goto(path)
             main = page.locator("main")
             assert main.get_by_role("table", name="Recorded workflow steps").count() == 1
-            assert "Model usage and cost are not shown" in main.inner_text()
+            assert "Usage is shown per output" in main.inner_text()
+            assert "(simulated)" in main.inner_text()
             other = "a.analyst2@synthetic" if analyst == "a.analyst1@synthetic" else "a.analyst1@synthetic"
             other_page = browser.new_page()
             sign_in(other_page, web, other)

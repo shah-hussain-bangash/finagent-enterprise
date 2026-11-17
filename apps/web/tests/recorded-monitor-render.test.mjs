@@ -20,6 +20,7 @@ function loadPage() {
     "@/lib/api": { ApiRequestError: class extends Error {}, listCases: async () => ({ items: [], next_cursor: null }), api: async (path) => {
       assert.ok(authenticated); calls.push(path);
       if (path.endsWith("/workflows")) return { items: [{ run_id: runId, workflow_type: "AML", status: "FAILED", attempt: 2, created_at: "2026-01-01" }] };
+      if (path.endsWith("/agent-outputs")) return { items: [{ output_id: "out1", run_id: runId, capability_id: "AG-AML", status: "SUCCEEDED", lineage: { provider: "mock-model-provider", model_alias: "sample" }, usage: { input_tokens: 30, output_tokens: 5, retries: 1, cost: "0.12" } }, { output_id: "out2", run_id: otherId, capability_id: "WRONG-RUN", status: "SUCCEEDED" }] };
       return { run_id: runId, case_id: caseId, workflow_type: "AML", graph_version: "v1", status: "FAILED", status_reason: "Synthetic failure", attempt: 2, max_attempts: 3, next_action: null, blockers: [], steps: [{ node: "gather", status: "FAILED", attempt: 2, error_code: "TEST_ERROR", started_at: "2026-01-01", finished_at: null }] };
     } },
   };
@@ -32,7 +33,8 @@ function loadPage() {
 test("shows recorded failures, attempts and timing fields", async () => {
   const { page } = loadPage();
   const html = renderToStaticMarkup(await page({ searchParams: Promise.resolve({ case: caseId, run: runId }) }));
-  for (const expected of ["Synthetic failure", "TEST_ERROR", "gather", "2026-01-01", "Model usage and cost are not shown"]) assert.ok(html.includes(expected));
+  for (const expected of ["Synthetic failure", "TEST_ERROR", "gather", "2026-01-01", "(simulated)", "Input tokens:", "0.12 (currency not recorded)"]) assert.ok(html.includes(expected));
+  assert.ok(!html.includes("WRONG-RUN"));
 });
 test("does not request a run absent from the authorized case list", async () => {
   const { page, calls } = loadPage();
