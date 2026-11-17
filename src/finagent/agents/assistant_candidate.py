@@ -9,6 +9,7 @@ from dataclasses import replace
 from typing import Any
 
 from finagent.agents.assistant_grounding import ExtractiveDraft, validate_extractive_draft
+from finagent.agents.assistant_retrieval import retrieve_snapshot_excerpts
 from finagent.agents.gateway import CallContext
 from finagent.agents.prep import CaseFacts
 from finagent.agents.registry import require_enabled
@@ -17,7 +18,6 @@ from finagent.database.session import transaction
 from finagent.database.models import EvidenceSnapshot
 from finagent.services.case_service.queries import load_scoped_case
 from finagent.services.evidence_service.queries import item_view
-from finagent.services.evidence_service.search import search_current_evidence
 from finagent.services.evidence_service.snapshots import snapshot_items
 
 
@@ -43,7 +43,7 @@ def run_assistant_candidate(facts: CaseFacts, scope: RunScope, question: str) ->
     facts = replace(facts, case=case, snapshot=snapshot, items=authoritative_items)
 
     evidence = {"items": [item_view(item) for item in facts.items if item.source_type in capability.permitted_source_types]}
-    search = search_current_evidence(evidence, query)
+    search = retrieve_snapshot_excerpts(evidence, query)
     retrieved: dict[str, list[str]] = {}
     for match in search["matches"]:
         retrieved.setdefault(match["evidence_ref"], []).append(match["excerpt"])
@@ -65,5 +65,5 @@ def run_assistant_candidate(facts: CaseFacts, scope: RunScope, question: str) ->
     return {
         "status": checked["status"], "quotes": checked["quotes"], "usage": usage.as_dict(),
         "snapshot_id": str(facts.snapshot.id), "search_limited": search["search_limited"],
-        "notice": "Quoted source text is untrusted. Exact matching does not establish relevance, truth or completeness.",
+        "notice": "Lexical retrieval is not semantic search. Quoted source text is untrusted. Exact matching does not establish relevance, truth or completeness.",
     }

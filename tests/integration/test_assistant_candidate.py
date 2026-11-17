@@ -67,7 +67,7 @@ def test_candidate_accepts_only_snapshot_excerpts_and_abstains_on_missing(prep, 
     assert result["status"] == "SUPPORTED_EXCERPTS"
     assert result["snapshot_id"] == str(prep.snapshot_id)
     assert result["quotes"] and provider.calls == 1
-    missing = run_assistant_candidate(prep.facts(), scope, "no-such-synthetic-evidence-7f619")
+    missing = run_assistant_candidate(prep.facts(), scope, "zzzxqplm")
     assert missing["status"] == "INSUFFICIENT_EVIDENCE" and provider.calls == 1
 
 
