@@ -685,6 +685,7 @@ export default function Workspace() {
                   <h2>Explore the evidence.<br />Understand the risk.</h2>
                   <p>Review the planned investigation, AI, and governance tools using synthetic examples.</p>
                   <button className="ws-primary" onClick={() => open("Risk detection")}>Explore risk detection <Icon name="arrow" /></button>
+                  <p><a href="/workspace/case-overview">Open connected case overview →</a></p>
                 </div>
                 <div className="ws-hero-visual"><div><span>Human oversight</span><strong>Review remains essential</strong><small>Investigate → Explain → Review</small></div></div>
               </div>
