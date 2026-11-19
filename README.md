@@ -77,6 +77,8 @@ These ADRs record engineering decisions and their consequences; institutional ac
 
 ## Example investigation journey
 
+**For a portfolio walkthrough:** start with an accessible synthetic case in the running local environment. The connected case overview links to the evidence briefing, recorded transactions, document provenance, risk indicators and investigation runs. These views may be empty when the selected case has no corresponding records; they are not populated by the README alone.
+
 1. An authorized analyst opens an assigned synthetic case and inspects its alert and status.
 2. The analyst reviews available evidence, transaction sources, timestamps, gaps and conflicts.
 3. Document provenance shows recorded versions and extracted fields; quarantine and download restrictions remain visible.
@@ -85,6 +87,8 @@ These ADRs record engineering decisions and their consequences; institutional ac
 6. A reviewer assesses the submitted context and records an authorized decision; operational follow-up and history remain traceable.
 
 See the [synthetic workspace walkthrough](docs/workspace-demo-walkthrough.md) and [acceptance journey](docs/testing/acceptance-journey.md). The behavior of any action depends on the selected role, case state and configuration.
+
+For a short technical discussion, explain one case and its evidence, show how a report goes to an independent reviewer, and then trace a representative control through the [architecture-to-code map](docs/02-system-architecture/06-ARCHITECTURE-TO-CODE-MAP.md). The preview's fixed assistant examples and role selector are illustrative; they do not invoke a live AI assistant or change access rights.
 
 ## Engineering and security design
 
