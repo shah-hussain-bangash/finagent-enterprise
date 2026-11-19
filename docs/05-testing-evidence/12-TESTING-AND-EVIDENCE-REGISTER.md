@@ -21,6 +21,12 @@
 
 CI uploaded test evidence as a workflow artifact. Artifact availability, retention and public accessibility can change; inspect the run rather than assuming an artifact is permanently available. The generated [coverage summary](../traceability/coverage-summary.md) is a separate historical checkpoint and must not be treated as the result of a later run without regeneration and inspection.
 
+## Local workflow threshold observation
+
+On 19 November 2026, the operator reported **1 passed** for `test_first_failure_after_review_resume_uses_total_claim_count` against the disposable `finagent_test` database. The test and related UI wording were uncommitted working-tree changes on integration commit `88ce729`; they are not covered by the CI run above. The test exercises one successful claim, a review resumption, and a first injected failure with a threshold of two. In that scenario the resumed claim reaches the threshold and the run fails rather than retrying.
+
+This characterizes current behavior, not an approved retry policy or evidence for every failure type. A decision is still needed on whether review resumptions should consume a failure-retry budget, followed by implementation and regression tests if that policy changes. The reported local result is not an independently retained CI artifact.
+
 ## Representative control traces
 
 The [portfolio case study](../07-case-study/08-PORTFOLIO-CASE-STUDY.md) connects tenant filtering, AI authority boundaries and review separation to source, mutation definitions and the recorded run. In mutation testing, a test failure after deliberately weakening the code is the expected result; the mutation runner determines whether that change was caught.

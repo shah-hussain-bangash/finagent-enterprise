@@ -309,3 +309,32 @@ def test_transient_failure_retries_with_backoff_then_fails_when_exhausted(
             .order_by(WorkflowRunHistory.seq)
         ).all()
     assert [RunStatus(g) for g in got[1:]] == view_history
+
+
+def test_first_failure_after_review_resume_uses_total_claim_count(
+    make_worker, db_url, started
+) -> None:  # type: ignore[no-untyped-def]
+    """Characterize the existing threshold: review resumes also count as claims."""
+    from finagent.orchestration.faults import FaultInjector
+
+    _, _, run_id = started
+    run_uuid = uuid.UUID(run_id)
+    with transaction(session_factory(db_url)) as s:
+        run = s.get(WorkflowRun, run_uuid)
+        assert run is not None
+        run.max_attempts = 2
+
+    drive(make_worker())
+    assert run_status(db_url, run_id) == ("WAITING_REVIEW", None)
+    with transaction(session_factory(db_url)) as s:
+        run = s.get(WorkflowRun, run_uuid)
+        assert run is not None and run.attempt == 1
+
+    resume(db_url, run_id)
+    faults = FaultInjector({("before_invoke", "*"): "error"}, once=False)
+    drive(make_worker(faults=faults, retry_backoff_seconds=1))
+
+    assert run_status(db_url, run_id) == ("FAILED", "RuntimeError")
+    with transaction(session_factory(db_url)) as s:
+        run = s.get(WorkflowRun, run_uuid)
+        assert run is not None and run.attempt == 2

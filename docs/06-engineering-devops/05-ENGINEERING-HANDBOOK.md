@@ -36,6 +36,7 @@ The connected workspace currently combines read-only recorded views with existin
 - **Documents:** show scan/quarantine state and authorize each download; extraction and corrections do not establish authenticity.
 - **AI:** keep source content untrusted, constrain tool and model access, validate outputs, disclose limitations, and do not enable experimental capabilities without an approved integration and evaluation.
 - **State changes:** preserve version checks, idempotency, audit and recovery semantics. Describe ambiguous external outcomes explicitly.
+- **Workflow attempts:** the current run attempt count includes claims after review resumption; for certain failures the worker compares this total with the configured failure-handling threshold. A first failure after review can therefore exhaust that threshold. Treat separation of review resumptions from failure retries as an open policy decision, not an implemented guarantee. See the [local observation](../05-testing-evidence/12-TESTING-AND-EVIDENCE-REGISTER.md#local-workflow-threshold-observation).
 - **UI:** retain selected-case context where supported; provide accessible names, keyboard operation and understandable loading, empty, error and access-denied states. Mark unconnected and sample content.
 - **Data:** do not mix currencies or imply filtered totals are account balances; use the source and window associated with the recorded value.
 
