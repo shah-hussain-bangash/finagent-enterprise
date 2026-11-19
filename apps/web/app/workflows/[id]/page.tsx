@@ -27,8 +27,9 @@ export default async function RunMonitor({ params, searchParams }: {
     <section aria-labelledby="h">
       <h1 id="h">Execution and recovery: run {id.slice(0, 8)}</h1>
       <p><Link href={`/cases/${r.case_id}`}>Case {r.case_id.slice(0, 8)}</Link> - {r.workflow_type} ({r.graph_version}) -
-        recorded attempt {r.attempt} - configured maximum {r.max_attempts}</p>
-      {r.attempt > r.max_attempts && <p className="warn">Recorded attempt exceeds the configured maximum. Review the execution history for context.</p>}
+        recorded attempt count {r.attempt} - configured failure-handling threshold {r.max_attempts}</p>
+      <p className="muted">The attempt count can include worker claims after review or re-analysis. The threshold is considered when handling certain failures; it is not a limit on all review cycles.</p>
+      {r.attempt > r.max_attempts && <p className="warn">The recorded count is above the failure-handling threshold. Review the execution history for context; this does not by itself establish that a retry limit was breached.</p>}
       <p><Link href={`/workspace/recorded-monitor?${new URLSearchParams({ case: r.case_id, run: r.run_id })}`}>View recorded investigation run →</Link></p>
       <Flash ok={sp.ok} error={sp.error} />
       <p>Status <span className={`badge badge-${r.status.toLowerCase()}`}>{r.status}</span> - {r.status_reason}

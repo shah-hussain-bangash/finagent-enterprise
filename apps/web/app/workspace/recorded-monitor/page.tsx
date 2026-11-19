@@ -71,8 +71,9 @@ export default async function RecordedMonitor({ searchParams }: { searchParams: 
       {runError && <ErrorState error={runError} what="Run details" />}
     </section>}
     {run && run.case_id === selected && <section className="panel"><h2>Run {run.run_id.slice(0, 8)}</h2>
-      <p>{run.workflow_type} · {run.graph_version} · {run.status} · Recorded attempt: {run.attempt} · Configured maximum: {run.max_attempts}</p>
-      {run.attempt > run.max_attempts && <p>Recorded attempt exceeds the configured maximum. Review the full execution history for context.</p>}
+      <p>{run.workflow_type} · {run.graph_version} · {run.status} · Recorded attempt count: {run.attempt} · Failure-handling threshold: {run.max_attempts}</p>
+      <p>Attempts can include worker claims after review or re-analysis. The threshold is considered for certain failures, not every review cycle.</p>
+      {run.attempt > run.max_attempts && <p>The count is above the failure-handling threshold. Review the full execution history; this alone does not establish a retry-limit breach.</p>}
       <p>Status reason: {run.status_reason}</p>{run.next_action && <p>Next action: {run.next_action}</p>}
       {run.blockers.length > 0 && <><h3>Blockers</h3><ul>{run.blockers.map((item, index) => <li key={index}>{item.code}{item.reason ? `: ${item.reason}` : ""}</li>)}</ul></>}
       <h3>Recorded steps</h3>
