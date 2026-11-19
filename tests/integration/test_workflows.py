@@ -311,9 +311,7 @@ def test_transient_failure_retries_with_backoff_then_fails_when_exhausted(
     assert [RunStatus(g) for g in got[1:]] == view_history
 
 
-def test_first_failure_after_review_resume_uses_total_claim_count(
-    make_worker, db_url, started
-) -> None:  # type: ignore[no-untyped-def]
+def test_first_failure_after_review_resume_uses_total_claim_count(make_worker, db_url, started) -> None:  # type: ignore[no-untyped-def]
     """Characterize the existing threshold: review resumes also count as claims."""
     from finagent.orchestration.faults import FaultInjector
 
