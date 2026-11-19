@@ -15,7 +15,7 @@ def local_web_auth(monkeypatch):
     monkeypatch.setenv("FINAGENT_ENVIRONMENT", "local")
 
 
-def test_workflow_monitor_requires_case_access(stack, client, token):
+def test_workflow_monitor_requires_case_access(stack, client, token):  # noqa: F811
     from playwright.sync_api import sync_playwright
 
     approve_policies(client, token)
@@ -46,6 +46,8 @@ def test_workflow_monitor_requires_case_access(stack, client, token):
             other_page = browser.new_page()
             sign_in(other_page, web, other)
             other_page.goto(path)
-            assert other_page.locator("main").get_by_role("table", name="Recorded workflow steps").count() == 0
+            assert (
+                other_page.locator("main").get_by_role("table", name="Recorded workflow steps").count() == 0
+            )
         finally:
             browser.close()

@@ -180,7 +180,8 @@ def _checklist(facts: CaseFacts, conflicts: list[EvidenceConflict], today: date)
     facts.document_selection = {
         "rule_version": KYC_SELECTION_VERSION,
         "review_date": today.isoformat(),
-        "basis": "Subject-scoped candidates ranked by parsed status, valid date and deterministic tie-breakers.",
+        "basis": "Subject-scoped candidates ranked by parsed status, valid date and deterministic "
+        "tie-breakers.",
         "items": [
             {
                 "document_type": kind,

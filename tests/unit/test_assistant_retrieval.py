@@ -4,11 +4,25 @@ from finagent.agents.assistant_retrieval import retrieve_snapshot_excerpts
 
 
 def item(ref, text):  # type: ignore[no-untyped-def]
-    return {"evidence_item_id": ref, "source_type": "DOCUMENT_EXTRACTION", "source_ref": "synthetic", "version_no": 1, "freshness": "CURRENT", "completeness": "COMPLETE", "as_of": None, "content": {"text": text}}
+    return {
+        "evidence_item_id": ref,
+        "source_type": "DOCUMENT_EXTRACTION",
+        "source_ref": "synthetic",
+        "version_no": 1,
+        "freshness": "CURRENT",
+        "completeness": "COMPLETE",
+        "as_of": None,
+        "content": {"text": text},
+    }
 
 
 def test_question_matches_words_in_same_record_without_claiming_semantics() -> None:
-    evidence = {"items": [item("first", "Expected monthly turnover AED 50000."), item("other", "Monthly rent AED 2000.")]}
+    evidence = {
+        "items": [
+            item("first", "Expected monthly turnover AED 50000."),
+            item("other", "Monthly rent AED 2000."),
+        ]
+    }
     result = retrieve_snapshot_excerpts(evidence, "What is the expected monthly turnover?")
     assert result["matches"]
     assert {match["evidence_ref"] for match in result["matches"]} == {"ev:first"}
@@ -27,7 +41,7 @@ def test_no_useful_words_abstains_without_inventing_results() -> None:
 
 
 def test_bilingual_aliases_match_in_both_directions_without_double_counting() -> None:
-    arabic = item("arabic", "الإيراد الشهري المتوقع ١٠٠٠ درهم")
+    arabic = item("arabic", "الإيراد الشهري المتوقع ١٠٠٠ درهم")  # noqa: RUF001
     english = item("english", "Expected monthly turnover AED 1000")
     english_query = retrieve_snapshot_excerpts({"items": [arabic]}, "monthly turnover")
     arabic_query = retrieve_snapshot_excerpts({"items": [english]}, "الإيراد الشهري")
@@ -52,7 +66,12 @@ def test_terms_may_match_different_fields_but_never_different_records() -> None:
 
 
 def test_equal_scoring_records_are_disclosed_without_treating_them_as_verified() -> None:
-    evidence = {"items": [item("first", "Customer details for Example A."), item("other", "Customer details for an unrelated example.")]}
+    evidence = {
+        "items": [
+            item("first", "Customer details for Example A."),
+            item("other", "Customer details for an unrelated example."),
+        ]
+    }
     result = retrieve_snapshot_excerpts(evidence, "customer details")
     assert result["terms_used"] == 2
     assert result["matching_records"] == 2

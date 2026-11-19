@@ -15,7 +15,7 @@ def local_web_auth(monkeypatch):
     monkeypatch.setenv("FINAGENT_ENVIRONMENT", "local")
 
 
-def test_evaluation_comparison_requires_permission(stack, make_client, token, bank):
+def test_evaluation_comparison_requires_permission(stack, make_client, token, bank):  # noqa: F811
     from playwright.sync_api import sync_playwright
 
     client = make_client(bank_base_url=bank.url)

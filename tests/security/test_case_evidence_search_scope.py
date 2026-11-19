@@ -16,7 +16,9 @@ def test_search_requires_assigned_case_access(make_client, make_settings, token,
     assert result["matches"] and all(row["evidence_ref"].startswith("ev:") for row in result["matches"])
     other = "a.analyst2@synthetic" if prep.analyst == "a.analyst1@synthetic" else "a.analyst1@synthetic"
     other_response = prep.client.post(path, json={"query": "customer"}, headers=token(other))
-    tenant_response = prep.client.post(path, json={"query": "customer"}, headers=token("b.supervisor1@synthetic"))
+    tenant_response = prep.client.post(
+        path, json={"query": "customer"}, headers=token("b.supervisor1@synthetic")
+    )
     anonymous_response = prep.client.post(path, json={"query": "customer"})
     invalid_response = prep.client.post(path, json={"query": "  "}, headers=token(prep.analyst))
     assert other_response.status_code == 404

@@ -16,7 +16,7 @@ def local_web_auth(monkeypatch):
     monkeypatch.setenv("FINAGENT_ENVIRONMENT", "local")
 
 
-def test_briefing_requires_case_access(stack, make_client, make_settings, token, bank):
+def test_briefing_requires_case_access(stack, make_client, make_settings, token, bank):  # noqa: F811
     from playwright.sync_api import sync_playwright
 
     prep = prepared_case(make_client(bank_base_url=bank.url), token, make_settings(bank_base_url=bank.url))
@@ -38,7 +38,7 @@ def test_briefing_requires_case_access(stack, make_client, make_settings, token,
             assert "TRANSACTIONS" in main.inner_text()
             assert "does not use an AI model" in main.inner_text()
             assert main.get_by_role("link", name="Open case evidence and source details").count() == 1
-            page.get_by_label("Search text (3–80 characters)").fill("customer")
+            page.get_by_label("Search text (3–80 characters)").fill("customer")  # noqa: RUF001
             page.get_by_role("button", name="Search evidence").click()
             main.get_by_text(re.compile(r"\d+ match\(es\)")).wait_for(timeout=30_000)
             assert "ev:" in main.inner_text()
@@ -49,10 +49,15 @@ def test_briefing_requires_case_access(stack, make_client, make_settings, token,
             source_link.click()
             page.wait_for_url(re.compile(r"/cases/.*/evidence#evidence-"), timeout=30_000)
             assert page.locator(f"[id='{href.split('#', 1)[1]}']").count() == 1
-            other = "a.analyst2@synthetic" if prep.analyst == "a.analyst1@synthetic" else "a.analyst1@synthetic"
+            other = (
+                "a.analyst2@synthetic" if prep.analyst == "a.analyst1@synthetic" else "a.analyst1@synthetic"
+            )
             other_page = browser.new_page()
             sign_in(other_page, web, other)
             other_page.goto(path)
-            assert other_page.locator("main").get_by_role("heading", name="Current evidence sources").count() == 0
+            assert (
+                other_page.locator("main").get_by_role("heading", name="Current evidence sources").count()
+                == 0
+            )
         finally:
             browser.close()

@@ -18,8 +18,14 @@ def quote(ref, text):  # type: ignore[no-untyped-def]
 
 
 def test_accepts_only_exact_excerpt_with_request_scoped_reference() -> None:
-    result = validate_extractive_draft(draft("SUPPORTED_EXCERPTS", [quote(SOURCE, "AED 10.00")]), {SOURCE: ["Amount AED 10.00."]})
-    assert result == {"accepted": True, "status": "SUPPORTED_EXCERPTS", "quotes": [quote(SOURCE, "AED 10.00")]}
+    result = validate_extractive_draft(
+        draft("SUPPORTED_EXCERPTS", [quote(SOURCE, "AED 10.00")]), {SOURCE: ["Amount AED 10.00."]}
+    )
+    assert result == {
+        "accepted": True,
+        "status": "SUPPORTED_EXCERPTS",
+        "quotes": [quote(SOURCE, "AED 10.00")],
+    }
 
 
 @pytest.mark.parametrize(
@@ -38,7 +44,9 @@ def test_rejects_unsupported_or_ambiguous_draft(quotes, retrieved, reason) -> No
 
 
 def test_any_invalid_quote_rejects_entire_draft() -> None:
-    result = validate_extractive_draft(draft("SUPPORTED_EXCERPTS", [quote(SOURCE, "good"), quote(OTHER, "bad")]), {SOURCE: ["good"]})
+    result = validate_extractive_draft(
+        draft("SUPPORTED_EXCERPTS", [quote(SOURCE, "good"), quote(OTHER, "bad")]), {SOURCE: ["good"]}
+    )
     assert result == {"accepted": False, "reason": "EVIDENCE_NOT_RETRIEVED"}
 
 
@@ -56,6 +64,11 @@ def test_boundary_pattern_can_also_suppress_benign_context() -> None:
 
 def test_abstention_cannot_include_claims_and_extra_prose_is_forbidden() -> None:
     assert validate_extractive_draft(draft("INSUFFICIENT_EVIDENCE", []), {})["accepted"] is True
-    assert validate_extractive_draft(draft("INSUFFICIENT_EVIDENCE", [quote(SOURCE, "x")]), {SOURCE: ["x"]})["reason"] == "ABSTENTION_CONTAINS_QUOTES"
+    assert (
+        validate_extractive_draft(draft("INSUFFICIENT_EVIDENCE", [quote(SOURCE, "x")]), {SOURCE: ["x"]})[
+            "reason"
+        ]
+        == "ABSTENTION_CONTAINS_QUOTES"
+    )
     with pytest.raises(ValidationError):
         ExtractiveDraft.model_validate({"status": "SUPPORTED_EXCERPTS", "quotes": [], "answer": "invented"})

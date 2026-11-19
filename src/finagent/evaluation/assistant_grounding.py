@@ -30,11 +30,23 @@ def evaluate_grounding_suite(suite: dict[str, Any]) -> dict[str, Any]:
         counts = families.setdefault(family, {"passed": 0, "total": 0})
         counts["total"] += 1
         counts["passed"] += int(passed)
-        results.append({"id": scenario["id"], "family": family, "expected": scenario["expected"], "actual": actual, "passed": passed})
+        results.append(
+            {
+                "id": scenario["id"],
+                "family": family,
+                "expected": scenario["expected"],
+                "actual": actual,
+                "passed": passed,
+            }
+        )
     return {
-        "dataset": suite["dataset"], "version": suite["version"],
+        "dataset": suite["dataset"],
+        "version": suite["version"],
         "dataset_sha256": hashlib.sha256(encoded).hexdigest(),
-        "passed": sum(result["passed"] for result in results), "total": len(results),
-        "families": families, "results": results,
-        "notice": "Synthetic validator regression only; no model was called and this is not a release gate or security certification.",
+        "passed": sum(result["passed"] for result in results),
+        "total": len(results),
+        "families": families,
+        "results": results,
+        "notice": "Synthetic validator regression only; no model was called and this is not a release gate "
+        "or security certification.",
     }

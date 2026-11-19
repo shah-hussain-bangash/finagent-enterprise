@@ -5,8 +5,14 @@ from finagent.services.evidence_service.search import MAX_CHARS_PER_VALUE, searc
 
 def item(content):  # type: ignore[no-untyped-def]
     return {
-        "evidence_item_id": "synthetic-id", "source_type": "DOCUMENT_EXTRACTION", "source_ref": "doc-1",
-        "version_no": 2, "freshness": "STALE", "completeness": "INCOMPLETE", "as_of": None, "content": content,
+        "evidence_item_id": "synthetic-id",
+        "source_type": "DOCUMENT_EXTRACTION",
+        "source_ref": "doc-1",
+        "version_no": 2,
+        "freshness": "STALE",
+        "completeness": "INCOMPLETE",
+        "as_of": None,
+        "content": content,
     }
 
 

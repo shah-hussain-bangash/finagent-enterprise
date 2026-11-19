@@ -127,9 +127,18 @@ CAPABILITIES: MappingProxyType[str, Capability] = MappingProxyType(
             _cap("AG-COMPLIANCE", "Approved, applicable policy mapping with citations", {"TRANSACTIONS"}),
             _cap("AG-REPORT", "Draft investigation report from validated findings", set()),
             _cap("CAP-DOCUMENT", "Document extraction summary with provenance", {"DOCUMENT_EXTRACTION"}),
-            _cap("AG-ASSISTANT", "Evidence-grounded extractive assistant (future module)",
-                 {"TRANSACTIONS", "CUSTOMER_PROFILE", "KYC_DOCUMENT_LIST", "DOCUMENT_EXTRACTION", "SANCTIONS_SUMMARY"},
-                 status="FUTURE"),
+            _cap(
+                "AG-ASSISTANT",
+                "Evidence-grounded extractive assistant (future module)",
+                {
+                    "TRANSACTIONS",
+                    "CUSTOMER_PROFILE",
+                    "KYC_DOCUMENT_LIST",
+                    "DOCUMENT_EXTRACTION",
+                    "SANCTIONS_SUMMARY",
+                },
+                status="FUTURE",
+            ),
             _cap("AG-RISK", "Customer risk analysis (future module)", set(), status="FUTURE"),
         )
     }

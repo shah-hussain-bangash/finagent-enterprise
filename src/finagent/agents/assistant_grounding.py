@@ -16,7 +16,10 @@ from pydantic import BaseModel, ConfigDict, Field, StringConstraints
 from finagent.agents.validation import boundary_violations
 
 EvidenceReference = Annotated[
-    str, StringConstraints(pattern=r"^ev:[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$")
+    str,
+    StringConstraints(
+        pattern=r"^ev:[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
+    ),
 ]
 QuoteText = Annotated[str, StringConstraints(min_length=1, max_length=500)]
 _INSTRUCTION = re.compile(

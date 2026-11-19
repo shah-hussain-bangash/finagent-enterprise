@@ -15,7 +15,7 @@ def local_web_auth(monkeypatch):
     monkeypatch.setenv("FINAGENT_ENVIRONMENT", "local")
 
 
-def test_case_overview_requires_case_access(stack, make_client, make_settings, token, bank):
+def test_case_overview_requires_case_access(stack, make_client, make_settings, token, bank):  # noqa: F811
     from playwright.sync_api import sync_playwright
 
     prep = prepared_case(make_client(bank_base_url=bank.url), token, make_settings(bank_base_url=bank.url))
@@ -36,10 +36,15 @@ def test_case_overview_requires_case_access(stack, make_client, make_settings, t
             assert main.get_by_role("heading", name="Previously recorded risk indicators").count() == 1
             assert str(prep.snapshot_id) in main.inner_text()
             assert main.get_by_role("link", name="Review recorded transactions").count() == 1
-            other = "a.analyst2@synthetic" if prep.analyst == "a.analyst1@synthetic" else "a.analyst1@synthetic"
+            other = (
+                "a.analyst2@synthetic" if prep.analyst == "a.analyst1@synthetic" else "a.analyst1@synthetic"
+            )
             other_page = browser.new_page()
             sign_in(other_page, web, other)
             other_page.goto(path)
-            assert other_page.locator("main").get_by_role("heading", name="Current evidence and gaps").count() == 0
+            assert (
+                other_page.locator("main").get_by_role("heading", name="Current evidence and gaps").count()
+                == 0
+            )
         finally:
             browser.close()

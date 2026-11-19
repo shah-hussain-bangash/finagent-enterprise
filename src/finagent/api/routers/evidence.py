@@ -28,9 +28,9 @@ from finagent.services.document_service.corrections import FieldCorrection
 from finagent.services.document_service.ingest import DocumentPorts, UploadMeta
 from finagent.services.evidence_service import conflicts as conflict_service
 from finagent.services.evidence_service import queries as evidence_queries
-from finagent.services.evidence_service.search import search_current_evidence
 from finagent.services.evidence_service.conflicts import ConflictResolution
 from finagent.services.evidence_service.queries import snapshot_view
+from finagent.services.evidence_service.search import search_current_evidence
 from finagent.services.evidence_service.snapshots import create_snapshot
 
 evidence = APIRouter(prefix="/api/v1")
@@ -189,7 +189,12 @@ class EvidenceSearchRequest(BaseModel):
 
 @evidence.post("/cases/{case_id}/evidence-search", tags=["evidence"])
 def search_case_evidence(
-    case_id: str, body: EvidenceSearchRequest, request: Request, ctx: Principal, factory: Factory, settings: AppSettings
+    case_id: str,
+    body: EvidenceSearchRequest,
+    request: Request,
+    ctx: Principal,
+    factory: Factory,
+    settings: AppSettings,
 ) -> dict[str, Any]:
     """Literal retrieval from current evidence under the existing case-read scope."""
     charge(request, ctx, 3)

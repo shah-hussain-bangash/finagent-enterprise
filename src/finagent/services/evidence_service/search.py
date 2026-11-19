@@ -52,11 +52,15 @@ def search_current_evidence(evidence: dict[str, Any], query: str) -> dict[str, A
             value, path = stack.pop()
             visited += 1
             if isinstance(value, dict):
-                stack.extend((child, f"{path}.{key}") for key, child in list(value.items())[:MAX_VALUES_PER_ITEM])
+                stack.extend(
+                    (child, f"{path}.{key}") for key, child in list(value.items())[:MAX_VALUES_PER_ITEM]
+                )
                 if len(value) > MAX_VALUES_PER_ITEM:
                     limited = True
             elif isinstance(value, list):
-                stack.extend((child, f"{path}[{index}]") for index, child in enumerate(value[:MAX_VALUES_PER_ITEM]))
+                stack.extend(
+                    (child, f"{path}[{index}]") for index, child in enumerate(value[:MAX_VALUES_PER_ITEM])
+                )
                 if len(value) > MAX_VALUES_PER_ITEM:
                     limited = True
             elif isinstance(value, str):
@@ -65,21 +69,24 @@ def search_current_evidence(evidence: dict[str, Any], query: str) -> dict[str, A
                 text = value[:MAX_CHARS_PER_VALUE]
                 if needle in text.casefold():
                     excerpt, truncated = _match_excerpt(text, needle)
-                    matches.append({
-                        "evidence_ref": f"ev:{item['evidence_item_id']}",
-                        "source_type": item["source_type"],
-                        "source_ref": item["source_ref"],
-                        "version_no": item["version_no"],
-                        "freshness": item["freshness"],
-                        "completeness": item["completeness"],
-                        "as_of": item["as_of"],
-                        "field_path": path,
-                        "excerpt": excerpt,
-                        "excerpt_truncated": truncated or len(value) > MAX_CHARS_PER_VALUE,
-                    })
+                    matches.append(
+                        {
+                            "evidence_ref": f"ev:{item['evidence_item_id']}",
+                            "source_type": item["source_type"],
+                            "source_ref": item["source_ref"],
+                            "version_no": item["version_no"],
+                            "freshness": item["freshness"],
+                            "completeness": item["completeness"],
+                            "as_of": item["as_of"],
+                            "field_path": path,
+                            "excerpt": excerpt,
+                            "excerpt_truncated": truncated or len(value) > MAX_CHARS_PER_VALUE,
+                        }
+                    )
     return {
         "matches": matches,
         "search_limited": limited,
         "scope": "CURRENT_EVIDENCE",
-        "notice": "Literal text matches only; no AI answer or risk determination. Sources may be stale or incomplete.",
+        "notice": "Literal text matches only; no AI answer or risk determination. "
+        "Sources may be stale or incomplete.",
     }

@@ -13,7 +13,7 @@ def local_web_auth(monkeypatch):  # type: ignore[no-untyped-def]
     monkeypatch.setenv("FINAGENT_ENVIRONMENT", "local")
 
 
-def test_mobile_sidebar_is_hidden_until_opened_and_escape_returns_focus(stack):  # type: ignore[no-untyped-def]
+def test_mobile_sidebar_is_hidden_until_opened_and_escape_returns_focus(stack):  # type: ignore[no-untyped-def]  # noqa: F811
     from playwright.sync_api import expect, sync_playwright
 
     web = stack["web"]

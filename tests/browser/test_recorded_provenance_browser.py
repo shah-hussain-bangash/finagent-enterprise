@@ -15,7 +15,7 @@ def local_web_auth(monkeypatch):
     monkeypatch.setenv("FINAGENT_ENVIRONMENT", "local")
 
 
-def test_document_provenance_requires_case_access(stack, make_client, make_settings, token, bank):
+def test_document_provenance_requires_case_access(stack, make_client, make_settings, token, bank):  # noqa: F811
     from playwright.sync_api import sync_playwright
 
     prep = prepared_case(make_client(bank_base_url=bank.url), token, make_settings(bank_base_url=bank.url))
@@ -69,12 +69,16 @@ def test_document_provenance_requires_case_access(stack, make_client, make_setti
             for selected in selection["items"]:
                 if selected["selection"] == "SELECTED":
                     assert selected["evidence_ref"] in page.locator("main").inner_text()
-            other = "a.analyst2@synthetic" if prep.analyst == "a.analyst1@synthetic" else "a.analyst1@synthetic"
+            other = (
+                "a.analyst2@synthetic" if prep.analyst == "a.analyst1@synthetic" else "a.analyst1@synthetic"
+            )
             other_page = browser.new_page()
             sign_in(other_page, web, other)
             other_page.goto(path)
             assert other_page.locator("main").get_by_role("heading", name="Recorded versions").count() == 0
-            snapshot_path = f"{web}/workspace/snapshot-selection?case={prep.case_id}&output={result.output_id}"
+            snapshot_path = (
+                f"{web}/workspace/snapshot-selection?case={prep.case_id}&output={result.output_id}"
+            )
             other_page.goto(snapshot_path)
             assert str(prep.snapshot_id) not in other_page.locator("main").inner_text()
             tenant_page = browser.new_page()

@@ -16,7 +16,7 @@ def local_web_auth(monkeypatch):
     monkeypatch.setenv("FINAGENT_ENVIRONMENT", "local")
 
 
-def test_recorded_indicator_in_browser(stack, make_client, make_settings, token, bank):
+def test_recorded_indicator_in_browser(stack, make_client, make_settings, token, bank):  # noqa: F811
     from playwright.sync_api import sync_playwright
 
     settings = make_settings(bank_base_url=bank.url)

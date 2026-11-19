@@ -45,7 +45,9 @@ class SyntheticProvider:
         response = {"status": "SUPPORTED_EXCERPTS", "quotes": [{"evidence_ref": ref, "quote": quote}]}
         if self.add_prose:
             response["answer"] = "Unsupported narrative"
-        return ProviderResponse(text=json.dumps(response), input_tokens=10, output_tokens=10, model="synthetic")
+        return ProviderResponse(
+            text=json.dumps(response), input_tokens=10, output_tokens=10, model="synthetic"
+        )
 
 
 @pytest.fixture
@@ -62,7 +64,9 @@ def enable_candidate(monkeypatch):  # type: ignore[no-untyped-def]
 def run_with_selection(facts, scope, question):  # type: ignore[no-untyped-def]
     result = run_assistant_candidate(facts, scope, question)
     if result["status"] == "NEEDS_EVIDENCE_SELECTION":
-        return run_assistant_candidate(facts, scope, question, selected_evidence_refs=[result["choices"][0]["evidence_ref"]])
+        return run_assistant_candidate(
+            facts, scope, question, selected_evidence_refs=[result["choices"][0]["evidence_ref"]]
+        )
     return result
 
 
@@ -92,7 +96,9 @@ def test_candidate_accepts_only_snapshot_excerpts_and_abstains_on_missing(prep, 
     assert "Tied matches need human review" in result["notice"]
     quoted = result["quotes"][0]
     assert quoted["evidence_ref"].startswith("ev:")
-    assert {"source_type", "source_ref", "version_no", "freshness", "completeness", "as_of"} <= set(quoted["source"])
+    assert {"source_type", "source_ref", "version_no", "freshness", "completeness", "as_of"} <= set(
+        quoted["source"]
+    )
     assert quoted["source"]["source_type"] in registry.CAPABILITIES["AG-ASSISTANT"].permitted_source_types
     source = original_sources[quoted["evidence_ref"]]
     assert quoted["source"]["freshness"] == source.freshness
@@ -207,17 +213,33 @@ def test_tied_evidence_requires_authorized_explicit_selection(prep, monkeypatch)
     with transaction(prep.factory) as session:
         for suffix in ("a", "b"):
             record_item(
-                session, tenant_id=tenant_id, case_id=uuid.UUID(prep.case_id),
+                session,
+                tenant_id=tenant_id,
+                case_id=uuid.UUID(prep.case_id),
                 data=EvidenceInput(
-                    source_type="DOCUMENT_EXTRACTION", source_ref=f"synthetic-ambiguity-{suffix}",
-                    content={"document_type": "OTHER", "status": "PARSED", "text": f"Ambiguity probe record {suffix}.", "fields": []},
-                    source_system="synthetic-test", retrieved_at=now, as_of=now, freshness="FRESH",
-                    completeness="COMPLETE", classification="CONFIDENTIAL",
-                ), created_by="synthetic-test",
+                    source_type="DOCUMENT_EXTRACTION",
+                    source_ref=f"synthetic-ambiguity-{suffix}",
+                    content={
+                        "document_type": "OTHER",
+                        "status": "PARSED",
+                        "text": f"Ambiguity probe record {suffix}.",
+                        "fields": [],
+                    },
+                    source_system="synthetic-test",
+                    retrieved_at=now,
+                    as_of=now,
+                    freshness="FRESH",
+                    completeness="COMPLETE",
+                    classification="CONFIDENTIAL",
+                ),
+                created_by="synthetic-test",
             )
         snapshot, _ = create_snapshot(
-            session, tenant_id=tenant_id, case_id=uuid.UUID(prep.case_id),
-            created_by="synthetic-test", max_age=timedelta(hours=prep.settings.source_max_age_hours),
+            session,
+            tenant_id=tenant_id,
+            case_id=uuid.UUID(prep.case_id),
+            created_by="synthetic-test",
+            max_age=timedelta(hours=prep.settings.source_max_age_hours),
         )
         prep.snapshot_id = snapshot.id
     provider = SyntheticProvider()
@@ -232,7 +254,9 @@ def test_tied_evidence_requires_authorized_explicit_selection(prep, monkeypatch)
             run_assistant_candidate(facts, scope, "ambiguity probe", selected_evidence_refs=invalid)
     assert provider.calls == 0
     with pytest.raises(PermissionError):
-        run_assistant_candidate(facts, scope, "ambiguity probe", selected_evidence_refs=[f"ev:{uuid.uuid4()}"])
+        run_assistant_candidate(
+            facts, scope, "ambiguity probe", selected_evidence_refs=[f"ev:{uuid.uuid4()}"]
+        )
     assert provider.calls == 0
     selected = result["choices"][0]["evidence_ref"]
     answered = run_assistant_candidate(facts, scope, "ambiguity probe", selected_evidence_refs=[selected])
@@ -247,17 +271,28 @@ def test_injected_document_text_cannot_become_unvalidated_model_narrative(prep, 
     now = datetime.now(UTC)
     with transaction(prep.factory) as session:
         record_item(
-            session, tenant_id=prep.principal().tenant_id, case_id=uuid.UUID(prep.case_id),
+            session,
+            tenant_id=prep.principal().tenant_id,
+            case_id=uuid.UUID(prep.case_id),
             data=EvidenceInput(
-                source_type="DOCUMENT_EXTRACTION", source_ref="synthetic-injection",
+                source_type="DOCUMENT_EXTRACTION",
+                source_ref="synthetic-injection",
                 content={"document_type": "OTHER", "status": "PARSED", "text": malicious, "fields": []},
-                source_system="synthetic-test", retrieved_at=now, as_of=now, freshness="FRESH",
-                completeness="COMPLETE", classification="CONFIDENTIAL",
-            ), created_by="synthetic-test",
+                source_system="synthetic-test",
+                retrieved_at=now,
+                as_of=now,
+                freshness="FRESH",
+                completeness="COMPLETE",
+                classification="CONFIDENTIAL",
+            ),
+            created_by="synthetic-test",
         )
         snapshot, _ = create_snapshot(
-            session, tenant_id=prep.principal().tenant_id, case_id=uuid.UUID(prep.case_id),
-            created_by="synthetic-test", max_age=timedelta(hours=prep.settings.source_max_age_hours),
+            session,
+            tenant_id=prep.principal().tenant_id,
+            case_id=uuid.UUID(prep.case_id),
+            created_by="synthetic-test",
+            max_age=timedelta(hours=prep.settings.source_max_age_hours),
         )
         prep.snapshot_id = snapshot.id
     before = prep.client.get(f"/api/v1/cases/{prep.case_id}", headers=token(prep.analyst)).json()
