@@ -50,16 +50,17 @@ export default async function RecordedMonitor({ searchParams }: { searchParams: 
     catch (error) { if (!(error instanceof ApiRequestError)) throw error; outputError = error; }
   }
   const link = (value: Record<string, string>) => `/workspace/recorded-monitor?${new URLSearchParams(value)}`;
-  return <section aria-labelledby="monitor-title">
+  return <section className="connected-workspace" aria-labelledby="monitor-title">
     <p><Link href="/workspace" prefetch={false}>← Back to workspace preview</Link></p>
+    {validCase && <p><Link href={`/workspace/case-overview?${new URLSearchParams({ case: selected })}`} prefetch={false}>← Back to case overview</Link></p>}
     <h1 id="monitor-title">Recorded investigation runs</h1>
     <div className="panel"><strong>Connected, read-only view</strong><p>Shows recorded workflow steps and agent outputs for an accessible case. Refresh to see newer status. Usage is shown per output when recorded and is not a run-wide total.</p></div>
     <section className="panel"><h2>Choose an accessible case</h2>
       {caseError && <ErrorState error={caseError} what="Cases" />}
       {cases?.items.length === 0 && <Empty>No cases are available on this page.</Empty>}
-      {cases && cases.items.length > 0 && <ul>{cases.items.map((item) => <li key={item.case_id}><Link prefetch={false} href={link({ case: item.case_id, ...(cursor ? { cursor } : {}) })}>Case {item.case_id.slice(0, 8)}</Link> · {item.status}</li>)}</ul>}
-      {cases?.next_cursor && <p><Link prefetch={false} href={link({ cursor: cases.next_cursor })}>Next cases →</Link></p>}
-      {cursor && <p><Link prefetch={false} href="/workspace/recorded-monitor">← First cases</Link></p>}
+      {cases && cases.items.length > 0 && <ul>{cases.items.map((item) => <li key={item.case_id}><Link prefetch={false} aria-current={selected === item.case_id ? "true" : undefined} href={link({ case: item.case_id, ...(cursor ? { cursor } : {}) })}>Case {item.case_id.slice(0, 8)}</Link>{selected === item.case_id && <span className="case-selected">Selected</span>} · {item.status}</li>)}</ul>}
+      {cases?.next_cursor && <p><Link prefetch={false} href={link({ ...(validCase ? { case: selected, ...(UUID.test(runId) ? { run: runId } : {}) } : {}), cursor: cases.next_cursor })}>Next cases →</Link></p>}
+      {cursor && <p><Link prefetch={false} href={link(validCase ? { case: selected, ...(UUID.test(runId) ? { run: runId } : {}) } : {})}>← First cases</Link></p>}
     </section>
     {selected && !validCase && <p role="alert">The selected case identifier is invalid.</p>}
     {validCase && <section className="panel"><h2>Case runs</h2>
@@ -70,11 +71,12 @@ export default async function RecordedMonitor({ searchParams }: { searchParams: 
       {runError && <ErrorState error={runError} what="Run details" />}
     </section>}
     {run && run.case_id === selected && <section className="panel"><h2>Run {run.run_id.slice(0, 8)}</h2>
-      <p>{run.workflow_type} · {run.graph_version} · {run.status} · attempt {run.attempt}/{run.max_attempts}</p>
+      <p>{run.workflow_type} · {run.graph_version} · {run.status} · Recorded attempt: {run.attempt} · Configured maximum: {run.max_attempts}</p>
+      {run.attempt > run.max_attempts && <p>Recorded attempt exceeds the configured maximum. Review the full execution history for context.</p>}
       <p>Status reason: {run.status_reason}</p>{run.next_action && <p>Next action: {run.next_action}</p>}
       {run.blockers.length > 0 && <><h3>Blockers</h3><ul>{run.blockers.map((item, index) => <li key={index}>{item.code}{item.reason ? `: ${item.reason}` : ""}</li>)}</ul></>}
       <h3>Recorded steps</h3>
-      {run.steps.length === 0 ? <Empty>No recorded steps were returned.</Empty> : <div style={{ overflowX: "auto" }}><table><caption>Recorded workflow steps</caption><thead><tr><th>Step</th><th>Status</th><th>Attempt</th><th>Error</th><th>Started</th><th>Finished</th><th>Elapsed</th></tr></thead><tbody>{run.steps.map((step, index) => <tr key={index}><td>{step.node}</td><td>{step.status}</td><td>{step.attempt}</td><td>{step.error_code ?? "None recorded"}</td><td><When iso={step.started_at} /></td><td><When iso={step.finished_at} /></td><td>{elapsed(step.started_at, step.finished_at)}</td></tr>)}</tbody></table></div>}
+      {run.steps.length === 0 ? <Empty>No recorded steps were returned.</Empty> : <div style={{ overflowX: "auto" }} role="region" aria-label="Recorded workflow steps table" tabIndex={0}><table><caption>Recorded workflow steps</caption><thead><tr><th>Step</th><th>Status</th><th>Attempt</th><th>Error</th><th>Started</th><th>Finished</th><th>Elapsed</th></tr></thead><tbody>{run.steps.map((step, index) => <tr key={index}><td>{step.node}</td><td>{step.status}</td><td>{step.attempt}</td><td>{step.error_code ?? "None recorded"}</td><td><When iso={step.started_at} /></td><td><When iso={step.finished_at} /></td><td>{elapsed(step.started_at, step.finished_at)}</td></tr>)}</tbody></table></div>}
       <h3>Recorded agent usage</h3>
       {outputError && <ErrorState error={outputError} what="Agent outputs" />}
       {outputs?.length === 0 && <Empty>No agent outputs associated with this run were returned.</Empty>}

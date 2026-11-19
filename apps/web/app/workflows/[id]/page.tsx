@@ -27,7 +27,9 @@ export default async function RunMonitor({ params, searchParams }: {
     <section aria-labelledby="h">
       <h1 id="h">Execution and recovery: run {id.slice(0, 8)}</h1>
       <p><Link href={`/cases/${r.case_id}`}>Case {r.case_id.slice(0, 8)}</Link> - {r.workflow_type} ({r.graph_version}) -
-        attempt {r.attempt}/{r.max_attempts}</p>
+        recorded attempt {r.attempt} - configured maximum {r.max_attempts}</p>
+      {r.attempt > r.max_attempts && <p className="warn">Recorded attempt exceeds the configured maximum. Review the execution history for context.</p>}
+      <p><Link href={`/workspace/recorded-monitor?${new URLSearchParams({ case: r.case_id, run: r.run_id })}`}>View recorded investigation run →</Link></p>
       <Flash ok={sp.ok} error={sp.error} />
       <p>Status <span className={`badge badge-${r.status.toLowerCase()}`}>{r.status}</span> - {r.status_reason}
         {r.cancel_requested ? " (cancellation requested)" : ""}</p>
@@ -54,14 +56,15 @@ export default async function RunMonitor({ params, searchParams }: {
         </form>
       ) : null}
       <h2>Steps</h2>
-      <table>
+      {r.steps.length === 0 ? <p>No steps were returned for this run.</p> : <div className="workflow-steps-table" role="region" aria-label="Workflow steps table" tabIndex={0}><table>
+        <caption>Recorded workflow steps</caption>
         <thead><tr><th>Node</th><th>Status</th><th>Attempt</th><th>Error</th><th>Started</th><th>Finished</th></tr></thead>
         <tbody>{r.steps.map((s, i) => (
           <tr key={i}><td>{s.node}</td><td>{s.status}</td><td>{s.attempt}</td><td>{s.error_code ?? "-"}</td>
             <td><When iso={s.started_at} /></td><td><When iso={s.finished_at} /></td></tr>))}</tbody>
-      </table>
+      </table></div>}
       <h2>Status history</h2>
-      <ol>{r.history.map((h, i) => <li key={i}><When iso={h.at} /> {h.from ?? "new"} to <strong>{h.to}</strong>: {h.reason}</li>)}</ol>
+      {r.history.length === 0 ? <p>No status history was returned for this run.</p> : <ol>{r.history.map((h, i) => <li key={i}><When iso={h.at} /> {h.from ?? "new"} to <strong>{h.to}</strong>: {h.reason}</li>)}</ol>}
     </section>
   );
 }

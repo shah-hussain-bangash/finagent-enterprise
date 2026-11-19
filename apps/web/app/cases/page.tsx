@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { StatusBadge } from "@/components/StatusBadge";
+import { CASE_STATUS_LABEL, StatusBadge } from "@/components/StatusBadge";
 import { Empty, ErrorState, When } from "@/components/ui";
 import { ApiRequestError, type CaseStatus, listCases } from "@/lib/api";
 
@@ -20,18 +20,21 @@ export default async function Cases({ searchParams }: { searchParams: Promise<Re
   return (
     <section aria-labelledby="h">
       <h1 id="h">Case queue</h1>
-      <form className="inline" method="get">
+      <p>Review cases available to your account. Open a case to inspect its investigation and evidence.</p>
+      <form className="panel case-queue-filter" method="get">
         <label htmlFor="status">Status</label>
         <select id="status" name="status" defaultValue={status ?? ""}>
           <option value="">All</option>
-          {STATUSES.map((s) => <option key={s} value={s}>{s}</option>)}
+          {STATUSES.map((s) => <option key={s} value={s}>{CASE_STATUS_LABEL[s]}</option>)}
         </select>
         <button type="submit">Filter</button>
+        {status && <Link href="/cases">Clear filter</Link>}
       </form>
+      {sp.status && !status && <p role="alert">The requested status was not recognized. All statuses are shown.</p>}
       {error ? <ErrorState error={error} what="Cases" /> : null}
-      {page && page.items.length === 0 ? <Empty>No cases in your queue for this filter.</Empty> : null}
+      {page && page.items.length === 0 ? <Empty>{sp.cursor ? "No cases were returned on this page. Return to the first page to check the queue." : "No cases were returned for this filter."}</Empty> : null}
       {page && page.items.length > 0 ? (
-        <table>
+        <div className="case-queue-table" role="region" aria-label="Case queue table" tabIndex={0}><table>
           <caption>Cases you are permitted to see (newest first)</caption>
           <thead>
             <tr><th>Case</th><th>Status</th><th>Priority</th><th>Alert</th><th>Created</th><th>Updated</th></tr>
@@ -48,11 +51,12 @@ export default async function Cases({ searchParams }: { searchParams: Promise<Re
               </tr>
             ))}
           </tbody>
-        </table>
+        </table></div>
       ) : null}
       {page?.next_cursor ? (
         <p><Link href={`/cases?${new URLSearchParams({ ...(status ? { status } : {}), cursor: page.next_cursor })}`}>Next page</Link></p>
       ) : null}
+      {sp.cursor && <p><Link href={`/cases${status ? `?${new URLSearchParams({ status })}` : ""}`}>← First page</Link></p>}
     </section>
   );
 }

@@ -45,7 +45,7 @@ export default async function EvidencePage({ params, searchParams }: {
       {data ? (
         <>
           <h2>Gaps and limitations ({data.requirements_version})</h2>
-          {data.gaps.length === 0 ? <Empty>No gaps against the required evidence for this alert family.</Empty> : (
+          {data.gaps.length === 0 ? <Empty>No gaps were returned by the current evidence checklist. Review the sources before making a decision.</Empty> : (
             <ul>
               {data.gaps.map((g, i) => (
                 <li key={i}><strong>{g.severity === "BLOCKING" ? "Blocking" : "Review"}:</strong> {g.code} - {g.detail}
@@ -54,9 +54,9 @@ export default async function EvidencePage({ params, searchParams }: {
             </ul>
           )}
           <h2>Contradictory records</h2>
-          {data.conflicts.length === 0 ? <Empty>No conflicts detected.</Empty> : data.conflicts.map((c) => (
+          {data.conflicts.length === 0 ? <Empty>No conflicts were returned in the current evidence.</Empty> : data.conflicts.map((c) => (
             <div key={c.conflict_id} className="panel">
-              <p><strong>{c.field_key}</strong>: source A says <q>{c.value_a}</q>, source B says <q>{c.value_b}</q>.
+              <p><strong>{c.field_key}</strong>: source A says {c.value_a === null ? <em>value not available</em> : <q>{c.value_a}</q>}, source B says {c.value_b === null ? <em>value not available</em> : <q>{c.value_b}</q>}.
                 Status: <span className={`badge badge-${c.status.toLowerCase()}`}>{c.status}</span></p>
               {c.status === "RESOLVED" ? <p>Resolution {c.resolution}: {c.rationale}</p> : null}
               {c.status === "OPEN" ? (
@@ -64,7 +64,8 @@ export default async function EvidencePage({ params, searchParams }: {
                   <input type="hidden" name="case_id" value={id} />
                   <input type="hidden" name="conflict_id" value={c.conflict_id} />
                   <label htmlFor={`r-${c.conflict_id}`}>Resolution</label>
-                  <select id={`r-${c.conflict_id}`} name="resolution">
+                  <select id={`r-${c.conflict_id}`} name="resolution" defaultValue="" required>
+                    <option value="" disabled>Choose a resolution</option>
                     <option value="USE_A">Use source A</option>
                     <option value="USE_B">Use source B</option>
                     <option value="BOTH_RETAINED_EXPLAINED">Keep both, explained</option>
@@ -78,8 +79,9 @@ export default async function EvidencePage({ params, searchParams }: {
             </div>
           ))}
           <h2>Current evidence</h2>
-          {data.items.length === 0 ? <Empty>No evidence gathered yet. Start an investigation from the case overview.</Empty> : (
-            <table>
+          {data.items.length === 0 ? <Empty>No current evidence was returned. This does not establish that evidence does not exist.</Empty> : (
+            <div className="case-evidence-table" role="region" aria-label="Current evidence table" tabIndex={0}><table>
+              <caption>Current evidence sources</caption>
               <thead><tr><th>Source</th><th>Version</th><th>Freshness / completeness</th><th>As of</th><th>Content</th></tr></thead>
               <tbody>
                 {data.items.map((i) => (
@@ -89,21 +91,23 @@ export default async function EvidencePage({ params, searchParams }: {
                       <div className="muted">sha256 {i.content_hash.slice(0, 12)}</div></td>
                     <td>{i.freshness} / {i.completeness}</td>
                     <td><When iso={i.as_of} /></td>
-                    <td><details><summary>View</summary><Json value={i.content} /></details></td>
+                    <td><details><summary>View content for {i.source_type} ({i.source_ref})</summary><Json value={i.content} /></details></td>
                   </tr>
                 ))}
               </tbody>
-            </table>
+            </table></div>
           )}
         </>
       ) : null}
       <h2>Immutable snapshots</h2>
-      <form action={freezeSnapshot} className="inline">
+      {data && <form action={freezeSnapshot} className="inline">
         <input type="hidden" name="case_id" value={id} />
         <SubmitButton>Freeze current evidence</SubmitButton>
-      </form>
+      </form>}
+      {snaps.error && <ErrorState error={snaps.error} what="Snapshot history" />}
       {snaps.data && snaps.data.items.length > 0 ? (
-        <table>
+        <div className="case-evidence-table" role="region" aria-label="Evidence snapshots table" tabIndex={0}><table>
+          <caption>Recorded evidence snapshots</caption>
           <thead><tr><th>Version</th><th>Completeness</th><th>Open conflicts</th><th>Gaps</th><th>Created</th></tr></thead>
           <tbody>
             {snaps.data.items.map((s) => (
@@ -116,8 +120,8 @@ export default async function EvidencePage({ params, searchParams }: {
               </tr>
             ))}
           </tbody>
-        </table>
-      ) : <Empty>No snapshot yet.</Empty>}
+        </table></div>
+      ) : snaps.data ? <Empty>No snapshots were returned for this case.</Empty> : null}
     </section>
   );
 }

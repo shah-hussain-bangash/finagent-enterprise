@@ -48,6 +48,9 @@ test("filters by direction and status without hiding other statuses by default",
   const html = renderToStaticMarkup(await page({ searchParams: Promise.resolve({ case: caseId, direction: "DEBIT", status: "PENDING" }) }));
   assert.ok(html.includes("tx-two"));
   assert.ok(!html.includes("tx-one"));
+  assert.ok(html.includes("Active filters:"));
+  assert.ok(html.includes("Clear filters"));
+  assert.ok(html.includes(`/workspace/recorded-transactions?case=${caseId}`));
   const all = renderToStaticMarkup(await page({ searchParams: Promise.resolve({ case: caseId }) }));
   assert.ok(all.includes("tx-one") && all.includes("tx-two"));
   assert.ok(all.indexOf("tx-one") < all.indexOf("tx-two"));
@@ -56,6 +59,20 @@ test("filters by direction and status without hiding other statuses by default",
 test("reports invalid filters instead of silently treating them as valid", async () => {
   const html = renderToStaticMarkup(await loadPage()({ searchParams: Promise.resolve({ case: caseId, status: "INVALID" }) }));
   assert.ok(html.includes("unrecognized filter was ignored"));
+});
+
+test("paginates each source while totals cover all filtered rows and filters are preserved", async () => {
+  const many = structuredClone(evidence);
+  many.items[0].content.items = Array.from({ length: 60 }, (_, index) => ({ source_transaction_id: `sample-${String(index + 1).padStart(3, "0")}`, booking_time: "2026-01-01", amount: "1.00", currency: "AED", direction: "CREDIT", status: "POSTED", counterparty_ref: "sample" }));
+  const page = loadPage(many);
+  const html = renderToStaticMarkup(await page({ searchParams: Promise.resolve({ case: caseId, q: "sample", direction: "CREDIT", status: "POSTED", page_source: "e1", page: "2" }) }));
+  assert.ok(html.includes("sample-026"));
+  assert.ok(html.includes("sample-050"));
+  assert.ok(!html.includes("sample-025"));
+  assert.ok(!html.includes("sample-051"));
+  assert.ok(html.includes("60.00"));
+  assert.ok(html.includes("of 60 filtered transactions"));
+  assert.ok(html.includes("q=sample&amp;direction=CREDIT&amp;status=POSTED&amp;page_source=e1&amp;page=3"));
 });
 
 test("sums exact posted amounts separately and discloses excluded or unrecognized rows", () => {

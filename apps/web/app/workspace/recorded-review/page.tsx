@@ -35,16 +35,17 @@ export default async function RecordedReview({ searchParams }: { searchParams: P
     catch (error) { if (!(error instanceof ApiRequestError)) throw error; versionError = error; }
   }
   const link = (value: Record<string, string>) => `/workspace/recorded-review?${new URLSearchParams(value)}`;
-  return <section aria-labelledby="recorded-review-title">
+  return <section className="connected-workspace" aria-labelledby="recorded-review-title">
     <p><Link href="/workspace" prefetch={false}>← Back to workspace preview</Link></p>
+    {validCase && <p><Link href={`/workspace/case-overview?${new URLSearchParams({ case: selected })}`} prefetch={false}>← Back to case overview</Link></p>}
     <h1 id="recorded-review-title">Recorded report changes</h1>
     <div className="panel"><strong>Connected, read-only view</strong><p>Review recorded report versions and changes from each previous version. This view does not submit a decision or verify approval readiness.</p></div>
     <section className="panel"><h2>Choose an accessible case</h2>
       {caseError && <ErrorState error={caseError} what="Cases" />}
       {cases?.items.length === 0 && <Empty>No cases are available on this page.</Empty>}
-      {cases && cases.items.length > 0 && <ul>{cases.items.map((item) => <li key={item.case_id}><Link prefetch={false} href={link({ case: item.case_id, ...(cursor ? { cursor } : {}) })}>Case {item.case_id.slice(0, 8)}</Link> · {item.status}</li>)}</ul>}
-      {cases?.next_cursor && <p><Link prefetch={false} href={link({ cursor: cases.next_cursor })}>Next cases →</Link></p>}
-      {cursor && <p><Link prefetch={false} href="/workspace/recorded-review">← First cases</Link></p>}
+      {cases && cases.items.length > 0 && <ul>{cases.items.map((item) => <li key={item.case_id}><Link prefetch={false} aria-current={selected === item.case_id ? "true" : undefined} href={link({ case: item.case_id, ...(cursor ? { cursor } : {}) })}>Case {item.case_id.slice(0, 8)}</Link>{selected === item.case_id && <span className="case-selected">Selected</span>} · {item.status}</li>)}</ul>}
+      {cases?.next_cursor && <p><Link prefetch={false} href={link({ ...(validCase ? { case: selected, ...(params.version ? { version: params.version } : {}) } : {}), cursor: cases.next_cursor })}>Next cases →</Link></p>}
+      {cursor && <p><Link prefetch={false} href={link(validCase ? { case: selected, ...(params.version ? { version: params.version } : {}) } : {})}>← First cases</Link></p>}
     </section>
     {selected && !validCase && <p role="alert">The selected case identifier is invalid.</p>}
     {validCase && <section className="panel"><h2>Report version history</h2>
@@ -52,12 +53,12 @@ export default async function RecordedReview({ searchParams }: { searchParams: P
       {reports && !reports.report && <Empty>No report was returned for this case.</Empty>}
       {reports?.report && <><p>Report status: {reports.report.status} · Current version: {reports.report.current_version_no}</p>
         {reports.versions.length === 0 ? <Empty>No report versions were returned.</Empty> : <ul>{reports.versions.map((item) => <li key={item.version_no}>
-          <Link prefetch={false} href={link({ case: selected, version: String(item.version_no), ...(cursor ? { cursor } : {}) })}>Version {item.version_no}</Link> · {item.origin} · {item.author_label} · <When iso={item.created_at} /> · {item.valid ? "Validation passed" : "Validation problems"}{item.edit_note ? ` · ${item.edit_note}` : ""}
+          <Link prefetch={false} aria-current={chosen === item.version_no ? "true" : undefined} href={`${link({ case: selected, version: String(item.version_no), ...(cursor ? { cursor } : {}) })}#version-details`}>Version {item.version_no}</Link> · {item.origin} · {item.author_label} · <When iso={item.created_at} /> · {item.valid ? "Validation passed" : "Validation problems"}{item.edit_note ? ` · ${item.edit_note}` : ""}
         </li>)}</ul>}</>}
       {params.version && reports && (!chosen || !reports.versions.some((item) => item.version_no === chosen)) && <p role="alert">The selected version was not returned for this case.</p>}
       {versionError && <ErrorState error={versionError} what="Report version" />}
     </section>}
-    {version && <section className="panel"><h2>Changes for version {version.version_no}</h2>
+    {version && <section className="panel" id="version-details"><h2>Changes for version {version.version_no}</h2>
       <p>Evidence snapshot: {version.snapshot_id}</p>{version.watermark && <p>{version.watermark}</p>}
       <p>{version.validation.valid ? "Recorded validation passed." : "Recorded validation problems:"}</p>
       {!version.validation.valid && <ul>{version.validation.problems?.map((problem, index) => <li key={index}>{problem.code}{problem.section ? ` · ${problem.section}` : ""}</li>)}</ul>}

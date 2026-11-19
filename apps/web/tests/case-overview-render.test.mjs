@@ -15,7 +15,7 @@ function loadPage(deny = false) {
     "@/components/ui": { Empty: ({ children }) => React.createElement("p", null, children), ErrorState: () => React.createElement("p", null, "Access unavailable"), When: ({ iso }) => React.createElement("time", null, iso) },
     "@/lib/session": { requireSession: async () => {} },
     "@/lib/connected-risk": { recordedIndicators: (output) => output.findings },
-    "@/lib/api": { ApiRequestError: class extends Error {}, listCases: async () => ({ items: [], next_cursor: null }), load: async (path) => {
+    "@/lib/api": { ApiRequestError: class extends Error {}, listCases: async () => ({ items: [{ case_id: caseId, status: "INVESTIGATING" }], next_cursor: "next-token" }), load: async (path) => {
       calls.push(path);
       if (path.endsWith(caseId)) return deny ? { data: null, error: {} } : { data: { case_id: caseId, status: "INVESTIGATING", priority: "HIGH", alert_type: "AML", due_at: null, assigned_analyst_id: null, blocked_reason: null }, error: null };
       if (path.endsWith("/evidence")) return { data: { items: [], gaps: [{ code: "MISSING", severity: "BLOCKING", detail: "Document missing", source_type: "DOCUMENT_EXTRACTION", source_ref: "doc-example" }] }, error: null };
@@ -32,6 +32,14 @@ test("brings recorded evidence, indicator snapshot and case links together", asy
   const { page } = loadPage();
   const html = renderToStaticMarkup(await page({ searchParams: Promise.resolve({ case: caseId }) }));
   for (const expected of ["INVESTIGATING", "Document missing", "DOCUMENT_EXTRACTION", "doc-example", "does not by itself identify", "Synthetic indicator", "snapshot-1", `/workspace/recorded-transactions?case=${caseId}`]) assert.ok(html.includes(expected));
+  assert.ok(html.includes("Selected"));
+  assert.ok(html.includes(`/workspace/case-overview?case=${caseId}&amp;cursor=next-token`));
+});
+test("preserves the selected case when returning to the first case-list page", async () => {
+  const { page } = loadPage();
+  const html = renderToStaticMarkup(await page({ searchParams: Promise.resolve({ case: caseId, cursor: "previous-token" }) }));
+  assert.ok(html.includes(`/workspace/case-overview?case=${caseId}`));
+  assert.ok(html.includes("First cases"));
 });
 test("does not request evidence or agent outputs after case access fails", async () => {
   const { page, calls } = loadPage(true);

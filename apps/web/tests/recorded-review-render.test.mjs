@@ -31,6 +31,8 @@ test("renders recorded changes, validation problems and snapshot", async () => {
   const { page } = loadPage();
   const html = renderToStaticMarkup(await page({ searchParams: Promise.resolve({ case: caseId }) }));
   for (const expected of ["snapshot-example", "MISSING_EVIDENCE", "summary", "+new", "DRAFT"]) assert.ok(html.includes(expected));
+  assert.ok(html.includes("#version-details"));
+  assert.ok(html.includes('id="version-details"'));
 });
 test("does not request a report version absent from the case history", async () => {
   const { page, calls } = loadPage();

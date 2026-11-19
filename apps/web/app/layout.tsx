@@ -4,6 +4,7 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 
 import { signOut } from "@/app/actions";
+import { MainNavigation } from "@/components/MainNavigation";
 import { getSession } from "@/lib/session";
 import {
   sessionIdentity,
@@ -145,19 +146,7 @@ export default async function RootLayout({
           </span>
 
           {session ? (
-            <nav aria-label="Main">
-              {visibleNav.map(
-                ({ href, label }) => (
-                  <Link
-                    key={href}
-                    href={href}
-                    className={href === "/workspace" ? "workspace-nav-button" : undefined}
-                  >
-                    {label}
-                  </Link>
-                ),
-              )}
-            </nav>
+            <MainNavigation items={visibleNav.map(({ href, label }) => ({ href, label }))} />
           ) : null}
 
           {session ? (
@@ -186,7 +175,7 @@ export default async function RootLayout({
           are shown in UTC.
         </p>
 
-        <main id="main">
+        <main id="main" tabIndex={-1}>
           {children}
         </main>
       </body>

@@ -35,6 +35,7 @@ export function ErrorState({ error, what }: { error: ApiRequestError; what: stri
             : `${error.message} (status ${error.status})`}
       </p>
       {error.body?.error.correlation_id ? <p className="muted">Correlation ID: {error.body.error.correlation_id}</p> : null}
+      {error.code === "MFA_REQUIRED" ? <p><Link href="/security">Open security verification</Link></p> : null}
     </section>
   );
 }
@@ -46,6 +47,7 @@ export function Empty({ children }: { children: ReactNode }) {
 export function When({ iso }: { iso: string | null | undefined }) {
   if (!iso) return <span className="muted">-</span>;
   const d = new Date(iso);
+  if (!Number.isFinite(d.getTime())) return <span className="muted">Invalid date</span>;
   return (
     <time dateTime={iso} title={iso}>
       {d.toISOString().replace("T", " ").slice(0, 19)} UTC
@@ -69,6 +71,7 @@ export function Tabs({ caseId, active }: { caseId: string; active: string }) {
           {label}
         </Link>
       ))}
+      <Link href={`/workspace/case-overview?${new URLSearchParams({ case: caseId })}`}>Investigation overview</Link>
     </nav>
   );
 }
@@ -83,5 +86,5 @@ export function Field({ label, children }: { label: string; children: ReactNode 
 }
 
 export function Json({ value }: { value: unknown }) {
-  return <pre className="json">{JSON.stringify(value, null, 2)}</pre>;
+  return <pre className="json" role="region" aria-label="Structured details" tabIndex={0}>{JSON.stringify(value, null, 2)}</pre>;
 }

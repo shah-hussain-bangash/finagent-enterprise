@@ -16,9 +16,10 @@ export default async function Escalations() {
       <h1 id="h">Escalation queue</h1>
       <p className="muted">Due times are PROPOSED defaults (DEC-16); notification delivery state is shown, including failures.</p>
       {error ? <ErrorState error={error} what="Escalations" /> : null}
-      {data && data.items.length === 0 ? <Empty>No open escalations.</Empty> : null}
+      {data && data.items.length === 0 ? <Empty>No open escalations were returned for your account.</Empty> : null}
       {data && data.items.length > 0 ? (
-        <table>
+        <div className="escalation-table" role="region" aria-label="Escalation table" tabIndex={0}><table>
+          <caption>Open escalations in your access scope</caption>
           <thead><tr><th>Case</th><th>Status when due</th><th>Due</th><th>Escalated</th><th>Owner</th><th>Notification</th></tr></thead>
           <tbody>{data.items.map((e) => (
             <tr key={e.escalation_id}>
@@ -26,7 +27,7 @@ export default async function Escalations() {
               <td>{e.case_status}</td><td><When iso={e.due_at} /></td><td><When iso={e.escalated_at} /></td>
               <td>{e.owner_role}</td><td>{e.notification_status}</td>
             </tr>))}</tbody>
-        </table>
+        </table></div>
       ) : null}
     </section>
   );

@@ -32,3 +32,9 @@ test("does not claim missing evidence means no risk", async () => {
   const html = renderToStaticMarkup(await loadPage({ items: [], gaps: [], conflicts: [], latest_snapshot: null })({ searchParams: Promise.resolve({ case: caseId }) }));
   assert.ok(html.includes("not a finding that the case is complete or risk-free"));
 });
+test("links a returned evidence source to its case record", async () => {
+  const evidenceId = "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb";
+  const evidence = { items: [{ evidence_item_id: evidenceId, source_type: "TRANSACTIONS", source_ref: "source-1", source_system: "synthetic", version_no: 1, freshness: "FRESH", completeness: "COMPLETE", as_of: null }], gaps: [], conflicts: [], latest_snapshot: null };
+  const html = renderToStaticMarkup(await loadPage(evidence)({ searchParams: Promise.resolve({ case: caseId }) }));
+  assert.ok(html.includes(`/cases/${caseId}/evidence#evidence-${evidenceId}`));
+});

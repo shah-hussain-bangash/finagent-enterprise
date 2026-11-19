@@ -34,6 +34,10 @@ test("shows recorded versions and corrections with historical context", async ()
   const { page } = loadPage();
   const html = renderToStaticMarkup(await page({ searchParams: Promise.resolve({ case: caseId, document: documentId }) }));
   for (const expected of ["Unreadable", "CORRECTION", "Verified manually", "page 1", "earlier processing failures", "Synthetic KYC checklist", "ev:example", "snapshot-example", "does not establish which document was selected", "ev:selected", "QUARANTINED", "Selection details were not recorded"]) assert.ok(html.includes(expected));
+  assert.ok(html.includes("#document-details"));
+  assert.ok(html.indexOf('id="document-details"') < html.indexOf("Recorded KYC checklist findings"));
+  assert.ok(html.indexOf("snapshot-example") < html.indexOf("snapshot-older"));
+  assert.equal((html.match(/<details class="kyc-history-item" open=""/g) ?? []).length, 1);
 });
 test("does not request a document absent from the authorized case list", async () => {
   const { page, calls } = loadPage();

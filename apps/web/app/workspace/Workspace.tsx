@@ -323,7 +323,7 @@ export default function Workspace() {
   );
   const doc = documents[documentIndex]!;
   const caseTable = (
-    <div className="ws-table-scroll">
+    <div className="ws-table-scroll" role="region" aria-label="Sample case list" tabIndex={0}>
       <table>
         <thead>
           <tr>
@@ -651,7 +651,7 @@ export default function Workspace() {
           <div className="ws-page-heading">
             <div>
               <p className="ws-eyebrow">FINAGENT / {view.toUpperCase()}</p>
-              <h1>
+              <h1 aria-live="polite" aria-atomic="true">
                 {view === "Dashboard"
                   ? `Your ${role.toLowerCase()} workspace`
                   : view}
@@ -823,7 +823,7 @@ export default function Workspace() {
                 </Card>
               </div>
               <Card title="Evaluation results" subtitle="Results layout preview · no evaluation has been run">
-                <div className="ws-table-scroll">
+                <div className="ws-table-scroll" role="region" aria-label="Sample evaluation results" tabIndex={0}>
                   <table>
                     <thead><tr><th>Proposed check</th><th>Dataset</th><th>Result</th><th>Review</th></tr></thead>
                     <tbody>
@@ -909,7 +909,7 @@ export default function Workspace() {
                 </Card>
                 <Card title="Field comparison" subtitle="Illustrative field history · synthetic example">
                   {provenanceExample === "current" ? (
-                    <div className="ws-table-scroll"><table><thead><tr><th>Field</th><th>Example value</th><th>Review status</th></tr></thead><tbody>
+                    <div className="ws-table-scroll" role="region" aria-label="Sample document field comparison" tabIndex={0}><table><thead><tr><th>Field</th><th>Example value</th><th>Review status</th></tr></thead><tbody>
                       <tr><td>Issue date</td><td>Analyst-corrected example</td><td><Badge tone="amber">Review required</Badge></td></tr>
                       <tr><td>Name</td><td>Not shown</td><td><Badge tone="slate">Unverified</Badge></td></tr>
                       <tr><td>Address</td><td>Not shown</td><td><Badge tone="slate">Unverified</Badge></td></tr>
@@ -938,7 +938,7 @@ export default function Workspace() {
                 </Card>
               </div>
               <Card title="Security scenario results" subtitle="Results layout preview · no scenarios have run">
-                <div className="ws-table-scroll"><table><thead><tr><th>Scenario</th><th>Scope</th><th>Result</th><th>Evidence</th></tr></thead><tbody>
+                <div className="ws-table-scroll" role="region" aria-label="Sample security scenario results" tabIndex={0}><table><thead><tr><th>Scenario</th><th>Scope</th><th>Result</th><th>Evidence</th></tr></thead><tbody>
                   <tr><td>Document prompt injection</td><td>Synthetic document</td><td><Badge tone="slate">Not run</Badge></td><td>Not available</td></tr>
                   <tr><td>Unauthorized case access</td><td>Synthetic case and tenant</td><td><Badge tone="slate">Not run</Badge></td><td>Not available</td></tr>
                   <tr><td>Unsafe tool request</td><td>Simulated tool permission</td><td><Badge tone="slate">Not run</Badge></td><td>Not available</td></tr>
@@ -973,7 +973,7 @@ export default function Workspace() {
                 </Card>
               </div>
               <Card title="Release comparison" subtitle="Interface preview · no versions selected">
-                <div className="ws-table-scroll"><table><thead><tr><th>Review item</th><th>Current version</th><th>Candidate version</th></tr></thead><tbody>
+                <div className="ws-table-scroll" role="region" aria-label="Sample release comparison" tabIndex={0}><table><thead><tr><th>Review item</th><th>Current version</th><th>Candidate version</th></tr></thead><tbody>
                   <tr><td>Model and provider</td><td>Not connected</td><td>Not selected</td></tr>
                   <tr><td>Prompt version</td><td>Not connected</td><td>Not selected</td></tr>
                   <tr><td>Evaluation dataset</td><td>Not available</td><td>Not selected</td></tr>
@@ -1328,7 +1328,7 @@ export default function Workspace() {
                 title="Transaction ledger"
                 subtitle="Select a row to inspect its source"
               >
-                <div className="ws-table-scroll">
+                <div className="ws-table-scroll" role="region" aria-label="Sample transaction ledger" tabIndex={0}>
                   <table>
                     <thead>
                       <tr>
@@ -1727,7 +1727,7 @@ export default function Workspace() {
                 </Card>
               </div>
               <Card title="Policy version comparison" subtitle="Planned review layout · no policy versions loaded">
-                <div className="ws-table-scroll"><table><thead><tr><th>Review item</th><th>Current version</th><th>Proposed version</th></tr></thead><tbody>
+                <div className="ws-table-scroll" role="region" aria-label="Sample policy version comparison" tabIndex={0}><table><thead><tr><th>Review item</th><th>Current version</th><th>Proposed version</th></tr></thead><tbody>
                   <tr><td>Policy version</td><td>Not connected</td><td>Not selected</td></tr>
                   <tr><td>Effective date</td><td>Not available</td><td>Not available</td></tr>
                   <tr><td>Relevant requirements</td><td>Not available</td><td>Not available</td></tr>

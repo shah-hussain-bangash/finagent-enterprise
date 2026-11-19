@@ -8,7 +8,7 @@ export const metadata = { title: "Snapshot document selection | FinAgent Enterpr
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 interface Selection { document_type: string; selection: string; evidence_ref: string | null; source_ref: string | null; processing_status: string | null }
 interface Output { output_id: string; capability_id: string; snapshot_id: string; status: string; created_at: string; lineage?: { document_selection?: { rule_version: string; review_date: string; basis: string; items: Selection[] } } }
-interface SnapshotItem { evidence_item_id: string; source_type: string; source_ref: string; source_system: string; version_no: number; freshness: string; completeness: string; content_hash: string; content: { document_type?: string; status?: string; fields?: { field_key: string; value: string | null; value_state: string; validation_status: string; page?: number | null; origin?: string | null }[] } }
+interface SnapshotItem { evidence_item_id: string; source_type: string; source_ref: string; source_system: string; version_no: number; freshness: string; completeness: string; content_hash: string; content: { document_type?: string; status?: string; fields?: { field_key: string; value: string | null; value_state: string; validation_status: string; page?: number | null; origin?: string | null }[] } | null }
 interface Snapshot { snapshot_id: string; created_at: string; items: SnapshotItem[] }
 
 export default async function SnapshotSelection({ searchParams }: { searchParams: Promise<{ case?: string; output?: string }> }) {
@@ -32,8 +32,8 @@ export default async function SnapshotSelection({ searchParams }: { searchParams
     catch (error) { if (!(error instanceof ApiRequestError)) throw error; snapshotError = error; }
   }
   const selection = output?.lineage?.document_selection;
-  return <section aria-labelledby="selection-title">
-    <p><Link prefetch={false} href={`/workspace/recorded-provenance?${new URLSearchParams({ case: caseId })}`}>← Back to case provenance</Link></p>
+  return <section className="connected-workspace" aria-labelledby="selection-title">
+    <p><Link prefetch={false} href={UUID.test(caseId) ? `/workspace/recorded-provenance?${new URLSearchParams({ case: caseId })}` : "/workspace/recorded-provenance"}>← Back to case provenance</Link></p>
     <h1 id="selection-title">Recorded snapshot document selection</h1>
     <div className="panel"><strong>Connected, read-only view</strong><p>This shows the evidence recorded in the KYC output’s snapshot. It may differ from current case evidence. Selection does not establish document authenticity or checklist approval.</p></div>
     {!valid && <p role="alert">A valid case and output are required.</p>}
@@ -51,9 +51,11 @@ export default async function SnapshotSelection({ searchParams }: { searchParams
             return <article className="panel" key={index}><h3>{item.document_type} · {item.selection}</h3>
               <p>Recorded evidence: {item.evidence_ref ?? "None"} · Source: {item.source_ref ?? "None"} · Processing: {item.processing_status ?? "Not recorded"}</p>
               {item.selection === "SELECTED" && !evidence && <p role="alert">The selected document evidence was not found in this snapshot.</p>}
-              {evidence && <>{(evidence.content.document_type !== item.document_type || evidence.source_ref !== item.source_ref || evidence.content.status !== item.processing_status) && <p role="alert">The recorded selection details do not match this snapshot record. Review the original evidence before relying on the selection.</p>}<p>Snapshot source: {evidence.source_ref} · {evidence.source_system} · version {evidence.version_no} · {evidence.freshness} / {evidence.completeness} · sha256 {evidence.content_hash.slice(0, 12)}</p>
+              {evidence && <>{!evidence.content ? <p role="alert">The snapshot document content was not returned. The recorded selection cannot be verified here.</p> : (evidence.content.document_type !== item.document_type || evidence.source_ref !== item.source_ref || evidence.content.status !== item.processing_status) && <p role="alert">The recorded selection details do not match this snapshot record. Review the original evidence before relying on the selection.</p>}<p>Snapshot source: {evidence.source_ref} · {evidence.source_system} · version {evidence.version_no} · {evidence.freshness} / {evidence.completeness} · sha256 {evidence.content_hash.slice(0, 12)}</p>
+                {evidence.content && <>
                 <p>Snapshot document type: {evidence.content.document_type ?? "Not recorded"} · Processing: {evidence.content.status ?? "Not recorded"}</p>
                 {!Array.isArray(evidence.content.fields) || evidence.content.fields.length === 0 ? <p>No extracted fields were recorded in this snapshot.</p> : <ul>{evidence.content.fields.map((field, fieldIndex) => <li key={fieldIndex}>{field.field_key}: {field.value ?? "Not recorded"} · {field.value_state} · {field.validation_status}{field.page ? ` · page ${field.page}` : ""}{field.origin ? ` · ${field.origin}` : ""}</li>)}</ul>}
+                </>}
               </>}
             </article>;
           })}

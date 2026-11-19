@@ -49,12 +49,13 @@ export default async function RecordedRiskPage({
   })).filter((group) => group.indicators.length > 0 || group.calculations.length > 0).reverse();
 
   return (
-    <section aria-labelledby="recorded-risk-title">
+    <section className="connected-workspace" aria-labelledby="recorded-risk-title">
       <p><Link href="/workspace" prefetch={false}>← Back to workspace preview</Link></p>
+      {validCase && <p><Link href={`/workspace/case-overview?${new URLSearchParams({ case: selected })}`} prefetch={false}>← Back to case overview</Link></p>}
       <h1 id="recorded-risk-title">Recorded case risk indicators</h1>
       <div className="panel">
         <strong>Connected, read-only view</strong>
-        <p>This page reads selected recorded AML indicator claims and calculations from the existing API under your account’s case permissions. It does not run detection, change a case, or submit a decision. Other workspace screens remain sample previews.</p>
+        <p>This page reads selected recorded AML indicator claims and calculations from the existing API under your account’s case permissions. It does not run detection, change a case, or submit a decision. The workspace also contains illustrative sample screens.</p>
         <p>Results can be historical and may refer to different evidence snapshots. Calculations are displayed as recorded; they are not recalculated here. Indicators are interpretations for human review, not proof of wrongdoing.</p>
       </div>
 
@@ -63,21 +64,21 @@ export default async function RecordedRiskPage({
         {pageError && <ErrorState error={pageError} what="Cases" />}
         {page && page.items.length === 0 && <Empty>No cases are available on this page.</Empty>}
         {page && page.items.length > 0 && (
-          <div style={{ overflowX: "auto" }}>
+          <div style={{ overflowX: "auto" }} role="region" aria-label="Case selection table" tabIndex={0}>
             <table>
               <caption>Cases returned for your signed-in account</caption>
               <thead><tr><th>Case</th><th>Status</th><th>Priority</th><th>Alert type</th><th>Action</th></tr></thead>
               <tbody>{page.items.map((item) => (
                 <tr key={item.case_id}>
                   <td>{item.case_id.slice(0, 8)}</td><td>{item.status}</td><td>{item.priority}</td><td>{item.alert_type}</td>
-                  <td><Link prefetch={false} href={`/workspace/recorded-risk?${new URLSearchParams({ case: item.case_id, ...(cursor ? { cursor } : {}) })}`}>View recorded indicators</Link></td>
+                  <td><Link prefetch={false} aria-label={`View recorded indicators for case ${item.case_id.slice(0, 8)}`} aria-current={selected === item.case_id ? "true" : undefined} href={`/workspace/recorded-risk?${new URLSearchParams({ case: item.case_id, ...(cursor ? { cursor } : {}) })}`}>View recorded indicators</Link>{selected === item.case_id && <span className="case-selected">Selected</span>}</td>
                 </tr>
               ))}</tbody>
             </table>
           </div>
         )}
-        {page?.next_cursor && <p><Link prefetch={false} href={`/workspace/recorded-risk?${new URLSearchParams({ cursor: page.next_cursor })}`}>Next cases →</Link></p>}
-        {cursor && <p><Link prefetch={false} href="/workspace/recorded-risk">← First cases</Link></p>}
+        {page?.next_cursor && <p><Link prefetch={false} href={`/workspace/recorded-risk?${new URLSearchParams({ ...(validCase ? { case: selected } : {}), cursor: page.next_cursor })}`}>Next cases →</Link></p>}
+        {cursor && <p><Link prefetch={false} href={validCase ? `/workspace/recorded-risk?${new URLSearchParams({ case: selected })}` : "/workspace/recorded-risk"}>← First cases</Link></p>}
       </section>
 
       {selected && !validCase && <p role="alert" className="flash flash-error">The selected case identifier is invalid.</p>}

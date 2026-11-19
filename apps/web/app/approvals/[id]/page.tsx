@@ -31,8 +31,10 @@ export default async function ApprovalDetail({ params, searchParams }: {
   if (error) return <ErrorState error={error} what="Review request" />;
   return (
     <section aria-labelledby="h">
+      <p><Link href="/approvals">← Back to approval center</Link></p>
       <h1 id="h">Review request {id.slice(0, 8)} - {d.status}</h1>
       <p><Link href={`/cases/${d.case_id}`}>Open case</Link> - submitted <When iso={d.created_at} /> - matrix {d.matrix_version}</p>
+      <p><Link href={`/workspace/recorded-review?${new URLSearchParams({ case: d.case_id })}`}>Compare recorded report versions →</Link></p>
       <Flash ok={sp.ok} error={sp.error} />
       {d.evidence_drift.length ? (
         <p role="alert" className="flash flash-error">Evidence changed after submission ({d.evidence_drift.join(", ")}).
@@ -41,16 +43,18 @@ export default async function ApprovalDetail({ params, searchParams }: {
       {d.snapshot ? (
         <div className="panel">
           <h2>Bound evidence snapshot v{d.snapshot.version_no}: {d.snapshot.completeness_status}</h2>
+          <p>Open conflicts recorded in this snapshot: {d.snapshot.open_conflicts}</p>
           {d.snapshot.gaps.length ? <ul>{d.snapshot.gaps.map((g, i) => <li key={i}>{g.severity}: {g.code} - {g.detail}</li>)}</ul>
-            : <p className="muted">No gaps.</p>}
+            : <p className="muted">No gaps were recorded in this snapshot.</p>}
         </div>
-      ) : null}
+      ) : <p role="alert" className="warn">The evidence snapshot was not returned for this review request.</p>}
       {d.report ? (
         <>
           <h2>Report version {d.report.version_no} (frozen for this review)</h2>
           {d.report.sections.map((s) => <div key={s.section_id} className="panel"><h3>{s.title}</h3>
             <p style={{ whiteSpace: "pre-wrap" }}>{s.text}</p></div>)}
           <h2>Claims and evidence</h2>
+          {d.report.claims.length === 0 && <p>No claims were returned for this report version.</p>}
           <ul>{d.report.claims.map((c) => (
             <li key={c.claim_id} className="claim"><FindingTag kind={c.claim_type} /> {c.text}{" "}
               <span className="muted">[{c.support_status}; {[...c.evidence_refs, ...c.citation_refs].join(", ")}]</span></li>))}</ul>
@@ -58,8 +62,10 @@ export default async function ApprovalDetail({ params, searchParams }: {
             <details><summary>Differences from the previous version</summary>
               {d.report.diff_from_previous.map((x) => <div key={x.section_id}><strong>{x.section_id}</strong> ({x.change})
                 <pre className="diff">{x.diff.join("\n")}</pre></div>)}</details>) : null}
+          <h2>Recorded report limitations</h2>
+          {Object.values(d.report.limitations ?? {}).some((items) => items.length > 0) ? <dl>{Object.entries(d.report.limitations).map(([category, items]) => items.length > 0 ? <div key={category}><dt>{category}</dt><dd><ul>{items.map((item, index) => <li key={index}>{item}</li>)}</ul></dd></div> : null)}</dl> : <p>No report limitations were returned.</p>}
         </>
-      ) : null}
+      ) : <p role="alert" className="warn">The report version was not returned for this review request.</p>}
       {d.decision ? (
         <div className="panel">
           <h2>Decision: {d.decision.decision}</h2>
@@ -68,7 +74,7 @@ export default async function ApprovalDetail({ params, searchParams }: {
             MFA {d.decision.mfa_satisfied ? "satisfied" : "not satisfied"}, effect {d.decision.effect}, <When iso={d.decision.decided_at} /></p>
         </div>
       ) : null}
-      {d.status === "PENDING" ? (
+      {d.status === "PENDING" && d.report && d.snapshot ? (
         <form action={decide} className="stack panel">
           <h2>Your decision</h2>
           <input type="hidden" name="approval_request_id" value={id} />
@@ -90,6 +96,7 @@ export default async function ApprovalDetail({ params, searchParams }: {
           <SubmitButton>Record decision</SubmitButton>
         </form>
       ) : null}
+      {d.status === "PENDING" && (!d.report || !d.snapshot) ? <p className="warn">The decision form is unavailable until the report and evidence snapshot can be reviewed.</p> : null}
     </section>
   );
 }

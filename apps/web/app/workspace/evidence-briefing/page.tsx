@@ -29,16 +29,17 @@ export default async function EvidenceBriefing({ searchParams }: { searchParams:
     catch (error) { if (!(error instanceof ApiRequestError)) throw error; evidenceError = error; }
   }
   const link = (value: Record<string, string>) => `/workspace/evidence-briefing?${new URLSearchParams(value)}`;
-  return <section aria-labelledby="briefing-title">
+  return <section className="connected-workspace" aria-labelledby="briefing-title">
     <p><Link href="/workspace" prefetch={false}>← Back to workspace preview</Link></p>
+    {validCase && <p><Link href={`/workspace/case-overview?${new URLSearchParams({ case: selected })}`} prefetch={false}>← Back to case overview</Link></p>}
     <h1 id="briefing-title">Case evidence briefing</h1>
     <div className="panel"><strong>Connected, read-only evidence overview</strong><p>This structured briefing lists recorded case sources and gaps. It does not use an AI model, answer free-text questions, or make decisions. Current evidence may differ from older snapshots.</p></div>
     <section className="panel"><h2>Choose an accessible case</h2>
       {caseError && <ErrorState error={caseError} what="Cases" />}
       {cases?.items.length === 0 && <Empty>No cases are available on this page.</Empty>}
-      {cases && cases.items.length > 0 && <ul>{cases.items.map((item) => <li key={item.case_id}><Link prefetch={false} href={link({ case: item.case_id, ...(cursor ? { cursor } : {}) })}>Case {item.case_id.slice(0, 8)}</Link> · {item.status}</li>)}</ul>}
-      {cases?.next_cursor && <p><Link prefetch={false} href={link({ cursor: cases.next_cursor })}>Next cases →</Link></p>}
-      {cursor && <p><Link prefetch={false} href="/workspace/evidence-briefing">← First cases</Link></p>}
+      {cases && cases.items.length > 0 && <ul>{cases.items.map((item) => <li key={item.case_id}><Link prefetch={false} aria-current={selected === item.case_id ? "true" : undefined} href={link({ case: item.case_id, ...(cursor ? { cursor } : {}) })}>Case {item.case_id.slice(0, 8)}</Link>{selected === item.case_id && <span className="case-selected">Selected</span>} · {item.status}</li>)}</ul>}
+      {cases?.next_cursor && <p><Link prefetch={false} href={link({ ...(validCase ? { case: selected } : {}), cursor: cases.next_cursor })}>Next cases →</Link></p>}
+      {cursor && <p><Link prefetch={false} href={link(validCase ? { case: selected } : {})}>← First cases</Link></p>}
     </section>
     {selected && !validCase && <p role="alert">The selected case identifier is invalid.</p>}
     {validCase && <section><h2>Briefing for case {selected.slice(0, 8)}</h2>
@@ -46,7 +47,8 @@ export default async function EvidenceBriefing({ searchParams }: { searchParams:
       {evidence && <>
         <EvidenceSearch key={selected} caseId={selected} />
         <div className="panel"><h3>Current evidence sources</h3>
-          {evidence.items.length === 0 ? <Empty>No current evidence was returned. This does not establish that no evidence exists.</Empty> : <ul>{evidence.items.map((item) => <li key={item.evidence_item_id}><strong>{item.source_type}</strong> · {item.source_ref} · {item.source_system} · version {item.version_no} · {item.freshness} / {item.completeness} · as of <When iso={item.as_of} /> · evidence ID {item.evidence_item_id}</li>)}</ul>}
+          {evidence.items.length === 0 ? <Empty>No current evidence was returned. This does not establish that no evidence exists.</Empty> : <ul className="evidence-source-list">{evidence.items.map((item) => <li key={item.evidence_item_id}><strong>{item.source_type}</strong> · {item.source_ref} · {item.source_system} · version {item.version_no} · {item.freshness} / {item.completeness} · as of <When iso={item.as_of} /> · evidence ID {item.evidence_item_id}
+            {UUID.test(item.evidence_item_id) && <p><Link prefetch={false} href={`/cases/${selected}/evidence#evidence-${item.evidence_item_id}`}>Open this source in case evidence →</Link></p>}</li>)}</ul>}
         </div>
         <div className="panel"><h3>Recorded evidence gaps</h3>
           {evidence.gaps.length === 0 ? <Empty>No gaps were returned by the current evidence checklist. This is not a finding that the case is complete or risk-free.</Empty> : <><p>These warnings are associated with individual source records; they do not by themselves identify the document selected for investigation.</p><ul>{evidence.gaps.map((gap, index) => <li key={index}><strong>{gap.severity}: {gap.code}</strong> · {gap.source_type}{gap.source_ref ? ` · ${gap.source_ref}` : " · Reference not recorded"} · {gap.detail}</li>)}</ul></>}
