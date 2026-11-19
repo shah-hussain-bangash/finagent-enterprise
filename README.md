@@ -10,7 +10,7 @@ FinAgent is an enterprise AI engineering portfolio project exploring how analyst
 | **Demonstration** | Synthetic data, identities, integrations, and evaluation scenarios |
 | **Status** | Active development; production readiness and institutional approval are not established |
 | **Accountability** | Analysts and reviewers make decisions; AI output is a draft |
-| **Current development** | The connected workspace and latest improvements are on the integration branch until merged |
+| **Current development** | The default branch contains the merged workspace; ongoing updates are reviewed on an integration branch |
 
 > This is not a deployed bank product, a regulatory certification, or an autonomous system for deciding guilt. Local evidence and passing tests apply to the tested version and environment. Live-provider verification, independent assessment, and production acceptance remain open.
 
@@ -103,14 +103,14 @@ The [engineering handbook](docs/06-engineering-devops/05-ENGINEERING-HANDBOOK.md
 
 ## Verification and evidence
 
-On **19 November 2026**, GitHub Actions run [#7](https://github.com/zenithdevelopers7-source/finagent-enterprise/actions/runs/44469329182) for commit [`7ccb3c6`](https://github.com/zenithdevelopers7-source/finagent-enterprise/commit/7ccb3c63108c973a0ba8012dbf05ccf6385708f0) reported success for all five jobs. This is evidence for that commit and CI environment; later changes require their own verification.
+On **19 November 2026**, GitHub Actions run [#13](https://github.com/zenithdevelopers7-source/finagent-enterprise/actions/runs/44524434535) for commit [`eb302fc`](https://github.com/zenithdevelopers7-source/finagent-enterprise/commit/eb302fc18ff48d5d7729a2361aba512ba974d751) reported success for all five jobs. The release-blocker selection reported 343 passed and 392 deselected; the full-suite invocation reported 724 passed and 11 deselected. The mutation check caught 82 of its 82 defined mutations. Deselected tests were not run in those invocations. This is evidence for that commit and synthetic CI environment; later changes require their own verification.
 
 | CI job | What that run checked | Scope limit |
 |---|---|---|
 | Quality | Python lint and type checks, unit tests, API and event-contract drift | Does not establish production behavior |
 | Security | Repository security task and secret-scan step | Not an independent penetration test or a guarantee that all secrets are absent |
 | Web | Dependency installation and audit, type check and optimized build | Does not replace device, keyboard, screen-reader or usability acceptance |
-| Integration | Release-blocker and full suites, skip check, selected security-control mutation checks; artifacts uploaded | Synthetic CI environment; mutation checks cover selected controls |
+| Integration | Release-blocker and full suites, skip check, selected security-control mutation checks; artifact upload step succeeded | Synthetic CI environment; deselected tests were not run in their respective invocations; mutation checks cover selected controls |
 | Images | Container image builds | Images were not pushed, signed, deployed or validated in a production environment by this job |
 
 Earlier focused web checks and a local build also passed for their tested versions. Full role-based browser acceptance, screen-reader and accessibility review, realistic-volume performance tests, independent AI and security evaluation, live provider verification, and target-environment recovery exercises are outstanding. The [verification and evidence plan](docs/05-testing-evidence/07-TESTING-AND-EVIDENCE-PLAN.md) explains what must be recorded next.

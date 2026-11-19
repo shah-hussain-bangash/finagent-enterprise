@@ -4,6 +4,8 @@
 
 ## Recorded automated evidence
 
+**More recent run:** [GitHub Actions CI #13](https://github.com/zenithdevelopers7-source/finagent-enterprise/actions/runs/44524434535) passed all five jobs for commit [`eb302fc18ff48d5d7729a2361aba512ba974d751`](https://github.com/zenithdevelopers7-source/finagent-enterprise/commit/eb302fc18ff48d5d7729a2361aba512ba974d751). The release-blocker selection reported 343 passed and 392 deselected; the full-suite invocation reported 724 passed and 11 deselected. The mutation runner reported 82/82 defined mutations caught. These results are specific to that synthetic CI run: deselected tests were not run in the corresponding invocation, and mutation coverage is limited to the defined changes. Later commits are not covered by this record.
+
 **Run:** [GitHub Actions CI #7](https://github.com/zenithdevelopers7-source/finagent-enterprise/actions/runs/44469329182)  
 **Commit:** [`7ccb3c63108c973a0ba8012dbf05ccf6385708f0`](https://github.com/zenithdevelopers7-source/finagent-enterprise/commit/7ccb3c63108c973a0ba8012dbf05ccf6385708f0)  
 **Environment:** GitHub-hosted CI with the workflow's configured synthetic test services.  
