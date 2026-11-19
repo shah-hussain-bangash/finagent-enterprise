@@ -27,14 +27,18 @@ export default async function ReportPage({ params, searchParams }: {
   const list = await load<Reports>(`/api/v1/cases/${id}/reports`);
   if (list.error) return <ErrorState error={list.error} what="Report" />;
   const report = list.data.report;
-  const shown = Number(sp.v ?? report?.current_version_no ?? 0);
-  const v = report ? await load<Version>(`/api/v1/cases/${id}/reports/versions/${shown}`) : null;
+  const requested = sp.v === undefined ? null : /^[1-9]\d{0,8}$/.test(sp.v) ? Number(sp.v) : null;
+  const invalidVersion = sp.v !== undefined && (requested === null || !list.data.versions.some((item) => item.version_no === requested));
+  const shown = sp.v === undefined ? report?.current_version_no ?? 0 : requested ?? 0;
+  const v = report && !invalidVersion ? await load<Version>(`/api/v1/cases/${id}/reports/versions/${shown}`) : null;
   const isCurrent = report && shown === report.current_version_no;
   return (
     <section aria-labelledby="h">
       <h1 id="h">Investigation report</h1>
       <Tabs caseId={id} active="/report" />
+      <p><Link href={`/workspace/recorded-review?${new URLSearchParams({ case: id })}`}>Compare recorded report versions →</Link></p>
       <Flash ok={sp.ok} error={sp.error} />
+      {invalidVersion && <p role="alert">The selected report version was not returned for this case. Choose a version from the revision history.</p>}
       {!report ? <Empty>No draft yet. The draft is produced by the investigation run after evidence and analysis.</Empty> : null}
       {v?.error ? <ErrorState error={v.error} what="Report version" /> : null}
       {v?.data ? (
@@ -42,6 +46,7 @@ export default async function ReportPage({ params, searchParams }: {
           <p>Report status <span className={`badge badge-${report?.status.toLowerCase()}`}>{report?.status}</span> - viewing
             version {v.data.version_no} of {v.data.current_version_no} ({v.data.origin}, {v.data.author_label},{" "}
             <When iso={v.data.created_at} />)</p>
+          {!isCurrent ? <p className="warn">You are viewing an earlier version. <Link href={`/cases/${id}/report`}>Return to the current report</Link> to manage the current submission.</p> : null}
           {v.data.watermark ? <p className="warn"><strong>{v.data.watermark}</strong></p> : null}
           {!v.data.validation.valid ? (
             <div role="alert" className="flash flash-error">Validation problems (block submission):
@@ -83,7 +88,7 @@ export default async function ReportPage({ params, searchParams }: {
               ))}
             </details>
           ) : null}
-          {isCurrent && report?.status === "DRAFT" ? (
+          {isCurrent && report?.status === "DRAFT" && v.data.validation.valid ? (
             <form action={submitReport} className="inline panel">
               <input type="hidden" name="case_id" value={id} />
               <input type="hidden" name="version_no" value={v.data.version_no} />
@@ -91,12 +96,13 @@ export default async function ReportPage({ params, searchParams }: {
               <SubmitButton>{`Submit version ${v.data.version_no} for independent review`}</SubmitButton>
             </form>
           ) : null}
-          {report?.status === "SUBMITTED" ? (
+          {isCurrent && report?.status === "DRAFT" && !v.data.validation.valid ? <p className="warn">Resolve the validation problems above before submitting this version for review.</p> : null}
+          {isCurrent && report?.status === "SUBMITTED" ? (
             <form action={withdrawReport} className="inline panel">
               <input type="hidden" name="case_id" value={id} />
-              <label htmlFor="wreason">Withdraw submission (reason)</label>
+              <label htmlFor="wreason">Reason for withdrawing the current submission</label>
               <input id="wreason" name="reason" required minLength={5} maxLength={300} />
-              <SubmitButton danger>Withdraw</SubmitButton>
+              <SubmitButton danger>Withdraw current submission</SubmitButton>
             </form>
           ) : null}
           <form action={createExport} className="inline panel">
@@ -110,7 +116,8 @@ export default async function ReportPage({ params, searchParams }: {
       {list.data.versions.length ? (
         <>
           <h2>Revision history</h2>
-          <table>
+          <div className="report-history-table" role="region" aria-label="Report revision history table" tabIndex={0}><table>
+            <caption>Recorded report revisions</caption>
             <thead><tr><th>Version</th><th>Origin</th><th>Author</th><th>Valid</th><th>Note</th><th>Created</th></tr></thead>
             <tbody>
               {list.data.versions.map((h) => (
@@ -121,7 +128,7 @@ export default async function ReportPage({ params, searchParams }: {
                 </tr>
               ))}
             </tbody>
-          </table>
+          </table></div>
         </>
       ) : null}
     </section>

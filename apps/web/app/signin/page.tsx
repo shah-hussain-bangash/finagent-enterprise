@@ -332,24 +332,24 @@ function DashboardArtwork() {
         <div className="fin-kpi-card">
           <span className="fin-kpi-icon">↗</span>
           <div>
-            <strong>2,847</strong>
-            <small>Transactions analysed</small>
+            <strong>Sample</strong>
+            <small>Transaction review</small>
           </div>
         </div>
 
         <div className="fin-kpi-card">
           <span className="fin-kpi-icon warning">△</span>
           <div>
-            <strong>156</strong>
-            <small>Potential risks identified</small>
+            <strong>Sample</strong>
+            <small>Risk indicators</small>
           </div>
         </div>
 
         <div className="fin-kpi-card">
           <span className="fin-kpi-ring" />
           <div>
-            <strong>98%</strong>
-            <small>Investigation coverage</small>
+            <strong>Sample</strong>
+            <small>Investigation overview</small>
           </div>
         </div>
       </div>
@@ -423,20 +423,20 @@ export default async function SignIn({
           <div className="fin-top-badges">
             <TrustBadge
               icon={<LockIcon />}
-              title="SECURE"
-              text="Enterprise grade"
+              title="ACCESS"
+              text="Role-based controls"
             />
 
             <TrustBadge
               icon={<ShieldIcon />}
-              title="COMPLIANT"
-              text="AML / KYC / FATF"
+              title="REVIEW"
+              text="AML / KYC workflows"
             />
 
             <TrustBadge
               icon={<ChartIcon />}
-              title="AUDITABLE"
-              text="Full traceability"
+              title="EVIDENCE"
+              text="Recorded provenance"
             />
           </div>
         </div>
@@ -452,7 +452,7 @@ export default async function SignIn({
           </h2>
 
           <p>
-            Human-reviewed AI insights. Trusted compliance.
+            Human-reviewed investigation support.
             <br />
             Designed for financial institutions and enterprise teams.
           </p>
@@ -490,24 +490,24 @@ export default async function SignIn({
           <div>
             <BankIcon />
             <p>
-              <strong>Trusted by</strong>
-              Financial Institutions
+              <strong>Designed for</strong>
+              Financial institutions
             </p>
           </div>
 
           <div>
             <GlobeIcon />
             <p>
-              <strong>Global Standards</strong>
-              AML / KYC / FATF
+              <strong>Investigation</strong>
+              AML / KYC workflows
             </p>
           </div>
 
           <div>
             <ShieldIcon />
             <p>
-              <strong>Enterprise Security</strong>
-              Zero-trust Ready
+              <strong>Access controls</strong>
+              Authorised users
             </p>
           </div>
 
@@ -542,7 +542,8 @@ export default async function SignIn({
               className="warn fin-login-message"
             >
               Your session has expired or is missing.
-              Please sign in again.
+              Please sign in again. After sign-in, you will return to the overview;
+              reopen your case to continue.
             </p>
           ) : null}
 
@@ -575,9 +576,9 @@ export default async function SignIn({
                 </button>
               </form>
 
-              <div className="fin-or">
+              {passwordEnabled && <div className="fin-or">
                 <span>or</span>
-              </div>
+              </div>}
 
               <div className="fin-authorisation">
                 <ShieldIcon />
@@ -622,9 +623,9 @@ export default async function SignIn({
                   </span>
 
                   <p>
-                    <strong>Audit ready</strong>
+                    <strong>Recorded activity</strong>
                     <small>
-                      All activity is logged for compliance
+                      Review available audit history
                     </small>
                   </p>
                 </div>
@@ -650,6 +651,8 @@ export default async function SignIn({
                 to check the API and authentication configuration.
               </p>
             </div>
+          ) : ids.length === 0 ? (
+            <div className="panel" role="status"><p>No synthetic identities are available. Ask your local administrator to check the test setup.</p></div>
           ) : (
             <form
               action={signIn}

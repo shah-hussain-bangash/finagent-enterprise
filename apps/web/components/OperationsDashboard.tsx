@@ -41,10 +41,10 @@ function rate(value: Rate): string {
 }
 function CountsTable({ title, values }: { title: string; values: Counts }) {
   const entries = Object.entries(values);
-  return <div className="panel"><h3>{title}</h3>{entries.length ? <table><caption>{title}</caption>
+  return <div className="panel"><h3>{title}</h3>{entries.length ? <div className="operations-table" role="region" aria-label={`${title} table`} tabIndex={0}><table><caption>{title}</caption>
     <thead><tr><th scope="col">Category</th><th scope="col">Count</th></tr></thead>
     <tbody>{entries.map(([label, count]) => <tr key={label}><th scope="row">{label}</th><td>{count}</td></tr>)}</tbody>
-  </table> : <p>No observations in this scope.</p>}</div>;
+  </table></div> : <p>No observations in this scope.</p>}</div>;
 }
 function DurationCard({ title, value }: { title: string; value: Duration }) {
   return <div className="panel"><h3>{title}</h3><p>Mean: <strong>{elapsed(value.mean_seconds)}</strong></p>
@@ -56,8 +56,7 @@ export function OperationsDashboard({ data }: { data: DashboardData }) {
   return <section aria-labelledby="dashboard-heading">
     <h2 id="dashboard-heading">Operational dashboard</h2>
     <p>Scope: <strong>{data.scope}</strong>. Generated <When iso={data.generated_at} />.</p>
-    <nav aria-label="Reporting window"><Link href="/operations?days=1">1 day</Link>{" · "}
-      <Link href="/operations?days=7">7 days</Link>{" · "}<Link href="/operations?days=28">28 days</Link></nav>
+    <nav className="reporting-window" aria-label="Reporting window">{[1, 7, 28].map((days) => <Link key={days} href={`/operations?days=${days}`} aria-current={data.window_days === days ? "page" : undefined}>{days} {days === 1 ? "day" : "days"}</Link>)}</nav>
     <p>Event window: <When iso={data.window_start} /> to <When iso={data.generated_at} />.
       Backlog and current evidence freshness include records of all ages.</p>
     <div className="panel"><h3>Volumes and model usage</h3><dl>
@@ -100,7 +99,7 @@ export function OperationsDashboard({ data }: { data: DashboardData }) {
     <section aria-labelledby="slices-heading"><h3 id="slices-heading">Model usage by case type and configuration</h3>
       <p>Configuration identifies the recorded gateway configuration version, not a full deployment fingerprint.
         UNLINKED requests have no case association, including evaluations.</p>
-      {data.model_slices.length ? <div style={{ overflowX: "auto" }}><table><caption>Model usage slices in window</caption>
+      {data.model_slices.length ? <div style={{ overflowX: "auto" }} role="region" aria-label="Model usage slices table" tabIndex={0}><table><caption>Model usage slices in window</caption>
         <thead><tr><th scope="col">Case type</th><th scope="col">Configuration</th><th scope="col">Requests</th>
           <th scope="col">Tokens</th><th scope="col">Estimated cost</th></tr></thead><tbody>
           {data.model_slices.map((slice, index) => <tr key={`${slice.case_type}-${slice.config_version}-${slice.currency}-${index}`}>
@@ -117,10 +116,10 @@ export function OperationsDashboard({ data }: { data: DashboardData }) {
         <p>{run.status}; graph {run.graph_version}; attempt {run.attempt}; elapsed {elapsed(run.elapsed_seconds)}.</p>
         <p>Blocker code: {run.blocker_code ?? "None recorded"}; estimated model cost: {money(run.estimated_model_cost_by_currency)}.</p>
         {run.case_href ? <p><Link href={run.case_href}>Open permitted case</Link></p> : null}
-        <details><summary>Step records ({run.steps.length})</summary><table><caption>Recorded steps for workflow {run.run_id.slice(0, 8)}</caption>
+        <details><summary>Step records ({run.steps.length})</summary><div className="operations-table" role="region" aria-label={`Recorded steps for workflow ${run.run_id.slice(0, 8)}`} tabIndex={0}><table><caption>Recorded steps for workflow {run.run_id.slice(0, 8)}</caption>
           <thead><tr><th scope="col">Step</th><th scope="col">State</th><th scope="col">Attempt</th><th scope="col">Elapsed</th></tr></thead>
           <tbody>{run.steps.map((step, index) => <tr key={`${step.node}-${index}`}><th scope="row">{step.node}</th>
-            <td>{step.status}</td><td>{step.attempt}</td><td>{elapsed(step.elapsed_seconds)}</td></tr>)}</tbody></table></details>
+            <td>{step.status}</td><td>{step.attempt}</td><td>{elapsed(step.elapsed_seconds)}</td></tr>)}</tbody></table></div></details>
       </article>)}
       {data.recent_runs_truncated || data.recent_steps_truncated ? <p>Additional run or step records were omitted from this bounded view.</p> : null}
     </section>

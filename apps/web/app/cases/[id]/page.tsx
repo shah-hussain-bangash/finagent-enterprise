@@ -55,7 +55,9 @@ export default async function CaseOverview({ params, searchParams }: {
   const active = runs.data?.items.find((r) => !["SUCCEEDED", "FAILED", "CANCELLED"].includes(r.status));
   return (
     <section aria-labelledby="h">
+      <p><Link href="/cases">← Back to case queue</Link></p>
       <h1 id="h">Case {c.case_id.slice(0, 8)} <StatusBadge status={c.status} /></h1>
+      <p><Link href={`/workspace/case-overview?${new URLSearchParams({ case: c.case_id })}`}>Open connected investigation overview →</Link></p>
       <Tabs caseId={id} active="" />
       <Flash ok={sp.ok} error={sp.error} />
       {c.status === "BLOCKED" ? (
@@ -80,7 +82,8 @@ export default async function CaseOverview({ params, searchParams }: {
       {runs.error ? <ErrorState error={runs.error} what="Runs" /> : null}
       {runs.data && runs.data.items.length === 0 ? <Empty>No investigation has been started.</Empty> : null}
       {runs.data && runs.data.items.length > 0 ? (
-        <table>
+        <div className="case-run-table" role="region" aria-label="Investigation runs table" tabIndex={0}><table>
+          <caption>Recorded investigation runs</caption>
           <thead><tr><th>Run</th><th>Status</th><th>Reason / next action</th><th>Started</th></tr></thead>
           <tbody>
             {runs.data.items.map((r) => (
@@ -92,9 +95,9 @@ export default async function CaseOverview({ params, searchParams }: {
               </tr>
             ))}
           </tbody>
-        </table>
+        </table></div>
       ) : null}
-      {!active && ["ASSIGNED", "INVESTIGATING", "REWORK"].includes(c.status) ? (
+      {runs.data && !active && ["ASSIGNED", "INVESTIGATING", "REWORK"].includes(c.status) ? (
         <form action={startInvestigation} className="inline panel">
           <input type="hidden" name="case_id" value={id} />
           <input type="hidden" name="key" value={randomUUID()} />

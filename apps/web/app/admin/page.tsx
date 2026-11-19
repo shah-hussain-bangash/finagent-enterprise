@@ -35,7 +35,8 @@ export default async function Admin({ searchParams }: { searchParams: Promise<Re
         {dels.error ? <ErrorState error={dels.error} what="Delegations" /> : null}
         {dels.data && dels.data.items.length === 0 ? <Empty>No delegations.</Empty> : null}
         {dels.data && dels.data.items.length > 0 ? (
-          <table>
+          <div className="admin-table" role="region" aria-label="Delegations table" tabIndex={0}><table>
+            <caption>Recorded delegations</caption>
             <thead><tr><th>Role</th><th>From</th><th>To</th><th>Window</th><th>State</th><th>Revoke</th></tr></thead>
             <tbody>{dels.data.items.map((d) => (
               <tr key={d.delegation_id}>
@@ -46,7 +47,7 @@ export default async function Admin({ searchParams }: { searchParams: Promise<Re
                   <form action={revokeDelegation}><input type="hidden" name="delegation_id" value={d.delegation_id} />
                     <SubmitButton danger>Revoke</SubmitButton></form>) : "-"}</td>
               </tr>))}</tbody>
-          </table>
+          </table></div>
         ) : null}
         <form action={createDelegation} className="stack">
           <h3>Create delegation</h3>

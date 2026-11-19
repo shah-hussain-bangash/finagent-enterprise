@@ -39,18 +39,22 @@ export default async function DocumentReview({ params, searchParams }: {
   return (
     <section aria-labelledby="h">
       <h1 id="h">Document review: {d.title}</h1>
-      <p><Link href={`/cases/${d.case_id}/documents`}>Back to case documents</Link></p>
+      <p><Link href={`/cases/${d.case_id}/documents`}>← Back to case documents</Link></p>
+      <p><Link href={`/workspace/recorded-provenance?${new URLSearchParams({ case: d.case_id, document: d.document_id })}#document-details`}>View recorded document provenance →</Link></p>
       <Flash ok={sp.ok} error={sp.error} />
       {current?.quarantine ? (
         <p role="alert" className="flash flash-error">Quarantined ({current.quarantine.reason_code}): {current.quarantine.detail}
-          Owner: {current.quarantine.owner_role}. This file is never parsed or downloadable.</p>
+          {" "}Owner: {current.quarantine.owner_role}. The original file is not available for download while quarantined.</p>
       ) : null}
       {current?.next_action && !current.quarantine ? <p className="warn">{current.next_action}</p> : null}
       {current?.downloadable ? <p><a href={`/documents/${id}/download`}>Download original (short-lived, re-authorized link)</a></p> : null}
+      {current && !current.downloadable && !current.quarantine ? <p className="muted">The original file is not currently available for download. Check the processing status and any next action.</p> : null}
       <h2>Extracted fields ({d.document_type})</h2>
       <p className="muted">Values are extracted from the document; authenticity is not verified. Corrections add a new value and keep the original.</p>
+      {d.fields.length > 100 && <p role="status">Showing the first 100 of {d.fields.length} current fields. Additional fields are not displayed on this page.</p>}
       {d.fields.length === 0 ? <Empty>No fields extracted.</Empty> : (
-        <table>
+        <div className="document-review-table" role="region" aria-label="Extracted document fields table" tabIndex={0}><table>
+          <caption>Extracted fields and corrections</caption>
           <thead><tr><th>Field</th><th>Value</th><th>State / validation</th><th>Provenance</th><th>Origin</th><th>Correct</th></tr></thead>
           <tbody>
             {d.fields.slice(0, 100).map((f) => (
@@ -64,17 +68,17 @@ export default async function DocumentReview({ params, searchParams }: {
                   <form action={correctField} className="stack">
                     <input type="hidden" name="document_id" value={id} />
                     <input type="hidden" name="field_id" value={f.field_id} />
-                    <label htmlFor={`v-${f.field_id}`}>New value</label>
+                    <label htmlFor={`v-${f.field_id}`}>New value for {f.field_key}</label>
                     <input id={`v-${f.field_id}`} name="value" required maxLength={1000} />
-                    <label htmlFor={`r-${f.field_id}`}>Reason</label>
+                    <label htmlFor={`r-${f.field_id}`}>Reason for correcting {f.field_key}</label>
                     <input id={`r-${f.field_id}`} name="reason" required minLength={10} maxLength={300} />
-                    <SubmitButton>Save correction</SubmitButton>
+                    <SubmitButton>{`Save correction for ${f.field_key}`}</SubmitButton>
                   </form>
                 </td>
               </tr>
             ))}
           </tbody>
-        </table>
+        </table></div>
       )}
       {d.field_history.length > 0 ? (
         <>
@@ -83,7 +87,8 @@ export default async function DocumentReview({ params, searchParams }: {
         </>
       ) : null}
       <h2>Versions</h2>
-      <table>
+      {d.versions.length === 0 ? <Empty>No document versions were returned.</Empty> : <div className="document-review-table" role="region" aria-label="Document versions table" tabIndex={0}><table>
+        <caption>Recorded document versions</caption>
         <thead><tr><th>Version</th><th>Status</th><th>Scan</th><th>Parser</th><th>Size / sha256</th><th>Created</th></tr></thead>
         <tbody>
           {d.versions.map((v) => (
@@ -98,9 +103,9 @@ export default async function DocumentReview({ params, searchParams }: {
             </tr>
           ))}
         </tbody>
-      </table>
+      </table></div>}
       {current?.extraction ? (
-        <details><summary>Extracted text segments with provenance</summary><Json value={current.extraction.segments.slice(0, 50)} /></details>
+        <details><summary>Extracted text segments with provenance</summary>{current.extraction.segments.length > 50 && <p>Showing the first 50 of {current.extraction.segments.length} segments.</p>}<Json value={current.extraction.segments.slice(0, 50)} /></details>
       ) : null}
     </section>
   );

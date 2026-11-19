@@ -16,7 +16,7 @@ export interface AuditEvent {
 export function AuditTable({ items }: { items: AuditEvent[] }) {
   if (items.length === 0) return <Empty>No audit events visible to you.</Empty>;
   return (
-    <table>
+    <div className="audit-table" role="region" aria-label="Audit events table" tabIndex={0}><table>
       <caption>Append-only, hash-chained audit events (metadata only)</caption>
       <thead><tr><th>#</th><th>When</th><th>Action</th><th>Object</th><th>Outcome</th><th>Actor</th></tr></thead>
       <tbody>
@@ -31,6 +31,6 @@ export function AuditTable({ items }: { items: AuditEvent[] }) {
           </tr>
         ))}
       </tbody>
-    </table>
+    </table></div>
   );
 }

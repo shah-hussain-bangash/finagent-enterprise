@@ -34,11 +34,96 @@ header.top .brand { font-weight: 700; margin-right: 8px; }
 header.top .who { margin-left: auto; font-size: 0.9rem; }
 header.top form { display: inline; }
 header.top button { background: transparent; color: var(--brand-ink); border: 1px solid rgba(255,255,255,.6); }
+header.top nav { display: flex; align-items: center; flex-wrap: wrap; gap: 2px; }
+.route-state { max-width: 640px; margin: 24px auto; padding: 24px; }
+@media (max-width: 720px) {
+  header.top { gap: 8px; }
+  header.top nav { order: 3; flex: 1 0 100%; flex-wrap: nowrap; overflow-x: auto; padding: 4px 0; }
+  header.top nav a { white-space: nowrap; }
+  header.top .who { margin-left: auto; }
+}
 .synthetic { background: var(--warn-bg); color: var(--warn-ink); padding: 4px 16px; font-size: 0.85rem; }
 main { padding: 16px; max-width: 1280px; margin: 0 auto; }
 h1 { font-size: 1.5rem; margin: 8px 0 12px; }
 h2 { font-size: 1.15rem; margin: 16px 0 8px; }
 .panel { background: var(--panel); border: 1px solid var(--line); border-radius: 6px; padding: 12px 16px; margin: 12px 0; }
+.connected-workspace > h1 { color: #12385f; font-size: clamp(1.5rem, 2.4vw, 2rem); margin: 16px 0; }
+.connected-workspace .panel { border-color: #cbd9e8; border-radius: 8px; padding: 16px 18px; }
+.connected-workspace h2, .connected-workspace h3 { color: #163c62; }
+.connected-workspace li { overflow-wrap: anywhere; }
+.case-selected { display: inline-block; margin-left: 8px; padding: 1px 7px; border-radius: 4px; color: #174365; background: #e4f0fb; font-size: .8rem; font-weight: 700; }
+.connected-workspace table { min-width: 560px; }
+@media (max-width: 600px) { .connected-workspace .panel { padding: 14px; } }
+
+/* Connected case overview: keep its hierarchy readable on narrow screens. */
+.investigation-overview .investigation-notice { border-left: 4px solid #2266a8; background: #f2f7fd; }
+.investigation-overview .investigation-details { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 16px; margin: 18px 0 4px; }
+.investigation-overview .investigation-details div { min-width: 0; }
+.investigation-overview .investigation-details dt { color: #52677d; font-size: 0.85rem; }
+.investigation-overview .investigation-details dd { margin: 5px 0 0; font-weight: 600; overflow-wrap: anywhere; }
+.investigation-overview .investigation-gaps { padding-left: 20px; }
+.investigation-overview .investigation-gaps li { padding: 5px 0; }
+.investigation-overview .investigation-links { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr)); gap: 8px; list-style: none; padding: 0; }
+.investigation-overview .investigation-links a { display: block; padding: 10px 12px; border: 1px solid #c9d8e8; border-radius: 5px; }
+.investigation-overview .investigation-links a:hover { background: #f2f7fd; }
+.transaction-filters { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; }
+.transaction-filters input[name="q"] { flex: 1 1 220px; min-width: 0; }
+.transaction-filters select { max-width: 100%; }
+.transaction-pagination { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; margin-top: 14px; }
+@media (max-width: 600px) { .transaction-filters label, .transaction-filters input[name="q"], .transaction-filters select, .transaction-filters button { width: 100%; } }
+.evidence-search-form { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; }
+.evidence-search-form input[name="query"] { flex: 1 1 220px; min-width: 0; }
+.evidence-source-list li { padding: 6px 0; overflow-wrap: anywhere; }
+.evidence-source-list li p { margin: 4px 0; }
+@media (max-width: 600px) { .evidence-search-form label, .evidence-search-form input[name="query"], .evidence-search-form button { width: 100%; } }
+.approval-filter { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; }
+.approval-table { overflow-x: auto; }
+.approval-table table { min-width: 570px; }
+@media (max-width: 600px) { .approval-filter label, .approval-filter select, .approval-filter button { width: 100%; } }
+.case-queue-filter { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; }
+.case-queue-table { overflow-x: auto; }
+.case-queue-table table { min-width: 680px; }
+@media (max-width: 600px) { .case-queue-filter label, .case-queue-filter select, .case-queue-filter button { width: 100%; } }
+.case-run-table { overflow-x: auto; }
+.case-run-table table { min-width: 560px; }
+.case-evidence-table { overflow-x: auto; }
+.case-evidence-table table { min-width: 640px; }
+.document-review-table { overflow-x: auto; }
+.document-review-table table { min-width: 760px; }
+.case-documents-table, .report-history-table { overflow-x: auto; }
+.case-documents-table table { min-width: 600px; }
+.report-history-table table { min-width: 680px; }
+.audit-table { overflow-x: auto; }
+.audit-table table { min-width: 650px; }
+.operations-table, .escalation-table { overflow-x: auto; }
+.operations-table table { min-width: 400px; }
+.escalation-table table { min-width: 680px; }
+.reporting-window { display: flex; flex-wrap: wrap; gap: 8px; }
+.reporting-window a { display: inline-block; padding: 6px 12px; border: 1px solid #b5c9dc; border-radius: 5px; }
+.reporting-window a[aria-current="page"] { background: #0b4f8a; color: #fff; font-weight: 700; }
+.evaluation-filter { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; }
+.evaluation-filter h2 { flex: 1 0 100%; }
+.evaluation-filter select { min-width: 0; max-width: 100%; }
+@media (max-width: 600px) { .evaluation-filter label, .evaluation-filter select, .evaluation-filter button { width: 100%; } }
+.evaluation-results-table, .admin-table { overflow-x: auto; }
+.evaluation-results-table table { min-width: 580px; }
+.admin-table table { min-width: 680px; }
+.workflow-steps-table { overflow-x: auto; }
+.workflow-steps-table table { min-width: 640px; }
+.kyc-history-item { border-top: 1px solid #d0d7de; padding: 12px 0; }
+.kyc-history-item summary { cursor: pointer; font-weight: 600; }
+.agent-output > summary { cursor: pointer; font-weight: 600; overflow-wrap: anywhere; }
+.overview-header { border-radius: 10px; padding: 22px 24px; background: #edf5fd; border: 1px solid #d5e6f6; }
+.overview-header h1 { margin-bottom: 4px; color: #12385f; }
+.overview-header p { margin: 4px 0; }
+.overview-eyebrow { color: #315c83; font-size: .75rem; font-weight: 700; letter-spacing: .08em; }
+.overview-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 180px), 1fr)); gap: 12px; }
+.overview-kpi { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; min-width: 0; }
+.overview-kpi-content { display: flex; flex-direction: column; gap: 6px; min-height: 104px; padding: 15px; color: inherit; text-decoration: none; }
+a.overview-kpi-content:hover { background: #f2f7fd; text-decoration: underline; }
+.overview-kpi-label { color: #52677d; font-size: .9rem; text-transform: capitalize; }
+.overview-kpi-value { font-size: 1.5rem; font-weight: 700; overflow-wrap: anywhere; }
+.overview-help { color: #40576d; font-size: .9rem; }
 .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; }
 .kpi { font-size: 1.8rem; font-weight: 700; }
 table { border-collapse: collapse; width: 100%; background: var(--panel); }
@@ -78,7 +163,7 @@ button { background: var(--brand); color: var(--brand-ink); border-color: var(--
 button.danger { background: #8a1c1c; border-color: #8a1c1c; }
 button[disabled] { opacity: 0.6; cursor: progress; }
 .json { background: #f0f2f4; padding: 8px; overflow-x: auto; font-size: 0.8rem; max-height: 320px; }
-.diff { font-family: ui-monospace, monospace; font-size: 0.85rem; white-space: pre-wrap; }
+.diff { font-family: ui-monospace, monospace; font-size: 0.85rem; white-space: pre-wrap; overflow-wrap: anywhere; }
 .claim { margin: 4px 0; }
 @media (max-width: 720px) { main { padding: 8px; } }
 
@@ -928,3 +1013,16 @@ body:has(.fin-login) main {
 }
 
 /* === FINAGENT PROFESSIONAL LOGIN END === */
+
+/* Distinct workspace preview entry in the portal navigation. */
+header.top nav a.workspace-nav-button {
+  display: inline-block;
+  margin-left: 18px;
+  padding: 6px 13px;
+  background: #ffffff;
+  color: #0b4f8a;
+  border: 1px solid #ffffff;
+  border-radius: 5px;
+  font-weight: 700;
+}
+header.top nav a.workspace-nav-button:hover { background: #e6f0f9; color: #073b68; }
