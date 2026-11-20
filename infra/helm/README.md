@@ -29,6 +29,11 @@ attempt, address and test these blockers against the selected environment:
   Redis and Entra client secrets by default, rather than database or backend credentials. The
   CSI driver's [sync documentation](https://secrets-store-csi-driver.sigs.k8s.io/topics/sync-as-kubernetes-secret)
   states that syncing requires a pod mounting the volume.
+- Migration jobs have a proposed 600-second deadline to avoid waiting indefinitely for a secret,
+  identity, network or database that is unavailable. Choose an appropriate deadline and Helm
+  timeout for the environment, and test failure handling and migration recovery; a timeout does
+  not by itself establish whether a migration committed changes. The migration secret class name
+  must differ from the three application secret classes.
 - A migration bootstrap NetworkPolicy is created as an earlier hook than the migration job. It
   denies ingress and defaults to denying egress; explicitly configured migrator egress is allowed.
   The separate ordinary policy remains in effect after installation. Kubernetes policies are

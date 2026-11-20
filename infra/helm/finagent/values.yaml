@@ -15,6 +15,7 @@ workloadIdentity:
 migration:
   secretProviderClassName: finagent-migrator-kv
   databaseUrlSecretName: REPLACE_WITH_MIGRATION_DATABASE_URL_SECRET
+  activeDeadlineSeconds: 600  # proposed upper bound; align Helm timeout and operational runbook
 
 secretProviderClass:
   keyVaultName: REPLACE_ME

@@ -42,6 +42,7 @@ def main() -> None:
     assert len(jobs) == 1
     job = jobs[0]
     assert job["metadata"]["annotations"]["helm.sh/hook"] == "pre-install,pre-upgrade"
+    assert job["spec"]["activeDeadlineSeconds"] == 600
     pod = job["spec"]["template"]["spec"]
     assert pod["serviceAccountName"] == "finagent-migrator"
     container = pod["containers"][0]
@@ -166,6 +167,9 @@ def main() -> None:
     assert route["host"] == "finagent.example.test"
     assert route["http"]["paths"][0]["backend"]["service"] == {"name": "finagent-web", "port": {"number": 80}}
     for invalid in (
+        "migration.activeDeadlineSeconds=0",
+        "migration.activeDeadlineSeconds=86401",
+        'migration.secretProviderClassName="finagent-api-kv"',
         "secretProviderClass.secrets.web=null",
         "networkPolicy.webIngressPeers=[{}]",
         'networkPolicy.egress.api=[{"to":[{}],"ports":[{"port":443}]}]',
