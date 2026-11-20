@@ -120,6 +120,44 @@ class DatabaseAuthModeTests(unittest.TestCase):
             gc.collect()
         self.assertEqual(closed, [True])
 
+    def test_pool_reset_preserves_credential_for_new_connections(self):
+        azure = types.ModuleType("azure")
+        azure.__path__ = []
+        identity = types.ModuleType("azure.identity")
+        closed, requests, observed = [], [], []
+
+        class Credential:
+            def get_token(self, scope):
+                if closed:
+                    raise RuntimeError("credential closed too early")
+                requests.append(scope)
+                return types.SimpleNamespace(token=f"synthetic-{len(requests)}")
+
+            def close(self):
+                closed.append(True)
+
+        identity.WorkloadIdentityCredential = Credential
+        url = "postgresql+psycopg://identity@demo.postgres.database.azure.com/db?sslmode=verify-full"
+        with patch.dict(sys.modules, {"azure": azure, "azure.identity": identity}):
+            engine = get_engine(url, "azure_workload_identity")
+
+        def stop(dialect, record, args, params):
+            observed.append(params["password"])
+            raise RuntimeError("stopped before network")
+
+        event.listen(engine, "do_connect", stop)
+        try:
+            with self.assertRaisesRegex(RuntimeError, "stopped before network"):
+                engine.connect()
+            engine.dispose()
+            self.assertEqual(closed, [])
+            with self.assertRaisesRegex(RuntimeError, "stopped before network"):
+                engine.connect()
+        finally:
+            engine.dispose()
+        self.assertEqual(observed, ["synthetic-1", "synthetic-2"])
+        self.assertEqual(len(requests), 2)
+
     def test_failed_token_acquisition_never_reaches_driver(self):
         azure = types.ModuleType("azure")
         azure.__path__ = []
