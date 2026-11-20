@@ -85,6 +85,9 @@ It does not resolve this deployment blocker.
 An accompanying experimental URL validator requires verified TLS and a public-Azure PostgreSQL
 hostname. It is not yet enforced by the application; private DNS aliases and other Azure clouds
 need a separately reviewed configuration.
+The experimental registration helper accepts SQLAlchemy's event listener as a dependency and
+refuses registration for an invalid URL. Synthetic tests use a fake listener; no real SQLAlchemy
+engine or Azure identity has been tested through this helper yet.
 
 Before any staging deployment, design and implement the approved database identity integration,
 including a fresh token for new pooled connections, separately authorized application and

@@ -5,7 +5,7 @@ This component is not wired into an engine or enabled in any deployment.
 
 from __future__ import annotations
 
-from typing import Any, Protocol
+from typing import Any, Callable, Protocol
 from urllib.parse import parse_qsl, urlsplit
 
 POSTGRES_SCOPE = "https://ossrdbms-aad.database.windows.net/.default"
@@ -60,3 +60,18 @@ class PostgresTokenCallback:
             # Credential errors may contain sensitive details; do not forward them into logs.
             raise RuntimeError("Could not obtain a PostgreSQL access token") from None
         cparams["password"] = token
+
+
+def attach_token_callback(
+    engine: Any,
+    credential: TokenCredential,
+    listen: Callable[..., Any],
+) -> PostgresTokenCallback:
+    """Attach the experimental callback after validating the Azure-only URL.
+
+    The caller must supply SQLAlchemy's event.listen; local engines never use this helper.
+    """
+    validate_postgres_url(engine.url.render_as_string(hide_password=False))
+    callback = PostgresTokenCallback(credential)
+    listen(engine, "do_connect", callback)
+    return callback

@@ -3,10 +3,36 @@
 import unittest
 from types import SimpleNamespace
 
-from finagent.database.entra_auth import POSTGRES_SCOPE, PostgresTokenCallback, validate_postgres_url
+from finagent.database.entra_auth import (
+    POSTGRES_SCOPE,
+    PostgresTokenCallback,
+    attach_token_callback,
+    validate_postgres_url,
+)
 
 
 class DatabaseTokenTests(unittest.TestCase):
+    def test_registers_connection_callback_only_for_a_valid_url(self):
+        registered = []
+        azure_url = "postgresql+psycopg://identity@demo.postgres.database.azure.com/db?sslmode=verify-full"
+        engine = SimpleNamespace(url=SimpleNamespace(render_as_string=lambda **kw: azure_url))
+        credential = SimpleNamespace(get_token=lambda scope: SimpleNamespace(token="synthetic"))
+        callback = attach_token_callback(
+            engine,
+            credential,
+            lambda *args: registered.append(args),
+        )
+        self.assertEqual(registered, [(engine, "do_connect", callback)])
+        params = {}
+        registered[0][2](None, None, [], params)
+        self.assertEqual(params["password"], "synthetic")
+
+        with self.assertRaises(ValueError):
+            local_url = "postgresql+psycopg://local/db"
+            local_engine = SimpleNamespace(url=SimpleNamespace(render_as_string=lambda **kw: local_url))
+            attach_token_callback(local_engine, credential, lambda *args: registered.append(args))
+        self.assertEqual(len(registered), 1)
+
     def test_validate_azure_url_rejects_credential_and_tls_downgrades(self):
         validate_postgres_url("postgresql+psycopg://identity@demo.postgres.database.azure.com/db?sslmode=verify-full")
         for url in (
