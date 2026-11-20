@@ -86,6 +86,9 @@ before network access. It has not authenticated to Azure or been verified in a d
 Private DNS aliases and sovereign Azure clouds need a separately reviewed URL and identity design.
 Credential lifecycle, token-expiry recovery, database roles and deployment configuration remain
 unverified. The default Helm values do not enable Azure database authentication.
+The password and authenticator provisioning consoles and synthetic seed utility use their own
+database entry points and have not been integrated with this Azure authentication mode. Treat
+their use in an Entra-only environment as unsupported until separately implemented and tested.
 
 Before any staging deployment, review the database identity integration, including separately
 authorized application and migration identities, database role provisioning, TLS trust roots,
