@@ -87,8 +87,9 @@ hostname. It is not yet enforced by the application; private DNS aliases and oth
 need a separately reviewed configuration.
 The experimental registration helper accepts SQLAlchemy's event listener as a dependency and
 refuses registration for an invalid URL. A synthetic test exercises the real SQLAlchemy event
-dispatcher with a SQLite dialect and aborts before connecting. PostgreSQL driver behavior and
-Azure identity have not been tested through this helper.
+dispatcher with a SQLite dialect and aborts before connecting. Another local synthetic test
+exercises the PostgreSQL dialect and psycopg connection parameters, aborting before network
+access. Actual PostgreSQL authentication and Azure identity have not been tested.
 An experimental engine factory validates the URL and registers the token callback before the first
 connection. It is not used by the application or Alembic; credential selection, lifecycle,
 configuration, real-driver behavior, and failure recovery remain unverified.

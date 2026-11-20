@@ -9,6 +9,11 @@ try:
 except ImportError:
     create_engine = event = make_url = None
 
+try:
+    import psycopg
+except ImportError:
+    psycopg = None
+
 from finagent.database.entra_auth import (
     POSTGRES_SCOPE,
     PostgresTokenCallback,
@@ -19,6 +24,39 @@ from finagent.database.entra_auth import (
 
 
 class DatabaseTokenTests(unittest.TestCase):
+    @unittest.skipUnless(create_engine is not None and psycopg is not None, "SQLAlchemy or psycopg unavailable")
+    def test_postgresql_driver_receives_token_before_connection(self):
+        # Use the real PostgreSQL dialect and driver, but intercept before network access.
+        url = "postgresql+psycopg://identity@demo.postgres.database.azure.com/db?sslmode=verify-full"
+        scopes, observed = [], []
+
+        class Credential:
+            def get_token(self, scope):
+                scopes.append(scope)
+                return SimpleNamespace(token=f"synthetic-{len(scopes)}")
+
+        engine = create_azure_postgres_engine(url, Credential(), create_engine, event.listen)
+
+        def capture_and_abort(dialect, record, args, params):
+            observed.append((params["password"], params["sslmode"], params["host"]))
+            raise RuntimeError("synthetic stop before connection")
+
+        event.listen(engine, "do_connect", capture_and_abort)
+        try:
+            for _ in range(2):
+                with self.assertRaisesRegex(RuntimeError, "synthetic stop"):
+                    engine.connect()
+        finally:
+            engine.dispose()
+        self.assertEqual(scopes, [POSTGRES_SCOPE, POSTGRES_SCOPE])
+        self.assertEqual(
+            observed,
+            [
+                ("synthetic-1", "verify-full", "demo.postgres.database.azure.com"),
+                ("synthetic-2", "verify-full", "demo.postgres.database.azure.com"),
+            ],
+        )
+
     @unittest.skipUnless(create_engine is not None, "SQLAlchemy not installed")
     def test_real_sqlalchemy_connection_event_requests_tokens(self):
         # Use SQLite's dialect only to exercise the real event dispatcher. Abort before
