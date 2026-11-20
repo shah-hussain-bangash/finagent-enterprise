@@ -1,6 +1,6 @@
 # Terraform (Azure reference)
 
-**Status: LOCALLY VALIDATED; NOT PLANNED OR APPLIED.** On 20 November 2026, Terraform 1.11.4
+**Status: LOCALLY VALIDATED; NOT PLANNED AGAINST AZURE OR APPLIED.** On 20 November 2026, Terraform 1.11.4
 formatting and `terraform validate` passed in an isolated copy after `terraform init -backend=false`
 installed the signed AzureRM 4.81.0 provider. The deprecated Key Vault RBAC argument was updated,
 and validation passed again without warnings. The provider selection is recorded in

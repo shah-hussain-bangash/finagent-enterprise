@@ -1,5 +1,9 @@
 # Current portfolio status and release evidence
 
+For the later local infrastructure branch checks, see the
+[local infrastructure validation record](15-LOCAL-INFRASTRUCTURE-VALIDATION.md). Those checks
+are separate from the default-branch baseline below.
+
 **Baseline checked:** 20 November 2026, UAE. This is a synthetic engineering portfolio, not a production release or institutional acceptance. This record is the entry point for current status; update it when a newer baseline is verified. Historical results remain in the [evidence register](12-TESTING-AND-EVIDENCE-REGISTER.md).
 
 ## Baseline and evidence
