@@ -13,6 +13,9 @@ attempt, address and test these blockers against the selected environment:
 - The API image definition installs the Azure adapter dependencies and checks that they import
   during image build. The updated image has not been built or tested against Azure in this local
   validation. Build and scan the actual release image and test its configured adapters before use.
+- The web image definition copies the workspace's public images into its standalone runtime.
+  Build the release image and check those assets over HTTP before deployment; the current image
+  definition has not been container-tested here.
 
 - Default deny now selects only pods labelled as part of FinAgent. The chart explicitly permits
   web-to-api traffic; web ingress and all other egress remain denied unless the operator supplies
