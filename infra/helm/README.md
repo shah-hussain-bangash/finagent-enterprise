@@ -20,20 +20,30 @@ attempt, address and test these blockers against the selected environment:
   [Kubernetes network policy documentation](https://kubernetes.io/docs/concepts/services-networking/network-policies/).
 - The pre-install migration job now mounts a dedicated CSI SecretProviderClass and reads only its
   configured migration database URL from a file; it no longer depends on the application pods to
-  sync `finagent-secrets`. Supply a separately authorized migration credential and the migrator
+  sync application secrets. Supply a separately authorized migration credential and the migrator
   workload identity. This bootstrap has only been rendered locally and must be tested on a fresh
-  cluster with the Azure CSI driver. Application pods still use a synced Kubernetes Secret; the
+  cluster with the Azure CSI driver. Each application workload now has an independently configured
+  identity, SecretProviderClass and synced Kubernetes Secret. The web container receives only its session,
+  Redis and Entra client secrets by default, rather than database or backend credentials. The
   CSI driver's [sync documentation](https://secrets-store-csi-driver.sigs.k8s.io/topics/sync-as-kubernetes-secret)
   states that syncing requires a pod mounting the volume.
 - Service accounts, workload identity bindings, required private endpoints and approved
-  configuration must be supplied and verified separately. Rendering does not establish that
-  the CSI secret references or identities work.
+  configuration must be supplied and verified separately, including a web workload identity.
+  The Terraform reference currently defines api, worker and migrator identities, not web.
+  Separate mounts do not restrict what an Azure identity can retrieve from Key Vault: the existing
+  Terraform Key Vault role assignments are vault-scoped and need an approved secret-level access
+  design. Rendering does not establish that the CSI secret references or identities work.
 - The optional Ingress is disabled by default. Enabling it requires an explicit controller class,
   hostname, TLS secret and allowed ingress peers. TLS termination, HTTP-to-HTTPS enforcement and
   certificate management depend on the selected controller and must be verified in the cluster.
-  The chart does not supply the web application's required staging authentication settings,
-  HTTPS origin, TLS Redis session store or HTTPS API URL. These must be designed and validated
-  for the chosen environment; the application's local HTTP defaults are not valid for staging.
+  The web staging values contain placeholders. Supply actual approved Entra settings, HTTPS
+  origin, TLS Redis session store and HTTPS API URL for the chosen environment; the application's
+  local HTTP defaults are not valid for staging.
+
+Chart 0.2.0 changes `secretProviderClass.secrets` from one flat map to separate `api`, `worker`
+and `web` maps and uses separate `finagent-<workload>-kv` and `finagent-<workload>-secrets`
+resources. Any previously prepared values or secret-bootstrap automation must be updated before
+using this reference chart.
 
 The following illustrates the values shape only. The namespace, labels and documentation-only
 CIDR are synthetic; this is not a complete or deployable staging configuration. In particular,

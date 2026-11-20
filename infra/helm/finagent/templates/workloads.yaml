@@ -8,30 +8,35 @@ data:
 {{- range $k, $v := .Values.config }}
   {{ $k }}: {{ $v | quote }}
 {{- end }}
+{{- $identities := dict "api" .Values.workloadIdentity.clientIdApi "worker" .Values.workloadIdentity.clientIdWorker "web" .Values.workloadIdentity.clientIdWeb }}
+{{- range $name := list "api" "worker" "web" }}
+{{- $secrets := index $.Values.secretProviderClass.secrets $name }}
+{{- if not $secrets }}{{ fail (printf "secretProviderClass.secrets.%s must not be empty" $name) }}{{ end }}
 ---
 apiVersion: secrets-store.csi.x-k8s.io/v1
 kind: SecretProviderClass
-metadata: {name: {{ .Values.secretProviderClass.name }}}
+metadata: {name: {{ printf "finagent-%s-kv" $name | quote }}}
 spec:
   provider: azure
   secretObjects:
-    - secretName: finagent-secrets
+    - secretName: {{ printf "finagent-%s-secrets" $name | quote }}
       type: Opaque
       data:
-{{- range $env, $kv := .Values.secretProviderClass.secrets }}
-        - {objectName: {{ $kv }}, key: {{ $env }}}
+{{- range $env, $kv := $secrets }}
+        - {objectName: {{ $kv | quote }}, key: {{ $env | quote }}}
 {{- end }}
   parameters:
     usePodIdentity: "false"
-    clientID: {{ .Values.workloadIdentity.clientIdApi | quote }}
-    keyvaultName: {{ .Values.secretProviderClass.keyVaultName | quote }}
-    tenantId: {{ .Values.secretProviderClass.tenantId | quote }}
+    clientID: {{ index $identities $name | quote }}
+    keyvaultName: {{ $.Values.secretProviderClass.keyVaultName | quote }}
+    tenantId: {{ $.Values.secretProviderClass.tenantId | quote }}
     objects: |
       array:
-{{- range $env, $kv := .Values.secretProviderClass.secrets }}
+{{- range $env, $kv := $secrets }}
         - |
-          objectName: {{ $kv }}
+          objectName: {{ $kv | quote }}
           objectType: secret
+{{- end }}
 {{- end }}
 ---
 apiVersion: secrets-store.csi.x-k8s.io/v1
@@ -101,7 +106,9 @@ spec:
         - name: {{ $name }}
           image: "{{ $.Values.image.registry }}/finagent-{{ $name }}:{{ $.Values.image.tag }}"
           imagePullPolicy: {{ $.Values.image.pullPolicy }}
-          {{- include "finagent.env" $ | nindent 10 }}
+          envFrom:
+            - configMapRef: {name: finagent-config}
+            - secretRef: {name: {{ printf "finagent-%s-secrets" $name | quote }}}
           {{- include "finagent.securityContext" $ | nindent 10 }}
           resources: {{- toYaml $spec.resources | nindent 12 }}
           volumeMounts: [{name: tmp, mountPath: /tmp}, {name: kv, mountPath: /mnt/kv, readOnly: true}]
@@ -116,7 +123,7 @@ spec:
       volumes:
         - {name: tmp, emptyDir: {}}
         - name: kv
-          csi: {driver: secrets-store.csi.k8s.io, readOnly: true, volumeAttributes: {secretProviderClass: {{ $.Values.secretProviderClass.name }}}}
+          csi: {driver: secrets-store.csi.k8s.io, readOnly: true, volumeAttributes: {secretProviderClass: {{ printf "finagent-%s-kv" $name | quote }}}}
 {{- end }}
 ---
 apiVersion: v1

@@ -24,10 +24,20 @@ def main() -> None:
         "workloadIdentity.clientIdMigrator=synthetic-migrator-id",
         "--set",
         "migration.databaseUrlSecretName=synthetic-migration-secret",
+        "--set",
+        "workloadIdentity.clientIdApi=synthetic-api-id",
+        "--set",
+        "workloadIdentity.clientIdWorker=synthetic-worker-id",
+        "--set",
+        "workloadIdentity.clientIdWeb=synthetic-web-id",
     ]
     result = subprocess.run(command, check=True, capture_output=True, text=True)  # noqa: S603
     documents = [item for item in yaml.safe_load_all(result.stdout) if item]
     assert not any(item.get("kind") == "Ingress" for item in documents), "ingress must default to disabled"
+    config = next(item for item in documents if item.get("kind") == "ConfigMap")["data"]
+    assert config["FINAGENT_WEB_AUTH_MODE"] == "entra"
+    assert config["FINAGENT_WEB_ORIGIN"].startswith("https://")
+    assert config["FINAGENT_API_URL"].startswith("https://")
     jobs = [item for item in documents if item.get("kind") == "Job"]
     assert len(jobs) == 1
     job = jobs[0]
@@ -63,6 +73,41 @@ def main() -> None:
         d["spec"]["template"]["metadata"]["labels"]["app.kubernetes.io/part-of"] == "finagent"
         for d in deployments
     )
+    expected_web = {
+        "FINAGENT_WEB_SESSION_SECRET",
+        "FINAGENT_WEB_AUTH_REDIS_URL",
+        "FINAGENT_ENTRA_WEB_CLIENT_SECRET",
+    }
+    expected_backend = {
+        "FINAGENT_DATABASE_URL",
+        "FINAGENT_DATA_ENCRYPTION_KEY",
+        "FINAGENT_EVENT_SIGNING_KEY",
+        "FINAGENT_CONNECTOR_CREDENTIALS",
+        "FINAGENT_AZURE_SEARCH_API_KEY",
+        "FINAGENT_AZURE_OPENAI_API_KEY",
+    }
+    classes_by_name = {item["metadata"]["name"]: item for item in classes}
+    assert set(classes_by_name) == {"finagent-api-kv", "finagent-worker-kv", "finagent-web-kv", class_name}
+    for deployment in deployments:
+        name = deployment["metadata"]["name"].removeprefix("finagent-")
+        spec = deployment["spec"]["template"]["spec"]
+        assert spec["serviceAccountName"] == f"finagent-{name}"
+        workload = spec["containers"][0]
+        secret_ref = next(v["secretRef"]["name"] for v in workload["envFrom"] if "secretRef" in v)
+        assert secret_ref == f"finagent-{name}-secrets"
+        volume_ref = next(
+            v["csi"]["volumeAttributes"]["secretProviderClass"] for v in spec["volumes"] if "csi" in v
+        )
+        assert volume_ref == f"finagent-{name}-kv"
+        workload_class = classes_by_name[volume_ref]
+        assert workload_class["spec"]["parameters"]["clientID"] == f"synthetic-{name}-id"
+        synced = workload_class["spec"]["secretObjects"][0]
+        assert synced["secretName"] == secret_ref
+        keys = {entry["key"] for entry in synced["data"]}
+        assert keys == (expected_web if name == "web" else expected_backend)
+        requested = yaml.safe_load(workload_class["spec"]["parameters"]["objects"])["array"]
+        object_names = {yaml.safe_load(item)["objectName"] for item in requested}
+        assert object_names == {entry["objectName"] for entry in synced["data"]}
     assert policies["finagent-web-ingress"]["ingress"] == []
     for role in ("api", "worker", "migrator"):
         assert policies[f"finagent-{role}-egress"]["egress"] == []
@@ -111,6 +156,7 @@ def main() -> None:
     assert route["host"] == "finagent.example.test"
     assert route["http"]["paths"][0]["backend"]["service"] == {"name": "finagent-web", "port": {"number": 80}}
     for invalid in (
+        "secretProviderClass.secrets.web=null",
         "networkPolicy.webIngressPeers=[{}]",
         'networkPolicy.egress.api=[{"to":[{}],"ports":[{"port":443}]}]',
         'networkPolicy.egress.api=[{"to":[{"ipBlock":{"cidr":"192.0.2.0/24"}}]}]',
@@ -167,7 +213,7 @@ def main() -> None:
         rejected = subprocess.run([*command, *invalid], capture_output=True, text=True, check=False)  # noqa: S603
         assert rejected.returncode != 0, f"unsafe ingress unexpectedly accepted: {invalid}"
         assert expected in rejected.stderr
-    print("Helm migration and network-policy render checks passed (synthetic values; no cluster).")
+    print("Helm secret, migration, ingress and network checks passed (synthetic values; no cluster).")
 
 
 if __name__ == "__main__":

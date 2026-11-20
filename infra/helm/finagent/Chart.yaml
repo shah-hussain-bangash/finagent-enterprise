@@ -2,5 +2,5 @@ apiVersion: v2
 name: finagent
 description: FinAgent Enterprise - human-reviewed AML investigation copilot (api, worker, web). Locally rendered; not deployment validated.
 type: application
-version: 0.1.0
+version: 0.2.0
 appVersion: "0.1.0"
