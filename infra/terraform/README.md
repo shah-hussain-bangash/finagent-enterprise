@@ -70,6 +70,22 @@ Not included (needs institutional decisions): VNet/subnet/private-endpoint topol
 Azure OpenAI deployment (DEC-07/AI-D03), Defender for Storage/ClamAV hosting, diagnostic settings,
 alert action groups (SEC-D08).
 
+## Database authentication is not integrated
+
+The PostgreSQL reference enables Microsoft Entra authentication and disables password
+authentication. The application and Alembic migration currently construct SQLAlchemy engines
+from a database URL; they do not implement acquisition and refresh of an Entra database token.
+The migrator secret mount in the Helm reference does not solve token renewal. Consequently this
+Terraform configuration and the current application cannot be assumed to connect successfully.
+
+Before any staging deployment, design and implement the approved database identity integration,
+including a fresh token for new pooled connections, separately authorized application and
+migration identities, database role provisioning, TLS verification, and token-expiry recovery.
+Test these behaviors against an isolated Azure environment with synthetic data and document the
+result. Do not work around this gap by placing a short-lived token in a long-lived secret or by
+enabling password authentication without an approved design change. No Azure database connection
+has been tested by the local Terraform validation.
+
 ```powershell
 terraform init -backend-config=env/staging.backend.hcl
 terraform validate

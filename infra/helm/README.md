@@ -55,6 +55,11 @@ attempt, address and test these blockers against the selected environment:
   timeout for the environment, and test failure handling and migration recovery; a timeout does
   not by itself establish whether a migration committed changes. The migration secret class name
   must differ from the three application secret classes.
+- **Database authentication is an unresolved blocker:** the Terraform reference disables
+  PostgreSQL password authentication, while the current application and migration engine read a
+  database URL and do not acquire or refresh Entra database tokens. Supplying a static URL
+  through CSI does not complete that integration. See the
+  [Terraform reference](../terraform/README.md#database-authentication-is-not-integrated).
 - A migration bootstrap NetworkPolicy is created as an earlier hook than the migration job. It
   denies ingress and defaults to denying egress; explicitly configured migrator egress is allowed.
   The separate ordinary policy remains in effect after installation. Kubernetes policies are
