@@ -18,7 +18,9 @@ target_metadata = Base.metadata
 
 def run_migrations_online() -> None:
     url = os.environ.get("FINAGENT_MIGRATION_DATABASE_URL") or os.environ["FINAGENT_DATABASE_URL"]
-    mode = os.environ.get("FINAGENT_MIGRATION_DATABASE_AUTH_MODE", os.environ.get("FINAGENT_DATABASE_AUTH_MODE", "password"))
+    mode = os.environ.get(
+        "FINAGENT_MIGRATION_DATABASE_AUTH_MODE", os.environ.get("FINAGENT_DATABASE_AUTH_MODE", "password")
+    )
     engine = get_engine(url, mode)
     with engine.connect() as connection:
         context.configure(connection=connection, target_metadata=target_metadata, compare_type=True)

@@ -74,13 +74,15 @@ def main() -> None:
 
     policies = {d["metadata"]["name"]: d["spec"] for d in documents if d["kind"] == "NetworkPolicy"}
     bootstrap = next(
-        d for d in documents
+        d
+        for d in documents
         if d["kind"] == "NetworkPolicy" and d["metadata"]["name"] == "finagent-migrator-bootstrap"
     )
     assert bootstrap["metadata"]["annotations"]["helm.sh/hook"] == "pre-install,pre-upgrade"
     assert int(bootstrap["metadata"]["annotations"]["helm.sh/hook-weight"]) < job_weight
     assert bootstrap["spec"]["podSelector"]["matchLabels"] == {
-        "app": "finagent-migrator", "app.kubernetes.io/part-of": "finagent"
+        "app": "finagent-migrator",
+        "app.kubernetes.io/part-of": "finagent",
     }
     assert bootstrap["spec"]["ingress"] == [] and bootstrap["spec"]["egress"] == []
     assert policies["finagent-default-deny"]["podSelector"]["matchLabels"] == {

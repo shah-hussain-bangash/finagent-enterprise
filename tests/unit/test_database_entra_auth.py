@@ -67,7 +67,9 @@ class DatabaseTokenTests(unittest.TestCase):
         # Use SQLite's dialect only to exercise the real event dispatcher. Abort before
         # DBAPI connect, so no database or Azure service is contacted.
         engine = create_engine("sqlite://")
-        engine.url = make_url("postgresql+psycopg://identity@demo.postgres.database.azure.com/db?sslmode=verify-full")
+        engine.url = make_url(
+            "postgresql+psycopg://identity@demo.postgres.database.azure.com/db?sslmode=verify-full"
+        )
         calls = []
 
         class Credential:
@@ -149,7 +151,9 @@ class DatabaseTokenTests(unittest.TestCase):
         self.assertEqual(len(registered), 1)
 
     def test_validate_azure_url_rejects_credential_and_tls_downgrades(self):
-        validate_postgres_url("postgresql+psycopg://identity@demo.postgres.database.azure.com/db?sslmode=verify-full")
+        validate_postgres_url(
+            "postgresql+psycopg://identity@demo.postgres.database.azure.com/db?sslmode=verify-full"
+        )
         validate_postgres_url(
             "postgresql+psycopg://identity@demo.postgres.database.azure.com/db"
             "?sslrootcert=%2Fetc%2Ffinagent%2Froot.pem&sslmode=verify-full"
