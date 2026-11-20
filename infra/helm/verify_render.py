@@ -67,6 +67,11 @@ def main() -> None:
     assert container["command"] == ["/bin/sh", "-ec"]
 
     policies = {d["metadata"]["name"]: d["spec"] for d in documents if d["kind"] == "NetworkPolicy"}
+    bootstrap = next(d for d in documents if d["kind"] == "NetworkPolicy" and d["metadata"]["name"] == "finagent-migrator-bootstrap")
+    assert bootstrap["metadata"]["annotations"]["helm.sh/hook"] == "pre-install,pre-upgrade"
+    assert int(bootstrap["metadata"]["annotations"]["helm.sh/hook-weight"]) < int(job["metadata"]["annotations"].get("helm.sh/hook-weight", "0"))
+    assert bootstrap["spec"]["podSelector"]["matchLabels"] == {"app": "finagent-migrator", "app.kubernetes.io/part-of": "finagent"}
+    assert bootstrap["spec"]["ingress"] == [] and bootstrap["spec"]["egress"] == []
     assert policies["finagent-default-deny"]["podSelector"]["matchLabels"] == {
         "app.kubernetes.io/part-of": "finagent"
     }
@@ -151,6 +156,7 @@ def main() -> None:
     assert configured_policies["finagent-web-ingress"]["ingress"][0]["from"] == [peer]
     assert configured_policies["finagent-web-ingress"]["ingress"][0]["ports"][0]["port"] == 3000
     assert configured_policies["finagent-migrator-egress"]["egress"] == [egress]
+    assert configured_policies["finagent-migrator-bootstrap"]["egress"] == [egress]
     assert len(configured_policies["finagent-web-egress"]["egress"]) == 2
     assert configured_policies["finagent-web-egress"]["egress"][1] == egress
     ingress = next(d for d in configured_docs if d["kind"] == "Ingress")

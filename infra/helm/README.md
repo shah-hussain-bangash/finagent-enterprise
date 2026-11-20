@@ -29,12 +29,13 @@ attempt, address and test these blockers against the selected environment:
   Redis and Entra client secrets by default, rather than database or backend credentials. The
   CSI driver's [sync documentation](https://secrets-store-csi-driver.sigs.k8s.io/topics/sync-as-kubernetes-secret)
   states that syncing requires a pod mounting the volume.
-- **Fresh-install networking remains a blocker:** the pre-install migration job runs before the
-  chart's ordinary NetworkPolicy resources are installed. A cluster operator must establish and
-  verify an appropriately scoped default-deny and the required migration egress before installing
-  this chart. Do not rely on this chart alone to isolate the first migration job. Helm hook
-  resources are not managed like ordinary release resources; review the migration
-  SecretProviderClass lifecycle and cleanup during upgrades and uninstall.
+- A migration bootstrap NetworkPolicy is created as an earlier hook than the migration job. It
+  denies ingress and defaults to denying egress; explicitly configured migrator egress is allowed.
+  The separate ordinary policy remains in effect after installation. Kubernetes policies are
+  additive: other policies may grant additional traffic. CNI enforcement, required destinations,
+  and policy timing must be verified in the target cluster. Helm hook resources are not managed
+  like ordinary release resources; review the bootstrap policy and migration SecretProviderClass
+  lifecycle and cleanup during upgrades and uninstall.
 - Service accounts, workload identity bindings, required private endpoints and approved
   configuration must be supplied and verified separately. The Terraform reference defines
   separate api, worker, web and migrator identities, and creates no Key Vault secret-reader
