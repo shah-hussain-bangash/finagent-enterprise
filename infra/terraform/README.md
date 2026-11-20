@@ -76,7 +76,9 @@ The PostgreSQL reference enables Microsoft Entra authentication and disables pas
 authentication. The API, worker and Alembic now have an **experimental opt-in**
 `azure_workload_identity` database authentication mode. It uses Azure workload identity to
 request a token for each new connection, requires a passwordless public-Azure PostgreSQL URL
-with `sslmode=verify-full`, and retains password mode by default. Set
+with `sslmode=verify-full`, and retains password mode by default. The URL may also specify an
+absolute Linux `sslrootcert` path to an independently provisioned CA bundle; its presence,
+ownership, trust and rotation must be validated in the deployment. Set
 `FINAGENT_DATABASE_AUTH_MODE` for the API and worker; the migration job's separate Helm value
 `migration.databaseAuthMode` controls `FINAGENT_MIGRATION_DATABASE_AUTH_MODE`. In other
 environments Alembic falls back to `FINAGENT_DATABASE_AUTH_MODE`, then `password`.

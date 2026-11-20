@@ -27,7 +27,10 @@ class DatabaseTokenTests(unittest.TestCase):
     @unittest.skipUnless(create_engine is not None and psycopg is not None, "SQLAlchemy or psycopg unavailable")
     def test_postgresql_driver_receives_token_before_connection(self):
         # Use the real PostgreSQL dialect and driver, but intercept before network access.
-        url = "postgresql+psycopg://identity@demo.postgres.database.azure.com/db?sslmode=verify-full"
+        url = (
+            "postgresql+psycopg://identity@demo.postgres.database.azure.com/db"
+            "?sslmode=verify-full&sslrootcert=%2Fetc%2Ffinagent%2Froot.pem"
+        )
         scopes, observed = [], []
 
         class Credential:
@@ -38,7 +41,7 @@ class DatabaseTokenTests(unittest.TestCase):
         engine = create_azure_postgres_engine(url, Credential(), create_engine, event.listen)
 
         def capture_and_abort(dialect, record, args, params):
-            observed.append((params["password"], params["sslmode"], params["host"]))
+            observed.append((params["password"], params["sslmode"], params["host"], params["sslrootcert"]))
             raise RuntimeError("synthetic stop before connection")
 
         event.listen(engine, "do_connect", capture_and_abort)
@@ -52,8 +55,8 @@ class DatabaseTokenTests(unittest.TestCase):
         self.assertEqual(
             observed,
             [
-                ("synthetic-1", "verify-full", "demo.postgres.database.azure.com"),
-                ("synthetic-2", "verify-full", "demo.postgres.database.azure.com"),
+                ("synthetic-1", "verify-full", "demo.postgres.database.azure.com", "/etc/finagent/root.pem"),
+                ("synthetic-2", "verify-full", "demo.postgres.database.azure.com", "/etc/finagent/root.pem"),
             ],
         )
 
@@ -145,12 +148,19 @@ class DatabaseTokenTests(unittest.TestCase):
 
     def test_validate_azure_url_rejects_credential_and_tls_downgrades(self):
         validate_postgres_url("postgresql+psycopg://identity@demo.postgres.database.azure.com/db?sslmode=verify-full")
+        validate_postgres_url(
+            "postgresql+psycopg://identity@demo.postgres.database.azure.com/db"
+            "?sslrootcert=%2Fetc%2Ffinagent%2Froot.pem&sslmode=verify-full"
+        )
         for url in (
             "postgresql+psycopg://identity:secret@demo.postgres.database.azure.com/db?sslmode=verify-full",
             "postgresql+psycopg://identity@demo.postgres.database.azure.com/db?sslmode=require",
             "postgresql+psycopg://identity@demo.postgres.database.azure.com/db?sslmode=verify-full&host=evil.test",
             "postgresql+psycopg://identity@evil.test/db?sslmode=verify-full",
             "postgresql+psycopg://identity@demo.postgres.database.azure.com/db?sslmode=verify-full&sslmode=disable",
+            "postgresql+psycopg://identity@demo.postgres.database.azure.com/db?sslmode=verify-full&sslrootcert=relative.pem",
+            "postgresql+psycopg://identity@demo.postgres.database.azure.com/db?sslmode=verify-full&sslrootcert=/etc/../bad.pem",
+            "postgresql+psycopg://identity@demo.postgres.database.azure.com/db?sslmode=verify-full&sslrootcert=/a&sslrootcert=/b",
         ):
             with self.subTest(url=url), self.assertRaisesRegex(ValueError, "Invalid Azure"):
                 validate_postgres_url(url)

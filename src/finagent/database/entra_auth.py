@@ -22,7 +22,15 @@ def validate_postgres_url(url: str) -> None:
         hostname = parsed.hostname
         _ = parsed.port  # Reject malformed ports.
         query = parse_qsl(parsed.query, keep_blank_values=True, strict_parsing=True)
-        keys = [key.lower() for key, _ in query]
+        keys = [key for key, _ in query]
+        options = dict(query)
+        root_cert = options.get("sslrootcert")
+        valid_cert = root_cert is None or (
+            root_cert.startswith("/")
+            and "\\" not in root_cert
+            and "\x00" not in root_cert
+            and ".." not in root_cert.split("/")
+        )
         valid = (
             parsed.scheme == "postgresql+psycopg"
             and bool(parsed.username)
@@ -32,8 +40,10 @@ def validate_postgres_url(url: str) -> None:
             and hostname != ".postgres.database.azure.com"
             and bool(parsed.path.strip("/"))
             and not parsed.fragment
-            and keys == ["sslmode"]
-            and query[0][1] == "verify-full"
+            and len(keys) == len(set(keys))
+            and set(keys) in ({"sslmode"}, {"sslmode", "sslrootcert"})
+            and options.get("sslmode") == "verify-full"
+            and valid_cert
         )
     except ValueError:
         valid = False
