@@ -1,6 +1,8 @@
 import { randomUUID } from "node:crypto";
 import Link from "next/link";
-import { reopenCase, resumeRun, startInvestigation, updateCase } from "@/app/actions";
+import { resumeRun, updateCase } from "@/app/actions";
+import { StartInvestigationForm } from "@/components/StartInvestigationForm";
+import { ReopenCaseForm } from "@/components/ReopenCaseForm";
 import { StatusBadge } from "@/components/StatusBadge";
 import { SubmitButton } from "@/components/SubmitButton";
 import { Empty, ErrorState, Field, Flash, Tabs, When } from "@/components/ui";
@@ -98,12 +100,7 @@ export default async function CaseOverview({ params, searchParams }: {
         </table></div>
       ) : null}
       {runs.data && !active && ["ASSIGNED", "INVESTIGATING", "REWORK"].includes(c.status) ? (
-        <form action={startInvestigation} className="inline panel">
-          <input type="hidden" name="case_id" value={id} />
-          <input type="hidden" name="key" value={randomUUID()} />
-          <SubmitButton>Start investigation</SubmitButton>
-          <span className="muted">Gathers evidence through approved connectors and drafts a report for your review.</span>
-        </form>
+        <StartInvestigationForm caseId={id} requestKey={randomUUID()} />
       ) : null}
       {active?.status === "WAITING_EVIDENCE" ? (
         <form action={resumeRun} className="stack panel">
@@ -153,14 +150,7 @@ export default async function CaseOverview({ params, searchParams }: {
           ) : active ? (
             <p className="warn">An investigation is still active or unresolved. Resolve it before reopening.</p>
           ) : (
-            <form action={reopenCase} className="stack" aria-label="Reopen completed case">
-              <input type="hidden" name="case_id" value={id} />
-              <input type="hidden" name="record_version" value={c.record_version} />
-              <label htmlFor="reopen-reason">Reason for reopening</label>
-              <textarea id="reopen-reason" name="reason" required minLength={3} maxLength={300}
-                rows={3} aria-describedby="reopen-help" />
-              <SubmitButton>Reopen case</SubmitButton>
-            </form>
+            <ReopenCaseForm caseId={id} recordVersion={c.record_version} />
           )}
         </div>
       ) : null}

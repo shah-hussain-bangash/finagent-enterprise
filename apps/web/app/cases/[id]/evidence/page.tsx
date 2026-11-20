@@ -1,4 +1,5 @@
-import { freezeSnapshot, resolveConflict } from "@/app/actions";
+import { freezeSnapshot } from "@/app/actions";
+import { ResolveConflictForm } from "@/components/ResolveConflictForm";
 import { SubmitButton } from "@/components/SubmitButton";
 import { Empty, ErrorState, Flash, Json, Tabs, When } from "@/components/ui";
 import { load } from "@/lib/api";
@@ -60,21 +61,7 @@ export default async function EvidencePage({ params, searchParams }: {
                 Status: <span className={`badge badge-${c.status.toLowerCase()}`}>{c.status}</span></p>
               {c.status === "RESOLVED" ? <p>Resolution {c.resolution}: {c.rationale}</p> : null}
               {c.status === "OPEN" ? (
-                <form action={resolveConflict} className="stack">
-                  <input type="hidden" name="case_id" value={id} />
-                  <input type="hidden" name="conflict_id" value={c.conflict_id} />
-                  <label htmlFor={`r-${c.conflict_id}`}>Resolution</label>
-                  <select id={`r-${c.conflict_id}`} name="resolution" defaultValue="" required>
-                    <option value="" disabled>Choose a resolution</option>
-                    <option value="USE_A">Use source A</option>
-                    <option value="USE_B">Use source B</option>
-                    <option value="BOTH_RETAINED_EXPLAINED">Keep both, explained</option>
-                    <option value="SOURCE_CORRECTION_REQUESTED">Request a source correction</option>
-                  </select>
-                  <label htmlFor={`t-${c.conflict_id}`}>Reason (recorded; neither source is deleted)</label>
-                  <textarea id={`t-${c.conflict_id}`} name="rationale" required minLength={10} maxLength={1000} />
-                  <SubmitButton>Record resolution</SubmitButton>
-                </form>
+                <ResolveConflictForm caseId={id} conflictId={c.conflict_id} />
               ) : null}
             </div>
           ))}

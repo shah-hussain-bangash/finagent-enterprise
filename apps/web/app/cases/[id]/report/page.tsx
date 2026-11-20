@@ -1,6 +1,7 @@
 import { randomUUID } from "node:crypto";
 import Link from "next/link";
-import { createExport, editReport, submitReport, withdrawReport } from "@/app/actions";
+import { createExport, editReport, withdrawReport } from "@/app/actions";
+import { SubmitReportForm } from "@/components/SubmitReportForm";
 import { FindingTag, type FindingKind } from "@/components/StatusBadge";
 import { SubmitButton } from "@/components/SubmitButton";
 import { Empty, ErrorState, Flash, Tabs, When } from "@/components/ui";
@@ -89,12 +90,7 @@ export default async function ReportPage({ params, searchParams }: {
             </details>
           ) : null}
           {isCurrent && report?.status === "DRAFT" && v.data.validation.valid ? (
-            <form action={submitReport} className="inline panel">
-              <input type="hidden" name="case_id" value={id} />
-              <input type="hidden" name="version_no" value={v.data.version_no} />
-              <input type="hidden" name="key" value={randomUUID()} />
-              <SubmitButton>{`Submit version ${v.data.version_no} for independent review`}</SubmitButton>
-            </form>
+            <SubmitReportForm caseId={id} version={v.data.version_no} requestKey={randomUUID()} />
           ) : null}
           {isCurrent && report?.status === "DRAFT" && !v.data.validation.valid ? <p className="warn">Resolve the validation problems above before submitting this version for review.</p> : null}
           {isCurrent && report?.status === "SUBMITTED" ? (
