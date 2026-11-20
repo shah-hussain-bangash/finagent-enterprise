@@ -58,7 +58,9 @@ attempt, address and test these blockers against the selected environment:
 - **Database authentication is an unresolved deployment blocker:** the Terraform reference
   disables PostgreSQL password authentication. An experimental workload-identity mode exists for
   the application and migration, but is disabled by default and has not been tested with Azure.
-  Set the API/worker mode and the separate migration mode only in an approved test configuration.
+  Set `config.FINAGENT_DATABASE_AUTH_MODE` for the API/worker and the separate
+  `migration.databaseAuthMode` only in an approved test configuration. These settings can differ
+  deliberately; verify that each selected mode matches its database URL and identity.
   Supplying a static URL through CSI alone does not complete identity setup. See the
   [Terraform reference](../terraform/README.md#database-authentication-remains-unverified).
 - A migration bootstrap NetworkPolicy is created as an earlier hook than the migration job. It

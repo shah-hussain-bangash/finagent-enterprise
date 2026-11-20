@@ -35,6 +35,7 @@ def main() -> None:
     documents = [item for item in yaml.safe_load_all(result.stdout) if item]
     assert not any(item.get("kind") == "Ingress" for item in documents), "ingress must default to disabled"
     config = next(item for item in documents if item.get("kind") == "ConfigMap")["data"]
+    assert config["FINAGENT_DATABASE_AUTH_MODE"] == "password"
     assert config["FINAGENT_WEB_AUTH_MODE"] == "entra"
     assert config["FINAGENT_WEB_ORIGIN"].startswith("https://")
     assert config["FINAGENT_API_URL"].startswith("https://")
@@ -181,6 +182,7 @@ def main() -> None:
     assert route["host"] == "finagent.example.test"
     assert route["http"]["paths"][0]["backend"]["service"] == {"name": "finagent-web", "port": {"number": 80}}
     for invalid in (
+        'config.FINAGENT_DATABASE_AUTH_MODE="invalid"',
         'migration.databaseAuthMode="invalid"',
         "worker.terminationGracePeriodSeconds=0",
         "worker.terminationGracePeriodSeconds=3601",

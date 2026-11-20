@@ -45,6 +45,7 @@ secretProviderClass:
 
 config:   # non-secret settings
   FINAGENT_AUTH_MODE: entra
+  FINAGENT_DATABASE_AUTH_MODE: password  # experimental alternative: azure_workload_identity
   FINAGENT_WEB_AUTH_MODE: entra
   FINAGENT_WEB_ORIGIN: https://replace-me.invalid
   FINAGENT_API_URL: https://replace-me.invalid

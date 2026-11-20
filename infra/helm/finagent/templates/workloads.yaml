@@ -8,6 +8,9 @@
 {{- if not (has .Values.migration.databaseAuthMode (list "password" "azure_workload_identity")) }}
 {{- fail "migration.databaseAuthMode must be password or azure_workload_identity" }}
 {{- end }}
+{{- if not (has .Values.config.FINAGENT_DATABASE_AUTH_MODE (list "password" "azure_workload_identity")) }}
+{{- fail "config.FINAGENT_DATABASE_AUTH_MODE must be password or azure_workload_identity" }}
+{{- end }}
 apiVersion: v1
 kind: ConfigMap
 metadata:
