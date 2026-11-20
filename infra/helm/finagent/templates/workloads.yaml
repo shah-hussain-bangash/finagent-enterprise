@@ -5,6 +5,9 @@
 {{- if has .Values.migration.secretProviderClassName (list "finagent-api-kv" "finagent-worker-kv" "finagent-web-kv") }}
 {{- fail "migration.secretProviderClassName must differ from workload secret classes" }}
 {{- end }}
+{{- if not (has .Values.migration.databaseAuthMode (list "password" "azure_workload_identity")) }}
+{{- fail "migration.databaseAuthMode must be password or azure_workload_identity" }}
+{{- end }}
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -86,6 +89,8 @@ spec:
       containers:
         - name: migrate
           image: "{{ .Values.image.registry }}/finagent-api:{{ .Values.image.tag }}"
+          env:
+            - {name: FINAGENT_MIGRATION_DATABASE_AUTH_MODE, value: {{ .Values.migration.databaseAuthMode | quote }}}
           command: ["/bin/sh", "-ec"]
           args:
             - 'FINAGENT_MIGRATION_DATABASE_URL="$(cat /mnt/migration/migration-database-url)"; test -n "$FINAGENT_MIGRATION_DATABASE_URL"; export FINAGENT_MIGRATION_DATABASE_URL; exec python -m alembic upgrade head'

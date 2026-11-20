@@ -46,6 +46,7 @@ def main() -> None:
     pod = job["spec"]["template"]["spec"]
     assert pod["serviceAccountName"] == "finagent-migrator"
     container = pod["containers"][0]
+    assert {item["name"]: item["value"] for item in container["env"]}["FINAGENT_MIGRATION_DATABASE_AUTH_MODE"] == "password"
     assert container["securityContext"]["runAsUser"] == 10001
     assert not container.get("envFrom"), "migration must not import application secrets"
     assert any(m["name"] == "migration-secret" and m["readOnly"] for m in container["volumeMounts"])
@@ -180,6 +181,7 @@ def main() -> None:
     assert route["host"] == "finagent.example.test"
     assert route["http"]["paths"][0]["backend"]["service"] == {"name": "finagent-web", "port": {"number": 80}}
     for invalid in (
+        'migration.databaseAuthMode="invalid"',
         "worker.terminationGracePeriodSeconds=0",
         "worker.terminationGracePeriodSeconds=3601",
         "migration.activeDeadlineSeconds=0",

@@ -70,33 +70,26 @@ Not included (needs institutional decisions): VNet/subnet/private-endpoint topol
 Azure OpenAI deployment (DEC-07/AI-D03), Defender for Storage/ClamAV hosting, diagnostic settings,
 alert action groups (SEC-D08).
 
-## Database authentication is not integrated
+## Database authentication remains unverified
 
 The PostgreSQL reference enables Microsoft Entra authentication and disables password
-authentication. The application and Alembic migration currently construct SQLAlchemy engines
-from a database URL; they do not implement acquisition and refresh of an Entra database token.
-The migrator secret mount in the Helm reference does not solve token renewal. Consequently this
-Terraform configuration and the current application cannot be assumed to connect successfully.
+authentication. The API, worker and Alembic now have an **experimental opt-in**
+`azure_workload_identity` database authentication mode. It uses Azure workload identity to
+request a token for each new connection, requires a passwordless public-Azure PostgreSQL URL
+with `sslmode=verify-full`, and retains password mode by default. Set
+`FINAGENT_DATABASE_AUTH_MODE` for the API and worker; the migration job's separate Helm value
+`migration.databaseAuthMode` controls `FINAGENT_MIGRATION_DATABASE_AUTH_MODE`. In other
+environments Alembic falls back to `FINAGENT_DATABASE_AUTH_MODE`, then `password`.
 
-An experimental `PostgresTokenCallback` requests a token for each new connection using an
-injected credential and has synthetic unit coverage. It is **not attached to either engine**,
-does not choose or configure an Azure identity, and has not been tested with PostgreSQL or Azure.
-It does not resolve this deployment blocker.
-An accompanying experimental URL validator requires verified TLS and a public-Azure PostgreSQL
-hostname. It is not yet enforced by the application; private DNS aliases and other Azure clouds
-need a separately reviewed configuration.
-The experimental registration helper accepts SQLAlchemy's event listener as a dependency and
-refuses registration for an invalid URL. A synthetic test exercises the real SQLAlchemy event
-dispatcher with a SQLite dialect and aborts before connecting. Another local synthetic test
-exercises the PostgreSQL dialect and psycopg connection parameters, aborting before network
-access. Actual PostgreSQL authentication and Azure identity have not been tested.
-An experimental engine factory validates the URL and registers the token callback before the first
-connection. It is not used by the application or Alembic; credential selection, lifecycle,
-configuration, real-driver behavior, and failure recovery remain unverified.
+This path has synthetic tests using SQLAlchemy and the psycopg driver, with connections stopped
+before network access. It has not authenticated to Azure or been verified in a deployed cluster.
+Private DNS aliases and sovereign Azure clouds need a separately reviewed URL and identity design.
+Credential lifecycle, token-expiry recovery, database roles and deployment configuration remain
+unverified. The default Helm values do not enable Azure database authentication.
 
-Before any staging deployment, design and implement the approved database identity integration,
-including a fresh token for new pooled connections, separately authorized application and
-migration identities, database role provisioning, TLS verification, and token-expiry recovery.
+Before any staging deployment, review the database identity integration, including separately
+authorized application and migration identities, database role provisioning, TLS trust roots,
+and token-expiry recovery.
 Test these behaviors against an isolated Azure environment with synthetic data and document the
 result. Do not work around this gap by placing a short-lived token in a long-lived secret or by
 enabling password authentication without an approved design change. No Azure database connection

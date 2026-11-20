@@ -1,6 +1,6 @@
 """Experimental token callback for new Azure PostgreSQL connections.
 
-This component is not wired into an engine or enabled in any deployment.
+The experimental engine path is opt-in and has not been validated against Azure.
 """
 
 from __future__ import annotations
@@ -85,7 +85,7 @@ def create_azure_postgres_engine(
 ) -> Any:
     """Build an inactive-by-default Azure engine without opening a database connection.
 
-    The caller owns the credential lifecycle. No code path selects this factory yet.
+    The caller owns the credential lifecycle.
     """
     validate_postgres_url(url)
     engine = create_engine(url, pool_pre_ping=True, pool_size=10, max_overflow=10)

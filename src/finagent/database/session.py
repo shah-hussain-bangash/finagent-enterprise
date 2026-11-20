@@ -7,17 +7,31 @@ from collections.abc import Iterator
 from contextlib import contextmanager
 from functools import lru_cache
 
-from sqlalchemy import Engine, create_engine
+from sqlalchemy import Engine, create_engine, event
 from sqlalchemy.orm import Session, sessionmaker
 
 
 @lru_cache(maxsize=4)
-def get_engine(url: str) -> Engine:
-    return create_engine(url, pool_pre_ping=True, pool_size=10, max_overflow=10)
+def get_engine(url: str, auth_mode: str = "password") -> Engine:
+    if auth_mode == "password":
+        return create_engine(url, pool_pre_ping=True, pool_size=10, max_overflow=10)
+    if auth_mode != "azure_workload_identity":
+        raise ValueError("Unsupported database authentication mode")
+    from azure.identity import WorkloadIdentityCredential
+
+    from finagent.database.entra_auth import create_azure_postgres_engine, validate_postgres_url
+
+    validate_postgres_url(url)
+    credential = WorkloadIdentityCredential()
+    try:
+        return create_azure_postgres_engine(url, credential, create_engine, event.listen)
+    except Exception:
+        credential.close()
+        raise
 
 
-def session_factory(url: str) -> sessionmaker[Session]:
-    return sessionmaker(bind=get_engine(url), expire_on_commit=False)
+def session_factory(url: str, auth_mode: str = "password") -> sessionmaker[Session]:
+    return sessionmaker(bind=get_engine(url, auth_mode), expire_on_commit=False)
 
 
 @contextmanager
