@@ -86,8 +86,10 @@ environments Alembic falls back to `FINAGENT_DATABASE_AUTH_MODE`, then `password
 This path has synthetic tests using SQLAlchemy and the psycopg driver, with connections stopped
 before network access. It has not authenticated to Azure or been verified in a deployed cluster.
 Private DNS aliases and sovereign Azure clouds need a separately reviewed URL and identity design.
+The workload credential is closed when its cached engine is no longer referenced, or at process
+exit; resetting an engine's connection pool does not close a credential that may be reused.
 Credential lifecycle, token-expiry recovery, database roles and deployment configuration remain
-unverified. The default Helm values do not enable Azure database authentication.
+unverified in a real deployment. The default Helm values do not enable Azure database authentication.
 The password and authenticator provisioning consoles and synthetic seed utility use their own
 database entry points and have not been integrated with this Azure authentication mode. Treat
 their use in an Entra-only environment as unsupported until separately implemented and tested.

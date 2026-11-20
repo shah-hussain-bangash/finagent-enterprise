@@ -1,5 +1,6 @@
 """Opt-in database identity tests; never connects to a database or Azure."""
 
+import gc
 import sys
 import types
 import unittest
@@ -90,6 +91,33 @@ class DatabaseAuthModeTests(unittest.TestCase):
             self.assertRaisesRegex(RuntimeError, "setup failed"),
         ):
             get_engine(url, "azure_workload_identity")
+        self.assertEqual(closed, [True])
+
+    def test_credential_closes_when_cached_engine_is_no_longer_used(self):
+        azure = types.ModuleType("azure")
+        azure.__path__ = []
+        identity = types.ModuleType("azure.identity")
+        closed = []
+
+        class Credential:
+            def close(self):
+                closed.append(True)
+
+        class Engine:
+            pass
+
+        identity.WorkloadIdentityCredential = Credential
+        url = "postgresql+psycopg://identity@demo.postgres.database.azure.com/db?sslmode=verify-full"
+        with (
+            patch.dict(sys.modules, {"azure": azure, "azure.identity": identity}),
+            patch("finagent.database.entra_auth.create_azure_postgres_engine", side_effect=lambda *args: Engine()),
+        ):
+            engine = get_engine(url, "azure_workload_identity")
+            self.assertEqual(closed, [])
+            get_engine.cache_clear()
+            self.assertEqual(closed, [])
+            del engine
+            gc.collect()
         self.assertEqual(closed, [True])
 
     def test_failed_token_acquisition_never_reaches_driver(self):

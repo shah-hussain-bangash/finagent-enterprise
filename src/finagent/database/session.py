@@ -6,6 +6,7 @@ from __future__ import annotations
 from collections.abc import Iterator
 from contextlib import contextmanager
 from functools import lru_cache
+from weakref import finalize
 
 from sqlalchemy import Engine, create_engine, event
 from sqlalchemy.orm import Session, sessionmaker
@@ -24,7 +25,10 @@ def get_engine(url: str, auth_mode: str = "password") -> Engine:
     validate_postgres_url(url)
     credential = WorkloadIdentityCredential()
     try:
-        return create_azure_postgres_engine(url, credential, create_engine, event.listen)
+        engine = create_azure_postgres_engine(url, credential, create_engine, event.listen)
+        # dispose() can be followed by engine reuse; close only when the engine is no longer used.
+        finalize(engine, credential.close)
+        return engine
     except Exception:
         credential.close()
         raise
