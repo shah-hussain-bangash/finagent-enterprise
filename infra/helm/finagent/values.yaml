@@ -70,12 +70,15 @@ config:   # non-secret settings
 
 api:
   replicas: 2
+  terminationGracePeriodSeconds: 30
   resources: {requests: {cpu: 250m, memory: 512Mi}, limits: {cpu: "1", memory: 1Gi}}
 worker:
   replicas: 2
+  terminationGracePeriodSeconds: 120  # proposed; review against configured timeouts and recovery tests
   resources: {requests: {cpu: 500m, memory: 1Gi}, limits: {cpu: "2", memory: 2Gi}}   # parser child capped separately
 web:
   replicas: 2
+  terminationGracePeriodSeconds: 30
   resources: {requests: {cpu: 100m, memory: 256Mi}, limits: {cpu: 500m, memory: 512Mi}}
 
 # No external traffic is permitted until an operator supplies reviewed Kubernetes

@@ -18,6 +18,10 @@ attempt, address and test these blockers against the selected environment:
   definition has not been container-tested here.
 - The chart uses the web image's non-root user ID 10003; the API, worker, and migration use
   their image user ID 10001. Verify file and mounted-secret permissions in the target cluster.
+- Workload termination grace periods are configurable. The proposed worker default is 120 seconds
+  because the default parser and model timeouts can each be 60 seconds; this is not a guarantee
+  that every operation completes before shutdown. Choose settings using the actual configured
+  timeouts and validate forced termination, lease recovery and duplicate handling in the cluster.
 
 - Default deny now selects only pods labelled as part of FinAgent. The chart explicitly permits
   web-to-api traffic; web ingress and all other egress remain denied unless the operator supplies

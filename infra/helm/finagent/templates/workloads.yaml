@@ -101,6 +101,10 @@ spec:
             readOnly: true
             volumeAttributes: {secretProviderClass: {{ .Values.migration.secretProviderClassName | quote }}}
 {{- range $name, $spec := dict "api" .Values.api "worker" .Values.worker "web" .Values.web }}
+{{- $grace := printf "%v" $spec.terminationGracePeriodSeconds }}
+{{- if or (not (regexMatch "^[1-9][0-9]{0,3}$" $grace)) (gt (int $grace) 3600) }}
+{{- fail (printf "%s.terminationGracePeriodSeconds must be a whole number between 1 and 3600" $name) }}
+{{- end }}
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -113,7 +117,7 @@ spec:
     spec:
       serviceAccountName: finagent-{{ $name }}
       automountServiceAccountToken: {{ if eq $name "web" }}false{{ else }}true{{ end }}
-      terminationGracePeriodSeconds: 30
+      terminationGracePeriodSeconds: {{ $grace }}
       containers:
         - name: {{ $name }}
           image: "{{ $.Values.image.registry }}/finagent-{{ $name }}:{{ $.Values.image.tag }}"

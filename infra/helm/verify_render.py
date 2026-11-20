@@ -102,6 +102,7 @@ def main() -> None:
     for deployment in deployments:
         name = deployment["metadata"]["name"].removeprefix("finagent-")
         spec = deployment["spec"]["template"]["spec"]
+        assert spec["terminationGracePeriodSeconds"] == (120 if name == "worker" else 30)
         assert spec["serviceAccountName"] == f"finagent-{name}"
         workload = spec["containers"][0]
         assert workload["securityContext"]["runAsUser"] == (10003 if name == "web" else 10001)
@@ -169,6 +170,8 @@ def main() -> None:
     assert route["host"] == "finagent.example.test"
     assert route["http"]["paths"][0]["backend"]["service"] == {"name": "finagent-web", "port": {"number": 80}}
     for invalid in (
+        "worker.terminationGracePeriodSeconds=0",
+        "worker.terminationGracePeriodSeconds=3601",
         "migration.activeDeadlineSeconds=0",
         "migration.activeDeadlineSeconds=86401",
         'migration.secretProviderClassName="finagent-api-kv"',
