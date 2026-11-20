@@ -51,6 +51,10 @@ def main() -> None:
     class_name = volume["csi"]["volumeAttributes"]["secretProviderClass"]
     classes = [item for item in documents if item.get("kind") == "SecretProviderClass"]
     migration_class = next(item for item in classes if item["metadata"]["name"] == class_name)
+    annotations = migration_class["metadata"]["annotations"]
+    assert annotations["helm.sh/hook"] == "pre-install,pre-upgrade"
+    assert int(annotations["helm.sh/hook-weight"]) < int(job["metadata"]["annotations"].get("helm.sh/hook-weight", "0"))
+    assert annotations["helm.sh/hook-delete-policy"] == "before-hook-creation"
     params = migration_class["spec"]["parameters"]
     assert params["clientID"] == "synthetic-migrator-id"
     objects = yaml.safe_load(params["objects"])["array"]

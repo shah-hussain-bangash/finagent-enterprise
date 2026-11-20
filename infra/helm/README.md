@@ -20,13 +20,21 @@ attempt, address and test these blockers against the selected environment:
   [Kubernetes network policy documentation](https://kubernetes.io/docs/concepts/services-networking/network-policies/).
 - The pre-install migration job now mounts a dedicated CSI SecretProviderClass and reads only its
   configured migration database URL from a file; it no longer depends on the application pods to
-  sync application secrets. Supply a separately authorized migration credential and the migrator
+  sync application secrets. The migration SecretProviderClass is a Helm hook with an earlier
+  weight than the job so Helm creates it before the pre-install or pre-upgrade job. Supply a
+  separately authorized migration credential and the migrator
   workload identity. This bootstrap has only been rendered locally and must be tested on a fresh
   cluster with the Azure CSI driver. Each application workload now has an independently configured
   identity, SecretProviderClass and synced Kubernetes Secret. The web container receives only its session,
   Redis and Entra client secrets by default, rather than database or backend credentials. The
   CSI driver's [sync documentation](https://secrets-store-csi-driver.sigs.k8s.io/topics/sync-as-kubernetes-secret)
   states that syncing requires a pod mounting the volume.
+- **Fresh-install networking remains a blocker:** the pre-install migration job runs before the
+  chart's ordinary NetworkPolicy resources are installed. A cluster operator must establish and
+  verify an appropriately scoped default-deny and the required migration egress before installing
+  this chart. Do not rely on this chart alone to isolate the first migration job. Helm hook
+  resources are not managed like ordinary release resources; review the migration
+  SecretProviderClass lifecycle and cleanup during upgrades and uninstall.
 - Service accounts, workload identity bindings, required private endpoints and approved
   configuration must be supplied and verified separately. The Terraform reference defines
   separate api, worker, web and migrator identities, and creates no Key Vault secret-reader
