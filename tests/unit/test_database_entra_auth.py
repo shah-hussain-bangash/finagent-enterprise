@@ -7,11 +7,47 @@ from finagent.database.entra_auth import (
     POSTGRES_SCOPE,
     PostgresTokenCallback,
     attach_token_callback,
+    create_azure_postgres_engine,
     validate_postgres_url,
 )
 
 
 class DatabaseTokenTests(unittest.TestCase):
+    def test_engine_factory_validates_before_creation_and_attaches_callback(self):
+        url = "postgresql+psycopg://identity@demo.postgres.database.azure.com/db?sslmode=verify-full"
+        engine = SimpleNamespace(url=SimpleNamespace(render_as_string=lambda **kw: url))
+        credential = SimpleNamespace(get_token=lambda scope: SimpleNamespace(token="synthetic"))
+        calls = []
+
+        def create(candidate, **kwargs):
+            calls.append((candidate, kwargs))
+            return engine
+
+        def listen(target, event, callback):
+            calls.append((target, event, callback))
+
+        self.assertIs(create_azure_postgres_engine(url, credential, create, listen), engine)
+        self.assertEqual(calls[0][0], url)
+        self.assertTrue(calls[0][1]["pool_pre_ping"])
+        self.assertEqual(calls[1][0:2], (engine, "do_connect"))
+        with self.assertRaises(ValueError):
+            create_azure_postgres_engine("postgresql+psycopg://local/db", credential, create, listen)
+        self.assertEqual(len(calls), 2)
+
+    def test_engine_disposed_if_callback_registration_fails(self):
+        url = "postgresql+psycopg://identity@demo.postgres.database.azure.com/db?sslmode=verify-full"
+        disposed = []
+        engine = SimpleNamespace(
+            url=SimpleNamespace(render_as_string=lambda **kw: url), dispose=lambda: disposed.append(True)
+        )
+
+        def fail(*args):
+            raise RuntimeError("registration failed")
+
+        with self.assertRaisesRegex(RuntimeError, "registration failed"):
+            create_azure_postgres_engine(url, object(), lambda *args, **kw: engine, fail)
+        self.assertEqual(disposed, [True])
+
     def test_registers_connection_callback_only_for_a_valid_url(self):
         registered = []
         azure_url = "postgresql+psycopg://identity@demo.postgres.database.azure.com/db?sslmode=verify-full"

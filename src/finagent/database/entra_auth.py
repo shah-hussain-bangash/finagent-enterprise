@@ -75,3 +75,23 @@ def attach_token_callback(
     callback = PostgresTokenCallback(credential)
     listen(engine, "do_connect", callback)
     return callback
+
+
+def create_azure_postgres_engine(
+    url: str,
+    credential: TokenCredential,
+    create_engine: Callable[..., Any],
+    listen: Callable[..., Any],
+) -> Any:
+    """Build an inactive-by-default Azure engine without opening a database connection.
+
+    The caller owns the credential lifecycle. No code path selects this factory yet.
+    """
+    validate_postgres_url(url)
+    engine = create_engine(url, pool_pre_ping=True, pool_size=10, max_overflow=10)
+    try:
+        attach_token_callback(engine, credential, listen)
+    except Exception:
+        engine.dispose()
+        raise
+    return engine

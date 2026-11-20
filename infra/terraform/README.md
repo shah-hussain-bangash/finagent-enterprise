@@ -88,6 +88,9 @@ need a separately reviewed configuration.
 The experimental registration helper accepts SQLAlchemy's event listener as a dependency and
 refuses registration for an invalid URL. Synthetic tests use a fake listener; no real SQLAlchemy
 engine or Azure identity has been tested through this helper yet.
+An experimental engine factory validates the URL and registers the token callback before the first
+connection. It is not used by the application or Alembic; credential selection, lifecycle,
+configuration, real-driver behavior, and failure recovery remain unverified.
 
 Before any staging deployment, design and implement the approved database identity integration,
 including a fresh token for new pooled connections, separately authorized application and
