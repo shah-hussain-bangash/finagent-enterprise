@@ -5,6 +5,7 @@ import test from "node:test";
 import React from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import ts from "typescript";
+import { loadComponent } from "./load-component.mjs";
 
 const require = createRequire(import.meta.url);
 const caseId = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa";
@@ -18,6 +19,8 @@ function loadPage(runResult) {
     "@/lib/session": { requireSession: async () => {} },
     "@/lib/api": { load: async (path) => path.endsWith("/workflows") ? runResult : { data: { case_id: caseId, status: "INVESTIGATING", alert: { subject_refs: [] }, timeline: [] }, error: null } },
   };
+  mocks["@/components/StartInvestigationForm"] = loadComponent("StartInvestigationForm", mocks);
+  mocks["@/components/ReopenCaseForm"] = loadComponent("ReopenCaseForm", mocks);
   const source = readFileSync(new URL("../app/cases/[id]/page.tsx", import.meta.url), "utf8");
   const code = ts.transpileModule(source, { compilerOptions: { module: ts.ModuleKind.CommonJS, jsx: ts.JsxEmit.ReactJSX, esModuleInterop: true } }).outputText;
   const exports = {};

@@ -53,10 +53,15 @@ export async function signOut(): Promise<never> {
 }
 
 // ------------------------------------------------------------------ cases and workflows
-export async function startInvestigation(form: FormData): Promise<never> {
+export async function startInvestigation(form: FormData): Promise<{ok: boolean; message: string}> {
   const caseId = str(form, "case_id");
-  return run(`/cases/${caseId}`, "Investigation queued.", () =>
-    api("/api/v1/workflows", { json: { case_id: caseId }, idempotencyKey: str(form, "key") || randomUUID() }));
+  try {
+    await api("/api/v1/workflows", { json: { case_id: caseId }, idempotencyKey: str(form, "key") || randomUUID() });
+    return {ok: true, message: "Investigation queued."};
+  } catch (e) {
+    if (!(e instanceof ApiRequestError)) throw e;
+    return {ok: false, message: `${e.code}: ${e.message}`};
+  }
 }
 
 export async function resumeRun(form: FormData): Promise<never> {
@@ -79,22 +84,22 @@ export async function updateCase(form: FormData): Promise<never> {
     api(`/api/v1/cases/${caseId}`, { method: "PATCH", json: body, ifMatch: Number(str(form, "record_version")) }));
 }
 
-export async function reopenCase(form: FormData): Promise<never> {
+export async function reopenCase(form: FormData): Promise<{ok: boolean; message: string}> {
   const caseId = str(form, "case_id");
   if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(caseId)) {
-    return to("/cases", "error", "Choose a valid case.");
+    return {ok: false, message: "Choose a valid case."};
   }
   const back = `/cases/${caseId}`;
   const reason = str(form, "reason");
   const versionText = str(form, "record_version");
   const version = Number(versionText);
   if (!/^[1-9]\d*$/.test(versionText) || !Number.isSafeInteger(version)) {
-    return to(back, "error", "Reload this case before reopening it.");
+    return {ok: false, message: "Reload this case before reopening it."};
   }
   if (reason.length < 3 || reason.length > 300) {
-    return to(back, "error", "Enter a reason between 3 and 300 characters.");
+    return {ok: false, message: "Enter a reason between 3 and 300 characters."};
   }
-  return run(back, "Case reopened. A new draft requires review.", async () => {
+  try {
     // Use the version the supervisor actually viewed. Never fetch a newer version
     // here to turn an outdated form into an accepted mutation.
     await api(`/api/v1/cases/${caseId}/reopen`, {
@@ -104,7 +109,11 @@ export async function reopenCase(form: FormData): Promise<never> {
     revalidatePath(`${back}/report`);
     revalidatePath(`${back}/audit`);
     revalidatePath("/cases");
-  });
+    return {ok: true, message: "Case reopened. A new draft requires review."};
+  } catch (e) {
+    if (!(e instanceof ApiRequestError)) throw e;
+    return {ok: false, message: `${e.code}: ${e.message}`};
+  }
 }
 
 export async function reassign(form: FormData): Promise<never> {
@@ -116,12 +125,17 @@ export async function reassign(form: FormData): Promise<never> {
 }
 
 // ------------------------------------------------------------------ evidence and documents
-export async function resolveConflict(form: FormData): Promise<never> {
+export async function resolveConflict(form: FormData): Promise<{ok: boolean; message: string}> {
   const caseId = str(form, "case_id");
-  return run(`/cases/${caseId}/evidence`, "Conflict resolved; both source values are kept.", () =>
-    api(`/api/v1/cases/${caseId}/evidence-conflicts/${str(form, "conflict_id")}/resolution`, {
+  try {
+    await api(`/api/v1/cases/${caseId}/evidence-conflicts/${str(form, "conflict_id")}/resolution`, {
       json: { resolution: str(form, "resolution"), rationale: str(form, "rationale") },
-    }));
+    });
+    return {ok: true, message: "Conflict resolved; both source values are kept."};
+  } catch (e) {
+    if (!(e instanceof ApiRequestError)) throw e;
+    return {ok: false, message: `${e.code}: ${e.message}`};
+  }
 }
 
 export async function freezeSnapshot(form: FormData): Promise<never> {
@@ -168,13 +182,18 @@ export async function editReport(form: FormData): Promise<never> {
     }));
 }
 
-export async function submitReport(form: FormData): Promise<never> {
+export async function submitReport(form: FormData): Promise<{ok: boolean; message: string}> {
   const caseId = str(form, "case_id");
-  return run(`/cases/${caseId}/report`, "Submitted for independent review.", () =>
-    api(`/api/v1/cases/${caseId}/reports/submit`, {
+  try {
+    await api(`/api/v1/cases/${caseId}/reports/submit`, {
       json: { version_no: Number(str(form, "version_no")) },
       idempotencyKey: str(form, "key") || randomUUID(),
-    }));
+    });
+    return {ok: true, message: "Submitted for independent review."};
+  } catch (e) {
+    if (!(e instanceof ApiRequestError)) throw e;
+    return {ok: false, message: `${e.code}: ${e.message}`};
+  }
 }
 
 export async function withdrawReport(form: FormData): Promise<never> {
@@ -183,9 +202,9 @@ export async function withdrawReport(form: FormData): Promise<never> {
     api(`/api/v1/cases/${caseId}/reports/withdraw`, { json: { reason: str(form, "reason") } }));
 }
 
-export async function decide(form: FormData): Promise<never> {
+export async function decide(form: FormData): Promise<{ok: boolean; message: string}> {
   const id = str(form, "approval_request_id");
-  return run(`/approvals/${id}`, "Decision recorded.", async () => {
+  try {
     const res = await raw(`/api/v1/approvals/${id}/decision`, {
       json: {
         decision: str(form, "decision"),
@@ -196,7 +215,11 @@ export async function decide(form: FormData): Promise<never> {
       idempotencyKey: str(form, "key") || randomUUID(),
     });
     if (!res.ok) throw new ApiRequestError(res.status, await res.json().catch(() => null));
-  });
+    return {ok: true, message: "Decision recorded."};
+  } catch (e) {
+    if (!(e instanceof ApiRequestError)) throw e;
+    return {ok: false, message: `${e.code}: ${e.message}`};
+  }
 }
 
 export async function createExport(form: FormData): Promise<never> {

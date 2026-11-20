@@ -35,7 +35,7 @@ export default async function Approvals({ searchParams }: { searchParams: Promis
           <tbody>
             {data.items.map((r) => (
               <tr key={r.approval_request_id}>
-                <td><Link href={`/approvals/${r.approval_request_id}`}>{r.approval_request_id.slice(0, 8)}</Link></td>
+                <td><a href={`/approvals/${r.approval_request_id}`}>{r.approval_request_id.slice(0, 8)}</a></td>
                 <td><Link href={`/cases/${r.case_id}`}>{r.case_id.slice(0, 8)}</Link></td>
                 <td>{r.status}</td>
                 <td>{r.reviewer_id?.slice(0, 8) ?? "Not assigned"}</td>

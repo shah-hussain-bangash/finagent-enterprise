@@ -1,4 +1,4 @@
-# Reference CI (ADR-0009). Validated as YAML only; NOT executed on GitHub from this build host.
+# CI workflow (ADR-0009). GitHub-hosted results are recorded per revision in the evidence register.
 # Image signing, SBOM attestation, Terraform plan and environment promotion need registry/cloud
 # credentials and are documented in docs/operations/deployment.md - not faked here.
 name: ci

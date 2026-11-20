@@ -1,4 +1,5 @@
 import { randomUUID } from "node:crypto";
+import { DecisionForm } from "@/components/DecisionForm";
 import Link from "next/link";
 import { decide } from "@/app/actions";
 import { FindingTag, type FindingKind } from "@/components/StatusBadge";
@@ -75,7 +76,7 @@ export default async function ApprovalDetail({ params, searchParams }: {
         </div>
       ) : null}
       {d.status === "PENDING" && d.report && d.snapshot ? (
-        <form action={decide} className="stack panel">
+        <DecisionForm action={decide} refreshHref={`/approvals/${id}`}>
           <h2>Your decision</h2>
           <input type="hidden" name="approval_request_id" value={id} />
           <input type="hidden" name="report_version_id" value={d.report_version_id} />
@@ -94,7 +95,7 @@ export default async function ApprovalDetail({ params, searchParams }: {
           <p className="muted">You cannot decide on work you submitted or authored. MFA is required.</p>
           <p><Link href="/security">Verify an enrolled authenticator before recording your decision</Link></p>
           <SubmitButton>Record decision</SubmitButton>
-        </form>
+        </DecisionForm>
       ) : null}
       {d.status === "PENDING" && (!d.report || !d.snapshot) ? <p className="warn">The decision form is unavailable until the report and evidence snapshot can be reviewed.</p> : null}
     </section>

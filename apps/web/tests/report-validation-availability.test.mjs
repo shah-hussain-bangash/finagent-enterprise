@@ -5,6 +5,7 @@ import test from "node:test";
 import React from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import ts from "typescript";
+import { loadComponent } from "./load-component.mjs";
 
 const require = createRequire(import.meta.url);
 function pageWithValidation(valid, calls = [], history = false) {
@@ -17,6 +18,7 @@ function pageWithValidation(valid, calls = [], history = false) {
     "@/lib/session": { requireSession: async () => {} },
     "@/lib/api": { load: async (path) => { calls.push(path); return path.includes("/versions/") ? { data: { version_no: 1, current_version_no: history ? 2 : 1, sections: [], claims: [], validation: { valid, problems: [{ code: "MISSING_EVIDENCE" }] } }, error: null } : { data: { report: { status: history ? "SUBMITTED" : "DRAFT", current_version_no: history ? 2 : 1 }, versions: history ? [{ version_no: 1 }] : [] }, error: null }; } },
   };
+  mocks["@/components/SubmitReportForm"] = loadComponent("SubmitReportForm", mocks);
   const source = readFileSync(new URL("../app/cases/[id]/report/page.tsx", import.meta.url), "utf8");
   const code = ts.transpileModule(source, { compilerOptions: { module: ts.ModuleKind.CommonJS, jsx: ts.JsxEmit.ReactJSX, esModuleInterop: true } }).outputText;
   const exports = {};

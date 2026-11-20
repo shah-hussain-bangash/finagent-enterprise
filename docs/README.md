@@ -2,6 +2,8 @@
 
 Read the project [README](../README.md) first, then follow the numbered folders below. The numbered collection is a portfolio reading path; existing requirements, ADRs, runbooks and generated evidence remain in their established locations and are linked where relevant.
 
+For the current documented baseline, open the [status and release evidence record](05-testing-evidence/13-CURRENT-STATUS-AND-RELEASE-EVIDENCE.md). Historical checkpoints are retained as history.
+
 | Order | Folder | Contents |
 |---|---|---|
 | 01 | [Business requirements](01-business-requirements/) | Scope, objectives, stakeholders, business capabilities and acceptance |

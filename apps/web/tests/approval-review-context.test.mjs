@@ -5,6 +5,7 @@ import test from "node:test";
 import React from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import ts from "typescript";
+import { loadComponent } from "./load-component.mjs";
 
 const require = createRequire(import.meta.url);
 function loadPage(data) {
@@ -17,6 +18,7 @@ function loadPage(data) {
     "@/lib/session": { requireSession: async () => {} },
     "@/lib/api": { load: async () => ({ data, error: null }) },
   };
+  mocks["@/components/DecisionForm"] = loadComponent("DecisionForm", mocks);
   const source = readFileSync(new URL("../app/approvals/[id]/page.tsx", import.meta.url), "utf8");
   const code = ts.transpileModule(source, { compilerOptions: { module: ts.ModuleKind.CommonJS, jsx: ts.JsxEmit.ReactJSX, esModuleInterop: true } }).outputText;
   const exports = {};

@@ -14,6 +14,8 @@ FinAgent is an enterprise AI engineering portfolio project exploring how analyst
 
 > This is not a deployed bank product, a regulatory certification, or an autonomous system for deciding guilt. Local evidence and passing tests apply to the tested version and environment. Live-provider verification, independent assessment, and production acceptance remain open.
 
+**Start here:** [Synthetic investigation walkthrough](docs/workspace-demo-walkthrough.md) · [Architecture-to-code map](docs/02-system-architecture/06-ARCHITECTURE-TO-CODE-MAP.md) · [Current status and release evidence](docs/05-testing-evidence/13-CURRENT-STATUS-AND-RELEASE-EVIDENCE.md) · [Recorded main-branch CI](https://github.com/zenithdevelopers7-source/finagent-enterprise/actions/runs/44532646751)
+
 ## Business problem
 
 An investigation can require analysts to reconcile an alert with customer information, transactions, document versions, policy and prior decisions. Missing information, stale records, inconsistent sources, and unclear AI claims can make review slower and harder to explain. A useful system must help the analyst find and assess evidence while preserving access boundaries, source context and human accountability.
@@ -103,7 +105,7 @@ The [engineering handbook](docs/06-engineering-devops/05-ENGINEERING-HANDBOOK.md
 
 ## Verification and evidence
 
-On **19 November 2026**, GitHub Actions run [#13](https://github.com/zenithdevelopers7-source/finagent-enterprise/actions/runs/44524434535) for commit [`eb302fc`](https://github.com/zenithdevelopers7-source/finagent-enterprise/commit/eb302fc18ff48d5d7729a2361aba512ba974d751) reported success for all five jobs. The release-blocker selection reported 343 passed and 392 deselected; the full-suite invocation reported 724 passed and 11 deselected. The mutation check caught 82 of its 82 defined mutations. Deselected tests were not run in those invocations. This is evidence for that commit and synthetic CI environment; later changes require their own verification.
+On **19 November 2026**, GitHub Actions run [#16](https://github.com/zenithdevelopers7-source/finagent-enterprise/actions/runs/44532646751) for main-branch commit [`a09dd9f`](https://github.com/zenithdevelopers7-source/finagent-enterprise/commit/a09dd9f144eea0612b3268ec50ef2b68c160c456) reported success for all five jobs. The release-blocker selection reported 343 passed and 392 deselected; the full-suite invocation reported 724 passed and 11 deselected. The mutation check caught 82 of its 82 defined mutations. Deselected tests were not run in those invocations. This is evidence for that commit and synthetic CI environment; later changes require their own verification.
 
 | CI job | What that run checked | Scope limit |
 |---|---|---|

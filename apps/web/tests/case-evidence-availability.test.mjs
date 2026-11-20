@@ -5,6 +5,7 @@ import test from "node:test";
 import React from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import ts from "typescript";
+import { loadComponent } from "./load-component.mjs";
 
 const require = createRequire(import.meta.url);
 function loadPage(evidence, snapshots) {
@@ -15,6 +16,7 @@ function loadPage(evidence, snapshots) {
     "@/lib/session": { requireSession: async () => {} },
     "@/lib/api": { load: async (path) => path.endsWith("/snapshots") ? snapshots : evidence },
   };
+  mocks["@/components/ResolveConflictForm"] = loadComponent("ResolveConflictForm", mocks);
   const source = readFileSync(new URL("../app/cases/[id]/evidence/page.tsx", import.meta.url), "utf8");
   const code = ts.transpileModule(source, { compilerOptions: { module: ts.ModuleKind.CommonJS, jsx: ts.JsxEmit.ReactJSX, esModuleInterop: true } }).outputText;
   const exports = {};

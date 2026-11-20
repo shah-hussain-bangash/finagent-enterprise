@@ -14,6 +14,7 @@ import os
 import shutil
 import socket
 import subprocess
+import tempfile
 import threading
 import time
 from collections.abc import Iterator
@@ -65,15 +66,18 @@ def stack(make_settings, make_worker, bank) -> Iterator[dict[str, Any]]:  # type
     env = {
         **os.environ,
         "FINAGENT_API_URL": f"http://127.0.0.1:{api_port}",
+        "FINAGENT_ENVIRONMENT": "test",
+        "FINAGENT_WEB_AUTH_MODE": "local",
         "FINAGENT_WEB_SESSION_SECRET": "browser-test-only-session-secret-0123456789",
         "NEXT_TELEMETRY_DISABLED": "1",
     }
+    web_log = tempfile.TemporaryFile(mode="w+t", encoding="utf-8")  # noqa: SIM115 - fixture lifetime
     web = subprocess.Popen(  # noqa: S603 - fixed argv
         [npx, "next", "start", "-p", str(web_port), "-H", "127.0.0.1"],
         cwd=WEB_DIR,
         env=env,
-        stdout=subprocess.DEVNULL,
-        stderr=subprocess.DEVNULL,
+        stdout=web_log,
+        stderr=web_log,
     )
     worker = make_worker(bank_base_url=bank.url)
     stop = threading.Event()
@@ -91,11 +95,14 @@ def stack(make_settings, make_worker, bank) -> Iterator[dict[str, Any]]:  # type
             "web": f"http://127.0.0.1:{web_port}",
             "api": f"http://127.0.0.1:{api_port}",
             "settings": settings,
+            "web_log": web_log,
         }
     finally:
         stop.set()
         web.terminate()
         server.should_exit = True
+        web.wait(timeout=10)
+        web_log.close()
 
 
 def sign_in(page: Any, web: str, who: str, *, mfa: str = "yes") -> None:
@@ -107,11 +114,16 @@ def sign_in(page: Any, web: str, who: str, *, mfa: str = "yes") -> None:
 
 
 def wait_text(page: Any, url: str, text: str, timeout: float = 120) -> None:
+    from playwright.sync_api import TimeoutError as PlaywrightTimeoutError
+
     deadline = time.monotonic() + timeout
     while time.monotonic() < deadline:
         page.goto(url)
-        if text in page.locator("main").inner_text():
+        try:
+            page.locator("main").get_by_text(text, exact=False).first.wait_for(timeout=5_000)
             return
+        except PlaywrightTimeoutError:
+            pass
         time.sleep(1.5)
     raise AssertionError(f"'{text}' not shown at {url}")
 
@@ -129,6 +141,7 @@ def wait_text(page: Any, url: str, text: str, timeout: float = 120) -> None:
     "FR-006",
 )
 def test_analyst_and_reviewer_complete_a_case_in_the_browser(stack, client, token) -> None:  # type: ignore[no-untyped-def]
+    from playwright.sync_api import TimeoutError as PlaywrightTimeoutError
     from playwright.sync_api import sync_playwright
 
     web = stack["web"]
@@ -139,18 +152,101 @@ def test_analyst_and_reviewer_complete_a_case_in_the_browser(stack, client, toke
         context = browser.new_context()
         page = context.new_page()
         page.goto(f"{web}/cases")
-        assert "/signin" in page.url  # no session: redirected, never shown data
+        page.wait_for_url("**/signin?expired=1", timeout=30_000)
+        assert "/signin" in page.url  # no session: redirected to sign-in
         sign_in(page, web, analyst)
         assert page.locator("html").get_attribute("lang") == "en"
         page.goto(f"{web}/cases")
         page.get_by_role("link", name=case_id[:8]).click()
         assert "Assigned" in page.locator("main").inner_text()
+        action_events: list[str] = []
+        page.on(
+            "response",
+            lambda response: (
+                action_events.append(
+                    f"POST response: {response.status}; "
+                    f"action redirect present: {'x-action-redirect' in response.headers}; "
+                    f"content type: {response.headers.get('content-type', 'missing')}"
+                )
+                if response.request.method == "POST" and f"/cases/{case_id}" in response.url
+                else None
+            ),
+        )
+        page.on("pageerror", lambda error: action_events.append(f"Browser error: {str(error)[:300]}"))
+        page.on(
+            "console",
+            lambda message: (
+                action_events.append(f"Console error: {message.text[:300]}")
+                if message.type == "error"
+                else None
+            ),
+        )
+        page.on(
+            "response",
+            lambda response: (
+                action_events.append(f"Case GET: {response.status}; url: {response.url}")
+                if response.request.method == "GET" and f"/cases/{case_id}" in response.url
+                else None
+            ),
+        )
+        page.on(
+            "requestfailed",
+            lambda request: (
+                action_events.append(f"POST request failed: {request.failure}")
+                if request.method == "POST" and f"/cases/{case_id}" in request.url
+                else None
+            ),
+        )
+        page.on(
+            "requestfinished",
+            lambda request: (
+                action_events.append("POST finished")
+                if request.method == "POST" and f"/cases/{case_id}" in request.url
+                else None
+            ),
+        )
+        action_responses: list[Any] = []
+        page.on(
+            "response",
+            lambda response: (
+                action_responses.append(response)
+                if response.request.method == "POST" and f"/cases/{case_id}" in response.url
+                else None
+            ),
+        )
         page.get_by_role("button", name="Start investigation").click()
         # the confirmation comes from the server after the API accepted the command (never optimistic)
-        page.get_by_text("Investigation queued.").first.wait_for(timeout=30_000)
+        try:
+            page.get_by_text("Investigation queued.").first.wait_for(timeout=30_000)
+        except PlaywrightTimeoutError as exc:
+            main_text = page.locator("main").inner_text(timeout=5_000)
+            workflow_response = client.get(f"/api/v1/cases/{case_id}/workflows", headers=token(analyst))
+            case_response = client.get(f"/api/v1/cases/{case_id}", headers=token(analyst))
+            stack["web_log"].seek(0)
+            web_output = stack["web_log"].read().lower()
+            redirect_error = "failed to get redirect response" in web_output
+            response_summary = "no response"
+            if action_responses:
+                try:
+                    response_body = action_responses[-1].body()
+                    response_summary = (
+                        f"{len(response_body)} bytes; render error marker: "
+                        f"{b'$RX' in response_body or b'NEXT_ERROR' in response_body}"
+                    )
+                except Exception as body_error:
+                    response_summary = f"body unavailable: {type(body_error).__name__}"
+            raise AssertionError(
+                f"Investigation confirmation missing; page: {page.url}; "
+                f"action events: {action_events}; workflows HTTP: {workflow_response.status_code}; "
+                f"workflow data: {workflow_response.text}; case data: {case_response.text}; "
+                f"redirect fetch error logged: {redirect_error}; "
+                f"response: {response_summary}; "
+                f"main: {main_text}"
+            ) from exc
         wait_text(page, f"{web}/cases/{case_id}", "WAITING_REVIEW")
         page.goto(f"{web}/cases/{case_id}/evidence")
-        assert "date_of_birth" in page.locator("main").inner_text()  # contradiction shown with both values
+        page.locator("main").get_by_text("date_of_birth", exact=False).first.wait_for(timeout=30_000)
+        page.get_by_label("Resolution", exact=True).select_option("USE_A")
         page.get_by_label("Reason (recorded; neither source is deleted)").fill(
             "core banking DOB verified at onboarding"
         )
@@ -161,17 +257,31 @@ def test_analyst_and_reviewer_complete_a_case_in_the_browser(stack, client, toke
         page.get_by_role("button", name="Re-run evidence and analysis").click()
         wait_text(page, f"{web}/cases/{case_id}/report", "version 2 of 2")
         page.goto(f"{web}/cases/{case_id}/agents")
+        page.get_by_text("Deterministic result", exact=False).first.wait_for(timeout=30_000)
         findings = page.locator("main").inner_text()
         assert "Deterministic result" in findings and "AI interpretation" in findings  # labelled in text
         page.goto(f"{web}/cases/{case_id}/report")
         page.get_by_role("button", name="Submit version 2 for independent review").click()
-        page.get_by_text("Submitted for independent review.").first.wait_for(timeout=30_000)
+        try:
+            page.get_by_text("Submitted for independent review.").first.wait_for(timeout=30_000)
+        except PlaywrightTimeoutError as exc:
+            case = client.get(f"/api/v1/cases/{case_id}", headers=token(analyst))
+            report = client.get(f"/api/v1/cases/{case_id}/reports", headers=token(analyst))
+            report_status = report.status_code
+            if report.status_code == 200:
+                report_status = report.json().get("report", {}).get("status")
+            raise AssertionError(
+                f"Review submission confirmation missing; page: {page.url}; "
+                f"main: {page.locator('main').inner_text()}; "
+                f"case status: {case.json().get('status') if case.status_code == 200 else case.status_code}; "
+                f"report status: {report_status}"
+            ) from exc
         page.get_by_role("button", name="Sign out").click()
         sign_in(page, web, "a.reviewer1@synthetic")
         page.goto(f"{web}/approvals")
         page.locator("table a").first.click()
         page.wait_for_url("**/approvals/*")
-        assert "frozen for this review" in page.locator("main").inner_text()
+        page.get_by_text("frozen for this review", exact=False).first.wait_for(timeout=30_000)
         page.get_by_label("Approve").check()
         page.get_by_label("Rationale (required, recorded with your identity and the reviewed versions)").fill(
             "Evidence, calculations and policy citations reviewed."
@@ -194,17 +304,18 @@ def test_analyst_and_reviewer_complete_a_case_in_the_browser(stack, client, toke
         page.get_by_role("button", name="Sign out").click()
         sign_in(page, web, analyst)
         page.goto(case_url)
+        page.get_by_label("Case status: Completed").wait_for(timeout=30_000)
         assert page.get_by_role("form", name="Reopen completed case", exact=True).count() == 0
         page.get_by_role("button", name="Sign out").click()
         sign_in(page, web, supervisor, mfa="no")
         page.goto(case_url)
-        assert page.get_by_role("link", name="Sign in with MFA", exact=True).count() == 1
+        page.get_by_role("link", name="Sign in with MFA", exact=True).wait_for(timeout=30_000)
         assert page.get_by_role("form", name="Reopen completed case", exact=True).count() == 0
         page.get_by_role("button", name="Sign out").click()
         sign_in(page, web, supervisor)
         page.goto(case_url)
         form = page.get_by_role("form", name="Reopen completed case", exact=True)
-        assert form.count() == 1
+        form.wait_for(timeout=30_000)
         # Required input prevents empty submission; whitespace is rejected server-side too.
         form.get_by_role("button", name="Reopen case", exact=True).click()
         assert page.get_by_label("Reason for reopening").evaluate("e => e.validity.valueMissing")
