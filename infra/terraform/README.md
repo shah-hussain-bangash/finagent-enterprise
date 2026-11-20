@@ -78,6 +78,11 @@ from a database URL; they do not implement acquisition and refresh of an Entra d
 The migrator secret mount in the Helm reference does not solve token renewal. Consequently this
 Terraform configuration and the current application cannot be assumed to connect successfully.
 
+An experimental `PostgresTokenCallback` requests a token for each new connection using an
+injected credential and has synthetic unit coverage. It is **not attached to either engine**,
+does not choose or configure an Azure identity, and has not been tested with PostgreSQL or Azure.
+It does not resolve this deployment blocker.
+
 Before any staging deployment, design and implement the approved database identity integration,
 including a fresh token for new pooled connections, separately authorized application and
 migration identities, database role provisioning, TLS verification, and token-expiry recovery.
