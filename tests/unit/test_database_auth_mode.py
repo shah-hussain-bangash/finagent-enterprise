@@ -72,6 +72,52 @@ class DatabaseAuthModeTests(unittest.TestCase):
             with self.assertRaises(ValueError):
                 get_engine("postgresql+psycopg://localhost/db", "azure_workload_identity")
 
+    def test_engine_setup_failure_closes_credential(self):
+        azure = types.ModuleType("azure")
+        azure.__path__ = []
+        identity = types.ModuleType("azure.identity")
+        closed = []
+
+        class Credential:
+            def close(self):
+                closed.append(True)
+
+        identity.WorkloadIdentityCredential = Credential
+        url = "postgresql+psycopg://identity@demo.postgres.database.azure.com/db?sslmode=verify-full"
+        with (
+            patch.dict(sys.modules, {"azure": azure, "azure.identity": identity}),
+            patch("finagent.database.entra_auth.create_azure_postgres_engine", side_effect=RuntimeError("setup failed")),
+            self.assertRaisesRegex(RuntimeError, "setup failed"),
+        ):
+            get_engine(url, "azure_workload_identity")
+        self.assertEqual(closed, [True])
+
+    def test_failed_token_acquisition_never_reaches_driver(self):
+        azure = types.ModuleType("azure")
+        azure.__path__ = []
+        identity = types.ModuleType("azure.identity")
+
+        class Credential:
+            def get_token(self, scope):
+                raise RuntimeError("sensitive-credential-detail")
+
+            def close(self):
+                pass
+
+        identity.WorkloadIdentityCredential = Credential
+        url = "postgresql+psycopg://identity@demo.postgres.database.azure.com/db?sslmode=verify-full"
+        with patch.dict(sys.modules, {"azure": azure, "azure.identity": identity}):
+            engine = get_engine(url, "azure_workload_identity")
+        reached_driver = []
+        event.listen(engine, "do_connect", lambda *args: reached_driver.append(True))
+        try:
+            with self.assertRaisesRegex(RuntimeError, "Could not obtain a PostgreSQL access token") as error:
+                engine.connect()
+        finally:
+            engine.dispose()
+        self.assertNotIn("sensitive-credential-detail", str(error.exception))
+        self.assertEqual(reached_driver, [])
+
 
 if __name__ == "__main__":
     unittest.main()
