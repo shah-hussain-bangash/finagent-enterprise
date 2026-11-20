@@ -28,11 +28,13 @@ attempt, address and test these blockers against the selected environment:
   CSI driver's [sync documentation](https://secrets-store-csi-driver.sigs.k8s.io/topics/sync-as-kubernetes-secret)
   states that syncing requires a pod mounting the volume.
 - Service accounts, workload identity bindings, required private endpoints and approved
-  configuration must be supplied and verified separately, including a web workload identity.
-  The Terraform reference currently defines api, worker and migrator identities, not web.
-  Separate mounts do not restrict what an Azure identity can retrieve from Key Vault: the existing
-  Terraform Key Vault role assignments are vault-scoped and need an approved secret-level access
-  design. Rendering does not establish that the CSI secret references or identities work.
+  configuration must be supplied and verified separately. The Terraform reference defines
+  separate api, worker, web and migrator identities, and creates no Key Vault secret-reader
+  assignments by default. Operators must explicitly configure approved secret names for each
+  identity and reconcile them with the chart's CSI values. Separate mounts alone do not restrict
+  what an Azure identity can retrieve: inherited roles and other assignments also need review.
+  The example is documented in the [Terraform reference](../terraform/README.md). Rendering
+  does not establish that the CSI secret references or identities work.
 - The optional Ingress is disabled by default. Enabling it requires an explicit controller class,
   hostname, TLS secret and allowed ingress peers. TLS termination, HTTP-to-HTTPS enforcement and
   certificate management depend on the selected controller and must be verified in the cluster.

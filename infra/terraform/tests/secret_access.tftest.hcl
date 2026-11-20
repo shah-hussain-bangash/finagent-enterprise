@@ -61,3 +61,22 @@ run "reject_case_duplicate_names" {
   }
   expect_failures = [var.key_vault_secret_access]
 }
+
+run "reject_invalid_secret_name" {
+  command = plan
+  variables {
+    key_vault_secret_access = { api = ["not/a-secret-name"] }
+  }
+  expect_failures = [var.key_vault_secret_access]
+}
+
+run "normalize_secret_name_case" {
+  command = plan
+  variables {
+    key_vault_secret_access = { web = ["Web-Session"] }
+  }
+  assert {
+    condition     = endswith(azurerm_role_assignment.kv_secrets["web/web-session"].scope, "/secrets/web-session")
+    error_message = "Secret names must be normalized consistently in keys and scopes."
+  }
+}
