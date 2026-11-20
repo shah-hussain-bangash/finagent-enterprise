@@ -86,8 +86,9 @@ An accompanying experimental URL validator requires verified TLS and a public-Az
 hostname. It is not yet enforced by the application; private DNS aliases and other Azure clouds
 need a separately reviewed configuration.
 The experimental registration helper accepts SQLAlchemy's event listener as a dependency and
-refuses registration for an invalid URL. Synthetic tests use a fake listener; no real SQLAlchemy
-engine or Azure identity has been tested through this helper yet.
+refuses registration for an invalid URL. A synthetic test exercises the real SQLAlchemy event
+dispatcher with a SQLite dialect and aborts before connecting. PostgreSQL driver behavior and
+Azure identity have not been tested through this helper.
 An experimental engine factory validates the URL and registers the token callback before the first
 connection. It is not used by the application or Alembic; credential selection, lifecycle,
 configuration, real-driver behavior, and failure recovery remain unverified.

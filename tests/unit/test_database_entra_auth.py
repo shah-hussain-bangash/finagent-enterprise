@@ -3,6 +3,12 @@
 import unittest
 from types import SimpleNamespace
 
+try:
+    from sqlalchemy import create_engine, event
+    from sqlalchemy.engine import make_url
+except ImportError:
+    create_engine = event = make_url = None
+
 from finagent.database.entra_auth import (
     POSTGRES_SCOPE,
     PostgresTokenCallback,
@@ -13,6 +19,36 @@ from finagent.database.entra_auth import (
 
 
 class DatabaseTokenTests(unittest.TestCase):
+    @unittest.skipUnless(create_engine is not None, "SQLAlchemy not installed")
+    def test_real_sqlalchemy_connection_event_requests_tokens(self):
+        # Use SQLite's dialect only to exercise the real event dispatcher. Abort before
+        # DBAPI connect, so no database or Azure service is contacted.
+        engine = create_engine("sqlite://")
+        engine.url = make_url("postgresql+psycopg://identity@demo.postgres.database.azure.com/db?sslmode=verify-full")
+        calls = []
+
+        class Credential:
+            def get_token(self, scope):
+                calls.append(scope)
+                return SimpleNamespace(token=f"synthetic-{len(calls)}")
+
+        observed = []
+        attach_token_callback(engine, Credential(), event.listen)
+
+        def capture_and_abort(dialect, record, args, params):
+            observed.append(params["password"])
+            raise RuntimeError("synthetic stop before connection")
+
+        event.listen(engine, "do_connect", capture_and_abort)
+        try:
+            for _ in range(2):
+                with self.assertRaisesRegex(RuntimeError, "synthetic stop"):
+                    engine.connect()
+        finally:
+            engine.dispose()
+        self.assertEqual(calls, [POSTGRES_SCOPE, POSTGRES_SCOPE])
+        self.assertEqual(observed, ["synthetic-1", "synthetic-2"])
+
     def test_engine_factory_validates_before_creation_and_attaches_callback(self):
         url = "postgresql+psycopg://identity@demo.postgres.database.azure.com/db?sslmode=verify-full"
         engine = SimpleNamespace(url=SimpleNamespace(render_as_string=lambda **kw: url))
