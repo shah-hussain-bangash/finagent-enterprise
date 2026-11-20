@@ -80,6 +80,11 @@ def main() -> None:
     assert job["spec"]["template"]["metadata"]["labels"]["app.kubernetes.io/part-of"] == "finagent"
     deployments = [d for d in documents if d["kind"] == "Deployment"]
     assert len(deployments) == 3
+    budgets = {d["metadata"]["name"]: d["spec"] for d in documents if d["kind"] == "PodDisruptionBudget"}
+    assert set(budgets) == {"finagent-api", "finagent-worker", "finagent-web"}
+    for name, budget in budgets.items():
+        assert budget["minAvailable"] == 1
+        assert budget["selector"]["matchLabels"] == {"app": name, "app.kubernetes.io/part-of": "finagent"}
     assert all(
         d["spec"]["template"]["metadata"]["labels"]["app.kubernetes.io/part-of"] == "finagent"
         for d in deployments

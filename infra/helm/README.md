@@ -7,7 +7,7 @@ placeholders. No chart was installed. Migration credentials and network-policy r
 checked with synthetic values by `verify_render.py`.
 
 The reference chart describes api, worker and web workloads, a migration job, Key Vault secrets,
-non-root containers, default-deny networking and a worker PodDisruptionBudget. Before any staging
+non-root containers, default-deny networking and workload PodDisruptionBudgets. Before any staging
 attempt, address and test these blockers against the selected environment:
 
 - The API image definition installs the Azure adapter dependencies and checks that they import
@@ -22,6 +22,10 @@ attempt, address and test these blockers against the selected environment:
   because the default parser and model timeouts can each be 60 seconds; this is not a guarantee
   that every operation completes before shutdown. Choose settings using the actual configured
   timeouts and validate forced termination, lease recovery and duplicate handling in the cluster.
+- The API, worker and web each have a PodDisruptionBudget requiring one available pod during
+  voluntary evictions. A single-replica deployment can therefore block a node drain; plan
+  maintenance and capacity accordingly. Budgets do not prevent involuntary outages or guarantee
+  availability, and their behavior has not been tested on a cluster.
 
 - Default deny now selects only pods labelled as part of FinAgent. The chart explicitly permits
   web-to-api traffic; web ingress and all other egress remain denied unless the operator supplies

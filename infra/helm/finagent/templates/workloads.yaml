@@ -221,8 +221,10 @@ spec:
   egress: []
 {{- end }}
 {{- end }}
+{{- range $name := list "api" "worker" "web" }}
 ---
 apiVersion: policy/v1
 kind: PodDisruptionBudget
-metadata: {name: finagent-worker}
-spec: {minAvailable: 1, selector: {matchLabels: {app: finagent-worker}}}
+metadata: {name: finagent-{{ $name }}}
+spec: {minAvailable: 1, selector: {matchLabels: {app: finagent-{{ $name }}, app.kubernetes.io/part-of: finagent}}}
+{{- end }}
