@@ -10,6 +10,10 @@ The reference chart describes api, worker and web workloads, a migration job, Ke
 non-root containers, default-deny networking and a worker PodDisruptionBudget. Before any staging
 attempt, address and test these blockers against the selected environment:
 
+- The API image definition installs the Azure adapter dependencies and checks that they import
+  during image build. The updated image has not been built or tested against Azure in this local
+  validation. Build and scan the actual release image and test its configured adapters before use.
+
 - Default deny now selects only pods labelled as part of FinAgent. The chart explicitly permits
   web-to-api traffic; web ingress and all other egress remain denied unless the operator supplies
   reviewed `networkPolicy.webIngressPeers` and per-workload `networkPolicy.egress` rules. Each
