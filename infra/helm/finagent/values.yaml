@@ -9,6 +9,11 @@ environment: staging          # local|test are refused by the application outsid
 workloadIdentity:
   clientIdApi: REPLACE_WITH_USER_ASSIGNED_IDENTITY_CLIENT_ID
   clientIdWorker: REPLACE_WITH_USER_ASSIGNED_IDENTITY_CLIENT_ID
+  clientIdMigrator: REPLACE_WITH_MIGRATOR_IDENTITY_CLIENT_ID
+
+migration:
+  secretProviderClassName: finagent-migrator-kv
+  databaseUrlSecretName: REPLACE_WITH_MIGRATION_DATABASE_URL_SECRET
 
 secretProviderClass:
   name: finagent-kv
