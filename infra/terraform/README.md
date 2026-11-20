@@ -82,6 +82,9 @@ An experimental `PostgresTokenCallback` requests a token for each new connection
 injected credential and has synthetic unit coverage. It is **not attached to either engine**,
 does not choose or configure an Azure identity, and has not been tested with PostgreSQL or Azure.
 It does not resolve this deployment blocker.
+An accompanying experimental URL validator requires verified TLS and a public-Azure PostgreSQL
+hostname. It is not yet enforced by the application; private DNS aliases and other Azure clouds
+need a separately reviewed configuration.
 
 Before any staging deployment, design and implement the approved database identity integration,
 including a fresh token for new pooled connections, separately authorized application and

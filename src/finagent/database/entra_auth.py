@@ -6,8 +6,39 @@ This component is not wired into an engine or enabled in any deployment.
 from __future__ import annotations
 
 from typing import Any, Protocol
+from urllib.parse import parse_qsl, urlsplit
 
 POSTGRES_SCOPE = "https://ossrdbms-aad.database.windows.net/.default"
+
+
+def validate_postgres_url(url: str) -> None:
+    """Reject unsafe public-Azure connection URLs before selecting token authentication.
+
+    This experimental policy covers Azure public-cloud DNS only; private DNS aliases and
+    sovereign clouds need a separately reviewed identity and hostname-verification design.
+    """
+    try:
+        parsed = urlsplit(url)
+        hostname = parsed.hostname
+        _ = parsed.port  # Reject malformed ports.
+        query = parse_qsl(parsed.query, keep_blank_values=True, strict_parsing=True)
+        keys = [key.lower() for key, _ in query]
+        valid = (
+            parsed.scheme == "postgresql+psycopg"
+            and bool(parsed.username)
+            and parsed.password is None
+            and bool(hostname)
+            and hostname.endswith(".postgres.database.azure.com")
+            and hostname != ".postgres.database.azure.com"
+            and bool(parsed.path.strip("/"))
+            and not parsed.fragment
+            and keys == ["sslmode"]
+            and query[0][1] == "verify-full"
+        )
+    except ValueError:
+        valid = False
+    if not valid:
+        raise ValueError("Invalid Azure PostgreSQL URL for token authentication")
 
 
 class TokenCredential(Protocol):

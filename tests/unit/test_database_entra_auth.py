@@ -3,10 +3,22 @@
 import unittest
 from types import SimpleNamespace
 
-from finagent.database.entra_auth import POSTGRES_SCOPE, PostgresTokenCallback
+from finagent.database.entra_auth import POSTGRES_SCOPE, PostgresTokenCallback, validate_postgres_url
 
 
 class DatabaseTokenTests(unittest.TestCase):
+    def test_validate_azure_url_rejects_credential_and_tls_downgrades(self):
+        validate_postgres_url("postgresql+psycopg://identity@demo.postgres.database.azure.com/db?sslmode=verify-full")
+        for url in (
+            "postgresql+psycopg://identity:secret@demo.postgres.database.azure.com/db?sslmode=verify-full",
+            "postgresql+psycopg://identity@demo.postgres.database.azure.com/db?sslmode=require",
+            "postgresql+psycopg://identity@demo.postgres.database.azure.com/db?sslmode=verify-full&host=evil.test",
+            "postgresql+psycopg://identity@evil.test/db?sslmode=verify-full",
+            "postgresql+psycopg://identity@demo.postgres.database.azure.com/db?sslmode=verify-full&sslmode=disable",
+        ):
+            with self.subTest(url=url), self.assertRaisesRegex(ValueError, "Invalid Azure"):
+                validate_postgres_url(url)
+
     def test_new_connections_request_tokens_independently(self):
         class Credential:
             def __init__(self):
