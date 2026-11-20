@@ -1,7 +1,12 @@
 # Terraform (Azure reference)
 
-**Status: NOT APPLIED, NOT VALIDATED.** The build host had no `terraform` binary and no cloud
-authorization was given; nothing was deployed and no cloud cost was incurred.
+**Status: LOCALLY VALIDATED; NOT PLANNED OR APPLIED.** On 20 November 2026, Terraform 1.11.4
+formatting and `terraform validate` passed in an isolated copy after `terraform init -backend=false`
+installed the signed AzureRM 4.81.0 provider. The deprecated Key Vault RBAC argument was updated,
+and validation passed again without warnings. The provider selection is recorded in
+`.terraform.lock.hcl` for repeatability. This checks configuration syntax and provider schemas;
+it does not verify credentials, Azure capabilities, connectivity, costs, a plan, or deployment.
+No cloud resources were created and no cloud cost was incurred.
 
 What it defines (PROPOSED values, see `variables.tf`): resource group, Log Analytics, Key Vault
 (RBAC, purge protection, private), PostgreSQL 16 Flexible Server (Entra auth only, private, zone

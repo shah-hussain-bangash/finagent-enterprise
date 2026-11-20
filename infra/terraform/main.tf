@@ -1,12 +1,12 @@
-# FinAgent Enterprise - Azure reference infrastructure (prompt §33). NOT APPLIED and NOT VALIDATED
-# on the build host (no terraform binary; no cloud authorization). Region, SKUs, retention and
-# network design are OPEN decisions (SEC-D06, NFR-D01..D09) - values below are PROPOSED.
+# FinAgent Enterprise - Azure reference infrastructure (prompt §33). Locally schema-validated;
+# NOT PLANNED or APPLIED. Region, SKUs, retention and network design remain OPEN decisions
+# (SEC-D06, NFR-D01..D09) - values below are PROPOSED.
 terraform {
   required_version = ">= 1.7"
   required_providers {
     azurerm = { source = "hashicorp/azurerm", version = "~> 4.10" }
   }
-  backend "azurerm" {}   # state storage configured per environment (never local state for shared envs)
+  backend "azurerm" {} # state storage configured per environment (never local state for shared envs)
 }
 
 provider "azurerm" {
@@ -41,7 +41,7 @@ resource "azurerm_key_vault" "kv" {
   resource_group_name           = azurerm_resource_group.rg.name
   tenant_id                     = var.tenant_id
   sku_name                      = "premium"
-  enable_rbac_authorization     = true
+  rbac_authorization_enabled    = true
   purge_protection_enabled      = true
   soft_delete_retention_days    = 90
   public_network_access_enabled = false
@@ -62,7 +62,7 @@ resource "azurerm_postgresql_flexible_server" "pg" {
   private_dns_zone_id           = var.postgres_private_dns_zone_id
   zone                          = "1"
   authentication {
-    active_directory_auth_enabled = true    # app connects with a managed identity (ADR-0014)
+    active_directory_auth_enabled = true # app connects with a managed identity (ADR-0014)
     password_auth_enabled         = false
     tenant_id                     = var.tenant_id
   }
@@ -78,7 +78,7 @@ resource "azurerm_storage_account" "blobs" {
   account_replication_type        = "ZRS"
   min_tls_version                 = "TLS1_2"
   allow_nested_items_to_be_public = false
-  shared_access_key_enabled       = false   # managed identity only
+  shared_access_key_enabled       = false # managed identity only
   public_network_access_enabled   = false
   blob_properties {
     versioning_enabled = true
@@ -108,7 +108,7 @@ resource "azurerm_servicebus_queue" "events" {
   name                                    = "finagent-events"
   namespace_id                            = azurerm_servicebus_namespace.bus.id
   lock_duration                           = "PT1M"
-  max_delivery_count                      = 5        # consumer_max_deliveries (PROPOSED)
+  max_delivery_count                      = 5 # consumer_max_deliveries (PROPOSED)
   requires_duplicate_detection            = true
   duplicate_detection_history_time_window = "PT1H"
   dead_lettering_on_message_expiration    = true
@@ -120,7 +120,7 @@ resource "azurerm_search_service" "search" {
   location                      = azurerm_resource_group.rg.location
   sku                           = "standard"
   public_network_access_enabled = false
-  local_authentication_enabled  = true   # API key held in Key Vault; switch to RBAC when approved
+  local_authentication_enabled  = true # API key held in Key Vault; switch to RBAC when approved
   tags                          = local.tags
 }
 

@@ -12,11 +12,11 @@ variable "location" {
 variable "tenant_id" { type = string }
 variable "postgres_sku" {
   type    = string
-  default = "GP_Standard_D2ds_v5"   # PROPOSED
+  default = "GP_Standard_D2ds_v5" # PROPOSED
 }
 variable "postgres_backup_days" {
   type    = number
-  default = 35                      # PROPOSED; RPO/RTO are OPEN (SEC-D09)
+  default = 35 # PROPOSED; RPO/RTO are OPEN (SEC-D09)
 }
 variable "geo_redundant_backup" {
   type    = bool
@@ -26,5 +26,5 @@ variable "postgres_subnet_id" { type = string }
 variable "postgres_private_dns_zone_id" { type = string }
 variable "log_retention_days" {
   type    = number
-  default = 90                      # PROPOSED; retention schedule is OPEN (SEC-D05)
+  default = 90 # PROPOSED; retention schedule is OPEN (SEC-D05)
 }
