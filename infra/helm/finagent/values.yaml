@@ -59,6 +59,16 @@ web:
   replicas: 2
   resources: {requests: {cpu: 100m, memory: 256Mi}, limits: {cpu: 500m, memory: 512Mi}}
 
+# No external traffic is permitted until an operator supplies reviewed Kubernetes
+# NetworkPolicy peers and egress rules for the actual staging environment.
+networkPolicy:
+  webIngressPeers: []
+  egress:
+    api: []
+    worker: []
+    web: []
+    migrator: []
+
 ingress:
   enabled: true
   className: azure-application-gateway

@@ -62,7 +62,7 @@ metadata:
 spec:
   backoffLimit: 0
   template:
-    metadata: {labels: {app: finagent-migrate, azure.workload.identity/use: "true"}}
+    metadata: {labels: {app: finagent-migrator, app.kubernetes.io/part-of: finagent, azure.workload.identity/use: "true"}}
     spec:
       restartPolicy: Never
       serviceAccountName: finagent-migrator   # schema owner identity (ADR-0014); app pods never run DDL
@@ -92,7 +92,7 @@ spec:
   replicas: {{ $spec.replicas }}
   selector: {matchLabels: {app: finagent-{{ $name }}}}
   template:
-    metadata: {labels: {app: finagent-{{ $name }}, azure.workload.identity/use: "true"}}
+    metadata: {labels: {app: finagent-{{ $name }}, app.kubernetes.io/part-of: finagent, azure.workload.identity/use: "true"}}
     spec:
       serviceAccountName: finagent-{{ $name }}
       automountServiceAccountToken: {{ if eq $name "web" }}false{{ else }}true{{ end }}
@@ -129,20 +129,75 @@ kind: Service
 metadata: {name: finagent-web}
 spec: {selector: {app: finagent-web}, ports: [{port: 80, targetPort: 3000}]}
 ---
-# Default deny; only web -> api, ingress -> web, and egress the platform needs (DNS + Azure PaaS via
-# private endpoints). Agents/tools have no arbitrary egress (prompt §12, §26).
+# Default deny is scoped to FinAgent pods, including the migration job.
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata: {name: finagent-default-deny}
-spec: {podSelector: {}, policyTypes: [Ingress, Egress]}
+spec: {podSelector: {matchLabels: {app.kubernetes.io/part-of: finagent}}, policyTypes: [Ingress, Egress]}
 ---
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata: {name: finagent-allow}
 spec:
-  podSelector: {matchLabels: {app: finagent-api}}
+  podSelector: {matchLabels: {app: finagent-api, app.kubernetes.io/part-of: finagent}}
   policyTypes: [Ingress]
-  ingress: [{from: [{podSelector: {matchLabels: {app: finagent-web}}}], ports: [{port: 8000}]}]
+  ingress: [{from: [{podSelector: {matchLabels: {app: finagent-web, app.kubernetes.io/part-of: finagent}}}], ports: [{port: 8000, protocol: TCP}]}]
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata: {name: finagent-web-ingress}
+spec:
+  podSelector: {matchLabels: {app: finagent-web, app.kubernetes.io/part-of: finagent}}
+  policyTypes: [Ingress]
+{{- with .Values.networkPolicy.webIngressPeers }}
+  {{- range . }}
+    {{- if not (or .podSelector .namespaceSelector .ipBlock) }}
+      {{- fail "webIngressPeers must contain a non-empty selector or ipBlock" }}
+    {{- end }}
+  {{- end }}
+  ingress:
+    - from: {{- toYaml . | nindent 8 }}
+      ports: [{port: 3000, protocol: TCP}]
+{{- else }}
+  ingress: []
+{{- end }}
+{{- range $name := list "api" "worker" "web" "migrator" }}
+{{- $rules := index $.Values.networkPolicy.egress $name }}
+{{- range $rules }}
+  {{- if or (not .to) (not .ports) }}
+    {{- fail (printf "networkPolicy.egress.%s rules require destinations and ports" $name) }}
+  {{- end }}
+  {{- range .ports }}
+    {{- if not .port }}
+      {{- fail (printf "networkPolicy.egress.%s ports must specify a port" $name) }}
+    {{- end }}
+  {{- end }}
+  {{- range .to }}
+    {{- if not (or .podSelector .namespaceSelector .ipBlock) }}
+      {{- fail (printf "networkPolicy.egress.%s destinations must not be empty" $name) }}
+    {{- end }}
+  {{- end }}
+{{- end }}
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata: {name: finagent-{{ $name }}-egress}
+spec:
+  podSelector: {matchLabels: {app: finagent-{{ $name }}, app.kubernetes.io/part-of: finagent}}
+  policyTypes: [Egress]
+{{- if or (eq $name "web") $rules }}
+  egress:
+  {{- if eq $name "web" }}
+    - to: [{podSelector: {matchLabels: {app: finagent-api, app.kubernetes.io/part-of: finagent}}}]
+      ports: [{port: 8000, protocol: TCP}]
+  {{- end }}
+  {{- with $rules }}
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+{{- else }}
+  egress: []
+{{- end }}
+{{- end }}
 ---
 apiVersion: policy/v1
 kind: PodDisruptionBudget

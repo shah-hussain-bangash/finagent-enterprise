@@ -3,16 +3,21 @@
 **Status: LOCAL RENDER ONLY; NOT READY TO INSTALL.** On 20 November 2026, Helm 3.17.3 linted
 and rendered the default chart after two YAML syntax fixes. This did not validate a Kubernetes
 cluster, identities, secrets, networking, migration, or deployment. Default values contain
-placeholders. No chart was installed. The dedicated migration-credential render was also checked
-with synthetic values by `verify_render.py`.
+placeholders. No chart was installed. Migration credentials and network-policy renders were
+checked with synthetic values by `verify_render.py`.
 
 The reference chart describes api, worker and web workloads, a migration job, Key Vault secrets,
 non-root containers, default-deny networking and a worker PodDisruptionBudget. Before any staging
 attempt, address and test these blockers against the selected environment:
 
-- The default-deny policy selects all pods for ingress and egress. The chart adds only an ingress
-  allowance for web-to-api; it does not allow the required egress or ingress to web. NetworkPolicy
-  enforcement and any additional policies depend on the cluster. See the [Kubernetes network policy documentation](https://kubernetes.io/docs/concepts/services-networking/network-policies/).
+- Default deny now selects only pods labelled as part of FinAgent. The chart explicitly permits
+  web-to-api traffic; web ingress and all other egress remain denied unless the operator supplies
+  reviewed `networkPolicy.webIngressPeers` and per-workload `networkPolicy.egress` rules. Each
+  egress rule must include destinations and ports. Define and test the required DNS, database,
+  identity, secret-store and service endpoints for the chosen environment; the chart does not
+  invent CIDRs or grant Internet access by default. Kubernetes policies are additive, and CNI
+  enforcement and any other policies must be verified in the actual cluster. See the
+  [Kubernetes network policy documentation](https://kubernetes.io/docs/concepts/services-networking/network-policies/).
 - The pre-install migration job now mounts a dedicated CSI SecretProviderClass and reads only its
   configured migration database URL from a file; it no longer depends on the application pods to
   sync `finagent-secrets`. Supply a separately authorized migration credential and the migrator
@@ -23,6 +28,32 @@ attempt, address and test these blockers against the selected environment:
 - Service accounts, workload identity bindings, required private endpoints and approved
   configuration must be supplied and verified separately. Rendering does not establish that
   the CSI secret references or identities work.
+- The chart does not render an Ingress resource, despite the illustrative `ingress` values.
+  It also does not supply the web application's required staging authentication settings,
+  HTTPS origin, TLS Redis session store or HTTPS API URL. These must be designed and validated
+  for the chosen environment; the application's local HTTP defaults are not valid for staging.
+
+The following illustrates the values shape only. The namespace, labels and documentation-only
+CIDR are synthetic; this is not a complete or deployable staging configuration. In particular,
+DNS and the api, worker and web external dependencies remain blocked until separately configured.
+
+```yaml
+networkPolicy:
+  webIngressPeers:
+    - namespaceSelector:
+        matchLabels: {kubernetes.io/metadata.name: synthetic-ingress}
+      podSelector:
+        matchLabels: {app: synthetic-ingress-controller}
+  egress:
+    migrator:
+      - to:
+          - ipBlock: {cidr: 192.0.2.0/24}
+        ports:
+          - {port: 5432, protocol: TCP}
+```
+
+Every peer and CIDR must be reviewed for the cluster: Kubernetes combines applicable policies,
+and a broad selector or `ipBlock` can permit more traffic than intended.
 
 ```powershell
 helm lint infra/helm/finagent
