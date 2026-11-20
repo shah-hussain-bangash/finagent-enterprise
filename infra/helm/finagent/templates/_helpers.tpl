@@ -5,7 +5,7 @@ app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}
 {{- define "finagent.securityContext" -}}
 securityContext:
   runAsNonRoot: true
-  runAsUser: 10001
+  runAsUser: {{ . }}
   allowPrivilegeEscalation: false
   readOnlyRootFilesystem: true
   capabilities: {drop: ["ALL"]}

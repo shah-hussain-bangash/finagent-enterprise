@@ -89,7 +89,7 @@ spec:
           command: ["/bin/sh", "-ec"]
           args:
             - 'FINAGENT_MIGRATION_DATABASE_URL="$(cat /mnt/migration/migration-database-url)"; test -n "$FINAGENT_MIGRATION_DATABASE_URL"; export FINAGENT_MIGRATION_DATABASE_URL; exec python -m alembic upgrade head'
-          {{- include "finagent.securityContext" . | nindent 10 }}
+          {{- include "finagent.securityContext" 10001 | nindent 10 }}
           volumeMounts:
             - {name: tmp, mountPath: /tmp}
             - {name: migration-secret, mountPath: /mnt/migration, readOnly: true}
@@ -121,7 +121,7 @@ spec:
           envFrom:
             - configMapRef: {name: finagent-config}
             - secretRef: {name: {{ printf "finagent-%s-secrets" $name | quote }}}
-          {{- include "finagent.securityContext" $ | nindent 10 }}
+          {{- include "finagent.securityContext" (ternary 10003 10001 (eq $name "web")) | nindent 10 }}
           resources: {{- toYaml $spec.resources | nindent 12 }}
           volumeMounts: [{name: tmp, mountPath: /tmp}, {name: kv, mountPath: /mnt/kv, readOnly: true}]
           {{- if eq $name "api" }}

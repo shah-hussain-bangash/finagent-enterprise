@@ -46,6 +46,7 @@ def main() -> None:
     pod = job["spec"]["template"]["spec"]
     assert pod["serviceAccountName"] == "finagent-migrator"
     container = pod["containers"][0]
+    assert container["securityContext"]["runAsUser"] == 10001
     assert not container.get("envFrom"), "migration must not import application secrets"
     assert any(m["name"] == "migration-secret" and m["readOnly"] for m in container["volumeMounts"])
     volume = next(v for v in pod["volumes"] if v["name"] == "migration-secret")
@@ -103,6 +104,7 @@ def main() -> None:
         spec = deployment["spec"]["template"]["spec"]
         assert spec["serviceAccountName"] == f"finagent-{name}"
         workload = spec["containers"][0]
+        assert workload["securityContext"]["runAsUser"] == (10003 if name == "web" else 10001)
         secret_ref = next(v["secretRef"]["name"] for v in workload["envFrom"] if "secretRef" in v)
         assert secret_ref == f"finagent-{name}-secrets"
         volume_ref = next(

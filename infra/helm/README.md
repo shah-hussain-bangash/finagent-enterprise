@@ -16,6 +16,8 @@ attempt, address and test these blockers against the selected environment:
 - The web image definition copies the workspace's public images into its standalone runtime.
   Build the release image and check those assets over HTTP before deployment; the current image
   definition has not been container-tested here.
+- The chart uses the web image's non-root user ID 10003; the API, worker, and migration use
+  their image user ID 10001. Verify file and mounted-secret permissions in the target cluster.
 
 - Default deny now selects only pods labelled as part of FinAgent. The chart explicitly permits
   web-to-api traffic; web ingress and all other egress remain denied unless the operator supplies
