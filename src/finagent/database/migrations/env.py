@@ -9,6 +9,7 @@ from __future__ import annotations
 import os
 
 from alembic import context
+
 from finagent.database.models import Base
 from finagent.database.session import get_engine
 

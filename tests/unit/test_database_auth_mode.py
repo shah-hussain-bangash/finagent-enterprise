@@ -69,9 +69,11 @@ class DatabaseAuthModeTests(unittest.TestCase):
             self.fail("credential should not be created")
 
         identity.WorkloadIdentityCredential = never_create
-        with patch.dict(sys.modules, {"azure": azure, "azure.identity": identity}):
-            with self.assertRaises(ValueError):
-                get_engine("postgresql+psycopg://localhost/db", "azure_workload_identity")
+        with (
+            patch.dict(sys.modules, {"azure": azure, "azure.identity": identity}),
+            self.assertRaises(ValueError),
+        ):
+            get_engine("postgresql+psycopg://localhost/db", "azure_workload_identity")
 
     def test_engine_setup_failure_closes_credential(self):
         azure = types.ModuleType("azure")
@@ -87,7 +89,10 @@ class DatabaseAuthModeTests(unittest.TestCase):
         url = "postgresql+psycopg://identity@demo.postgres.database.azure.com/db?sslmode=verify-full"
         with (
             patch.dict(sys.modules, {"azure": azure, "azure.identity": identity}),
-            patch("finagent.database.entra_auth.create_azure_postgres_engine", side_effect=RuntimeError("setup failed")),
+            patch(
+                "finagent.database.entra_auth.create_azure_postgres_engine",
+                side_effect=RuntimeError("setup failed"),
+            ),
             self.assertRaisesRegex(RuntimeError, "setup failed"),
         ):
             get_engine(url, "azure_workload_identity")
@@ -110,7 +115,10 @@ class DatabaseAuthModeTests(unittest.TestCase):
         url = "postgresql+psycopg://identity@demo.postgres.database.azure.com/db?sslmode=verify-full"
         with (
             patch.dict(sys.modules, {"azure": azure, "azure.identity": identity}),
-            patch("finagent.database.entra_auth.create_azure_postgres_engine", side_effect=lambda *args: Engine()),
+            patch(
+                "finagent.database.entra_auth.create_azure_postgres_engine",
+                side_effect=lambda *args: Engine(),
+            ),
         ):
             engine = get_engine(url, "azure_workload_identity")
             self.assertEqual(closed, [])

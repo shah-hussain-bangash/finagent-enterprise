@@ -47,7 +47,8 @@ def main() -> None:
     pod = job["spec"]["template"]["spec"]
     assert pod["serviceAccountName"] == "finagent-migrator"
     container = pod["containers"][0]
-    assert {item["name"]: item["value"] for item in container["env"]}["FINAGENT_MIGRATION_DATABASE_AUTH_MODE"] == "password"
+    migration_env = {item["name"]: item["value"] for item in container["env"]}
+    assert migration_env["FINAGENT_MIGRATION_DATABASE_AUTH_MODE"] == "password"
     assert container["securityContext"]["runAsUser"] == 10001
     assert not container.get("envFrom"), "migration must not import application secrets"
     assert any(m["name"] == "migration-secret" and m["readOnly"] for m in container["volumeMounts"])
@@ -57,7 +58,8 @@ def main() -> None:
     migration_class = next(item for item in classes if item["metadata"]["name"] == class_name)
     annotations = migration_class["metadata"]["annotations"]
     assert annotations["helm.sh/hook"] == "pre-install,pre-upgrade"
-    assert int(annotations["helm.sh/hook-weight"]) < int(job["metadata"]["annotations"].get("helm.sh/hook-weight", "0"))
+    job_weight = int(job["metadata"]["annotations"].get("helm.sh/hook-weight", "0"))
+    assert int(annotations["helm.sh/hook-weight"]) < job_weight
     assert annotations["helm.sh/hook-delete-policy"] == "before-hook-creation"
     params = migration_class["spec"]["parameters"]
     assert params["clientID"] == "synthetic-migrator-id"
@@ -71,10 +73,15 @@ def main() -> None:
     assert container["command"] == ["/bin/sh", "-ec"]
 
     policies = {d["metadata"]["name"]: d["spec"] for d in documents if d["kind"] == "NetworkPolicy"}
-    bootstrap = next(d for d in documents if d["kind"] == "NetworkPolicy" and d["metadata"]["name"] == "finagent-migrator-bootstrap")
+    bootstrap = next(
+        d for d in documents
+        if d["kind"] == "NetworkPolicy" and d["metadata"]["name"] == "finagent-migrator-bootstrap"
+    )
     assert bootstrap["metadata"]["annotations"]["helm.sh/hook"] == "pre-install,pre-upgrade"
-    assert int(bootstrap["metadata"]["annotations"]["helm.sh/hook-weight"]) < int(job["metadata"]["annotations"].get("helm.sh/hook-weight", "0"))
-    assert bootstrap["spec"]["podSelector"]["matchLabels"] == {"app": "finagent-migrator", "app.kubernetes.io/part-of": "finagent"}
+    assert int(bootstrap["metadata"]["annotations"]["helm.sh/hook-weight"]) < job_weight
+    assert bootstrap["spec"]["podSelector"]["matchLabels"] == {
+        "app": "finagent-migrator", "app.kubernetes.io/part-of": "finagent"
+    }
     assert bootstrap["spec"]["ingress"] == [] and bootstrap["spec"]["egress"] == []
     assert policies["finagent-default-deny"]["podSelector"]["matchLabels"] == {
         "app.kubernetes.io/part-of": "finagent"

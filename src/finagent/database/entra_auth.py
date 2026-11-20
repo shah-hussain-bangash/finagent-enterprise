@@ -5,7 +5,8 @@ The experimental engine path is opt-in and has not been validated against Azure.
 
 from __future__ import annotations
 
-from typing import Any, Callable, Protocol
+from collections.abc import Callable
+from typing import Any, Protocol
 from urllib.parse import parse_qsl, urlsplit
 
 POSTGRES_SCOPE = "https://ossrdbms-aad.database.windows.net/.default"

@@ -24,7 +24,9 @@ from finagent.database.entra_auth import (
 
 
 class DatabaseTokenTests(unittest.TestCase):
-    @unittest.skipUnless(create_engine is not None and psycopg is not None, "SQLAlchemy or psycopg unavailable")
+    @unittest.skipUnless(
+        create_engine is not None and psycopg is not None, "SQLAlchemy or psycopg unavailable"
+    )
     def test_postgresql_driver_receives_token_before_connection(self):
         # Use the real PostgreSQL dialect and driver, but intercept before network access.
         url = (

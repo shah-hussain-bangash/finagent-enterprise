@@ -28,7 +28,10 @@ class MigrationDatabaseAuthTests(unittest.TestCase):
 
     def test_migration_can_inherit_application_mode(self):
         get_engine = self.run_migration(
-            {"FINAGENT_DATABASE_URL": "synthetic-url", "FINAGENT_DATABASE_AUTH_MODE": "azure_workload_identity"}
+            {
+                "FINAGENT_DATABASE_URL": "synthetic-url",
+                "FINAGENT_DATABASE_AUTH_MODE": "azure_workload_identity",
+            }
         )
         get_engine.assert_called_once_with("synthetic-url", "azure_workload_identity")
 
