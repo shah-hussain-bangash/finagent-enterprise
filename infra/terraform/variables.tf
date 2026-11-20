@@ -10,6 +10,19 @@ variable "location" {
   description = "Azure region - OPEN decision SEC-D06 (data residency)."
 }
 variable "tenant_id" { type = string }
+variable "key_vault_secret_access" {
+  description = "Approved Key Vault secret names by workload; empty grants no secret access."
+  type        = map(set(string))
+  default     = {}
+  validation {
+    condition = alltrue([
+      for workload, names in var.key_vault_secret_access : contains(["api", "worker", "web", "migrator"], workload)
+      && alltrue([for name in names : can(regex("^[A-Za-z0-9-]{1,127}$", name))])
+      && length(distinct([for name in names : lower(name)])) == length(names)
+    ])
+    error_message = "Use known workload names and distinct, valid Key Vault secret names."
+  }
+}
 variable "postgres_sku" {
   type    = string
   default = "GP_Standard_D2ds_v5" # PROPOSED

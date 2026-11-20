@@ -18,6 +18,13 @@ provider "azurerm" {
 locals {
   name = "finagent-${var.environment}"
   tags = { system = "finagent", environment = var.environment, data = "restricted" }
+  secret_grants = {
+    for grant in flatten([
+      for workload, names in var.key_vault_secret_access : [
+        for name in names : { workload = workload, secret = lower(name) }
+      ]
+    ]) : "${grant.workload}/${grant.secret}" => grant
+  }
 }
 
 resource "azurerm_resource_group" "rg" {
@@ -135,7 +142,7 @@ resource "azurerm_container_registry" "acr" {
 }
 
 resource "azurerm_user_assigned_identity" "workload" {
-  for_each            = toset(["api", "worker", "migrator"])
+  for_each            = toset(["api", "worker", "web", "migrator"])
   name                = "id-${local.name}-${each.key}"
   resource_group_name = azurerm_resource_group.rg.name
   location            = azurerm_resource_group.rg.location
@@ -150,10 +157,10 @@ resource "azurerm_role_assignment" "blob_rw" {
 }
 
 resource "azurerm_role_assignment" "kv_secrets" {
-  for_each             = toset(["api", "worker", "migrator"])
-  scope                = azurerm_key_vault.kv.id
+  for_each             = local.secret_grants
+  scope                = "${azurerm_key_vault.kv.id}/secrets/${each.value.secret}"
   role_definition_name = "Key Vault Secrets User"
-  principal_id         = azurerm_user_assigned_identity.workload[each.key].principal_id
+  principal_id         = azurerm_user_assigned_identity.workload[each.value.workload].principal_id
 }
 
 resource "azurerm_role_assignment" "bus_send" {
