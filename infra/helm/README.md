@@ -26,6 +26,10 @@ attempt, address and test these blockers against the selected environment:
   voluntary evictions. A single-replica deployment can therefore block a node drain; plan
   maintenance and capacity accordingly. Budgets do not prevent involuntary outages or guarantee
   availability, and their behavior has not been tested on a cluster.
+- The API startup probe allows a proposed 150 seconds for its live endpoint before Kubernetes
+  considers startup failed. Readiness remains a separate database check. Tune these settings from
+  measured startup times and validate probe behavior in the target cluster; the web and worker
+  still need independently reviewed health and monitoring strategies.
 
 - Default deny now selects only pods labelled as part of FinAgent. The chart explicitly permits
   web-to-api traffic; web ingress and all other egress remain denied unless the operator supplies

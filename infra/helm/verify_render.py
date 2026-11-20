@@ -111,6 +111,11 @@ def main() -> None:
         assert spec["serviceAccountName"] == f"finagent-{name}"
         workload = spec["containers"][0]
         assert workload["securityContext"]["runAsUser"] == (10003 if name == "web" else 10001)
+        if name == "api":
+            assert workload["startupProbe"]["httpGet"] == {"path": "/health/live", "port": 8000}
+            assert workload["startupProbe"]["periodSeconds"] == 5
+            assert workload["startupProbe"]["failureThreshold"] == 30
+            assert workload["readinessProbe"]["httpGet"]["path"] == "/health/ready"
         secret_ref = next(v["secretRef"]["name"] for v in workload["envFrom"] if "secretRef" in v)
         assert secret_ref == f"finagent-{name}-secrets"
         volume_ref = next(

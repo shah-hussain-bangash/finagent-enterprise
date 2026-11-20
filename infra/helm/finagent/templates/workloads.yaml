@@ -130,6 +130,7 @@ spec:
           volumeMounts: [{name: tmp, mountPath: /tmp}, {name: kv, mountPath: /mnt/kv, readOnly: true}]
           {{- if eq $name "api" }}
           ports: [{containerPort: 8000}]
+          startupProbe: {httpGet: {path: /health/live, port: 8000}, periodSeconds: 5, failureThreshold: 30}
           readinessProbe: {httpGet: {path: /health/ready, port: 8000}, periodSeconds: 10}
           livenessProbe: {httpGet: {path: /health/live, port: 8000}, periodSeconds: 20}
           {{- else if eq $name "web" }}
