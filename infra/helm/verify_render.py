@@ -27,6 +27,7 @@ def main() -> None:
     ]
     result = subprocess.run(command, check=True, capture_output=True, text=True)  # noqa: S603
     documents = [item for item in yaml.safe_load_all(result.stdout) if item]
+    assert not any(item.get("kind") == "Ingress" for item in documents), "ingress must default to disabled"
     jobs = [item for item in documents if item.get("kind") == "Job"]
     assert len(jobs) == 1
     job = jobs[0]
@@ -81,6 +82,14 @@ def main() -> None:
             f"networkPolicy.egress.migrator={json.dumps([egress])}",
             "--set-json",
             f"networkPolicy.egress.web={json.dumps([egress])}",
+            "--set",
+            "ingress.enabled=true",
+            "--set",
+            "ingress.className=synthetic-controller",
+            "--set",
+            "ingress.host=finagent.example.test",
+            "--set",
+            "ingress.tlsSecretName=synthetic-tls",
         ],
         check=True,
         capture_output=True,
@@ -95,6 +104,12 @@ def main() -> None:
     assert configured_policies["finagent-migrator-egress"]["egress"] == [egress]
     assert len(configured_policies["finagent-web-egress"]["egress"]) == 2
     assert configured_policies["finagent-web-egress"]["egress"][1] == egress
+    ingress = next(d for d in configured_docs if d["kind"] == "Ingress")
+    assert ingress["spec"]["ingressClassName"] == "synthetic-controller"
+    assert ingress["spec"]["tls"] == [{"hosts": ["finagent.example.test"], "secretName": "synthetic-tls"}]
+    route = ingress["spec"]["rules"][0]
+    assert route["host"] == "finagent.example.test"
+    assert route["http"]["paths"][0]["backend"]["service"] == {"name": "finagent-web", "port": {"number": 80}}
     for invalid in (
         "networkPolicy.webIngressPeers=[{}]",
         'networkPolicy.egress.api=[{"to":[{}],"ports":[{"port":443}]}]',
@@ -105,6 +120,53 @@ def main() -> None:
             [*command, "--set-json", invalid], capture_output=True, text=True, check=False
         )
         assert rejected.returncode != 0, f"unsafe rule unexpectedly accepted: {invalid}"
+    for invalid, expected in (
+        (["--set", "ingress.enabled=true"], "ingress.className is required"),
+        (
+            [
+                "--set",
+                "ingress.enabled=true",
+                "--set",
+                "ingress.className=synthetic",
+                "--set",
+                "ingress.host=*.example.test",
+                "--set",
+                "ingress.tlsSecretName=synthetic",
+                "--set-json",
+                f"networkPolicy.webIngressPeers={json.dumps([peer])}",
+            ],
+            "without wildcards",
+        ),
+        (
+            [
+                "--set",
+                "ingress.enabled=true",
+                "--set",
+                "ingress.className=synthetic",
+                "--set",
+                "ingress.host=finagent.example.test",
+                "--set",
+                "ingress.tlsSecretName=synthetic",
+            ],
+            "networkPolicy.webIngressPeers is required",
+        ),
+        (
+            [
+                "--set",
+                "ingress.enabled=true",
+                "--set",
+                "ingress.className=synthetic",
+                "--set",
+                "ingress.host=finagent.example.test",
+                "--set-json",
+                f"networkPolicy.webIngressPeers={json.dumps([peer])}",
+            ],
+            "ingress.tlsSecretName is required",
+        ),
+    ):
+        rejected = subprocess.run([*command, *invalid], capture_output=True, text=True, check=False)  # noqa: S603
+        assert rejected.returncode != 0, f"unsafe ingress unexpectedly accepted: {invalid}"
+        assert expected in rejected.stderr
     print("Helm migration and network-policy render checks passed (synthetic values; no cluster).")
 
 

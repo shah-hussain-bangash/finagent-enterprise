@@ -28,8 +28,10 @@ attempt, address and test these blockers against the selected environment:
 - Service accounts, workload identity bindings, required private endpoints and approved
   configuration must be supplied and verified separately. Rendering does not establish that
   the CSI secret references or identities work.
-- The chart does not render an Ingress resource, despite the illustrative `ingress` values.
-  It also does not supply the web application's required staging authentication settings,
+- The optional Ingress is disabled by default. Enabling it requires an explicit controller class,
+  hostname, TLS secret and allowed ingress peers. TLS termination, HTTP-to-HTTPS enforcement and
+  certificate management depend on the selected controller and must be verified in the cluster.
+  The chart does not supply the web application's required staging authentication settings,
   HTTPS origin, TLS Redis session store or HTTPS API URL. These must be designed and validated
   for the chosen environment; the application's local HTTP defaults are not valid for staging.
 

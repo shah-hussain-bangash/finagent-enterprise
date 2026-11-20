@@ -70,6 +70,7 @@ networkPolicy:
     migrator: []
 
 ingress:
-  enabled: true
-  className: azure-application-gateway
-  host: finagent.REPLACE_ME
+  enabled: false
+  className: ""
+  host: ""
+  tlsSecretName: ""
