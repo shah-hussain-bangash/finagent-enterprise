@@ -1,5 +1,7 @@
 # Implementation Status
 
+For the current portfolio baseline, see the [status and release evidence record](05-testing-evidence/13-CURRENT-STATUS-AND-RELEASE-EVIDENCE.md). The dated sections below are historical checkpoints, not current release sign-off.
+
 The resume point for every build session (prompt Â§60).
 
 Requirement-level status is generated in:
@@ -11,7 +13,7 @@ Do not hand-edit those generated files.
 
 All 300 source requirements remain DRAFT. Passing tests do not constitute institutional approval or production acceptance.
 
-## Current source checkpoint - 2026-10-31: verified quality repair
+## Historical source checkpoint - 2026-10-31: verified quality repair
 
 The tested source checkpoint was adopted from the isolated PostgreSQL 16 candidate.
 This is source adoption only. The active host virtual environment was not updated,

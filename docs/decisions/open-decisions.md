@@ -85,7 +85,3 @@ Status values: OPEN · DEFAULTED-LOCAL (conservative dev default in place) · RE
 ## Local phone passkey candidate clarification - 2026-11-09
 
 DEC-35 and DEC-36 remain OPEN. Private mobile HTTPS and reviewer email/password access were demonstrated by the user. ADR 0035 proposes owner-allowlisted password-plus-recent-email enrollment and session-bound WebAuthn step-up for local/test only. Candidate code is isolated; database/Redis integration and actual passkey enrollment are not yet verified. Recovery/replacement, hardware assurance, institutional policy and production acceptance remain outstanding.
-
-## Local phone passkey candidate clarification - 2026-11-09
-
-DEC-35 and DEC-36 remain OPEN. Private mobile HTTPS and reviewer email/password access were demonstrated by the user. ADR 0035 proposes owner-allowlisted password-plus-recent-email enrollment and session-bound WebAuthn step-up for local/test only. Candidate code is isolated; database/Redis integration and actual passkey enrollment are not yet verified. Recovery/replacement, hardware assurance, institutional policy and production acceptance remain outstanding.

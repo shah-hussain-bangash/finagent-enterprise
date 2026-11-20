@@ -16,8 +16,11 @@ case-status write NOT enabled by environment variable in production.
 
 ## Release pipeline (reference)
 1. CI (`.github/workflows/ci.yml`): lint, strict typing, unit, contract drift (OpenAPI + events),
-   SAST + dependency audit + secret scan, release blockers, full suite incl. E2E, mutation check,
+   SAST + dependency audit + secret scan, release blockers, configured full-suite invocation,
+   mutation check,
    web typecheck/build/audit, image builds.
+   Hosted CI has run; use the [current evidence record](../05-testing-evidence/13-CURRENT-STATUS-AND-RELEASE-EVIDENCE.md)
+   for the exact revision and exclusions. A passing run does not prove staging acceptance or deployment.
 2. Image signing (cosign/Notation) + SBOM (syft) + provenance attestation - needs registry and signing
    identity (not configured).
 3. `terraform plan` reviewed and approved; `apply` only with written authorization.
