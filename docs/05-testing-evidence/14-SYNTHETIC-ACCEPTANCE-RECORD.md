@@ -2,6 +2,10 @@
 
 **Status: synthetic browser journey passed locally; formal acceptance remains open.** This is not a staging or production approval. Formal acceptance criteria and accountable institutional owners remain open under [DEC-12](../decisions/open-decisions.md).
 
+**Hosted CI for the tested API revision:** [GitHub Actions run #25](https://github.com/zenithdevelopers7-source/finagent-enterprise/actions/runs/44879796510) completed successfully for `d45b60918cdb8cbb67b72d716e51d4838bc3819a`: quality, security, web, infrastructure reference validation, integration, and images jobs passed. These checks complement the local observations below; they do not establish an Azure deployment or formal acceptance. Later commits require their own checks.
+
+**Isolated browser run, 21 November 2026:** the operator reported a successful production web build and **1 passed in 44.11 seconds** for `tests/browser/test_ui_journey.py` at revision `614030f4728d0088542327e3d11e140f4a6f358b`. The runner exported that Git revision into a separate source snapshot, installed the locked web dependencies, built the web app and ran the browser journey against the disposable local `finagent_test` database. The test covers the synthetic analyst, reviewer and supervisor journey; the result is operator-reported and no test report artifact or exact execution time was provided. This is not an Azure or production acceptance test.
+
 **Local API and worker acceptance run, 21 November 2026:** the operator reported **1 passed in 21.06 seconds** for `tests/e2e/test_acceptance_journey.py::test_full_human_reviewed_investigation_journey` at clean revision `d45b60918cdb8cbb67b72d716e51d4838bc3819a`. The runner checked the revision and the identity of the disposable local `finagent_test` database before execution; its schema was reset. This separate synthetic test exercises authorization boundaries, human review, a simulated interruption and worker recovery, a single mock-bank operation, and audit-chain checks. The result is operator-reported; no test report artifact or exact execution time was supplied. It does not establish Azure connectivity, live-bank behavior, staging acceptance, or production readiness.
 
 **Local reconciliation run, 21 November 2026:** the operator reported **1 passed in 30.38 seconds** for `tests/integration/test_aml_workflow.py::test_uncertain_status_write_is_reconciled_never_blindly_retried` at revision `d45b60918cdb8cbb67b72d716e51d4838bc3819a`, with only this evidence document modified. The test uses a disposable local database and a synthetic mock bank. It checks that a timed-out write is held as outcome uncertain, is not automatically retried, and can be reconciled by an operator before the workflow resumes; it asserts a single mock-bank status call. This operator-reported result has no attached test report and does not demonstrate recovery against a real bank.
@@ -32,7 +36,7 @@ The local observations above identify the tested API revision and reported resul
 
 | Field | Actual recorded value |
 |---|---|
-| Revision and branch | API tests: `d45b609` on `fix/infra-validation`; the release commit, clean build revision and corresponding browser run remain to be recorded. |
+| Revision and branch | API tests: `d45b609`; isolated browser build and test: `614030f`, both on `fix/infra-validation`. The release commit and corresponding build and tests remain to be recorded. |
 | Environment and operator | NOT RECORDED: isolated environment, date/time and operator |
 | Web build | NOT RECORDED: exact source revision, build command and result |
 | Test dependencies | NOT RECORDED: isolated database and Redis identity, browser and fixture versions; never include credentials |
@@ -45,7 +49,7 @@ The local observations above identify the tested API revision and reported resul
 
 | Scenario | Existing executable evidence | Record for this baseline |
 |---|---|---|
-| Analyst and independent reviewer complete a case in Chromium | [`test_ui_journey.py`](../../tests/browser/test_ui_journey.py) signs in as distinct roles, starts work, reviews evidence, submits a draft and records a review decision | PASS locally, 20 November 2026: 1 passed in 43.10 seconds, isolated working tree with uncommitted changes based on `2f44700`. The full release evidence and browser version still need recording. |
+| Analyst and independent reviewer complete a case in Chromium | [`test_ui_journey.py`](../../tests/browser/test_ui_journey.py) signs in as distinct roles, starts work, reviews evidence, submits a draft and records a review decision | PASS locally, operator-reported, 21 November 2026: 1 passed in 44.11 seconds on isolated revision `614030f`. The full release evidence and browser version still need recording. |
 | Unauthorized and cross-tenant review or evidence access | [`test_acceptance_journey.py`](../../tests/e2e/test_acceptance_journey.py) checks self-approval denial, other-role denial and cross-tenant resource denial | PASS in the operator-reported API test at `d45b609`, 21 November 2026; no detailed test artifact was supplied. |
 | Interrupted external operation and recovery | The same API-level acceptance test injects a crash around the synthetic downstream status operation, resumes with a second worker, probes and checks a single confirmed operation | PASS in the same API test. This is a synthetic mock write, not evidence of live-bank recovery. |
 | Case transitions and audit integrity | The same API-level test checks key audit actions, audit-chain verification and the completed timeline | PASS in the same API test; preserve a test artifact in a future release packet. |
