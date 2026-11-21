@@ -26,17 +26,19 @@ Further testing reproduced the stalled confirmation using a recorded synthetic c
 
 Demonstrate one synthetic `TM_STRUCTURING` case from assignment through evidence review, draft and independent review. Separately verify denied access, an interrupted operation and its recovery, and the audit trail. Use an isolated test environment and disposable database; these tests can reset their configured schema. Never target a shared or live database.
 
-## Evidence to fill in after execution
+## Release evidence still to collect
+
+The local observations above identify the tested API revision and reported results. The following fields describe the separate, complete release packet; a local test pass does not fill them automatically.
 
 | Field | Actual recorded value |
 |---|---|
-| Revision and branch | NOT RECORDED: full Git commit, working-tree status and build revision |
+| Revision and branch | API tests: `d45b609` on `fix/infra-validation`; the release commit, clean build revision and corresponding browser run remain to be recorded. |
 | Environment and operator | NOT RECORDED: isolated environment, date/time and operator |
 | Web build | NOT RECORDED: exact source revision, build command and result |
 | Test dependencies | NOT RECORDED: isolated database and Redis identity, browser and fixture versions; never include credentials |
 | Synthetic identities and case | NOT RECORDED: role labels, fixture and case IDs; synthetic data only |
-| CI / local run | NOT RECORDED: command, result, passed / failed / skipped / deselected counts and artifact link |
-| Recovery and audit | NOT RECORDED: injected fault, expected and observed states, effect count and audit verification |
+| CI / local run | API and reconciliation commands and operator-reported results are above; collect full release test counts and durable artifacts. |
+| Recovery and audit | Synthetic test assertions and results are described above; preserve the detailed output and review them for the release packet. |
 | Review and exceptions | NOT RECORDED: reviewer, findings, evidence locations and outstanding limitations |
 
 ## Traceable acceptance checks
