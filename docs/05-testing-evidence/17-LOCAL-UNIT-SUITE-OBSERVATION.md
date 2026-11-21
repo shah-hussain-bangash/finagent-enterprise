@@ -26,8 +26,18 @@ parameterized parser transport cases. This is a user-reported focused result, no
 rerun of the unit suite or hosted CI. It shows that the three parser cases passed in that terminal;
 the isolated session's runtime-access failure is not evidence of a parser defect there.
 
-The skipped tests were an access-policy test requiring `FINAGENT_TEST_DATABASE_URL`, which was
-not supplied, and a Linux-only seccomp runtime test. They were **not run**, not passed. No test
+The user subsequently reported running the complete `tests/unit` selection from the same
+checkout in their PowerShell session, with `FINAGENT_TEST_DATABASE_URL` deliberately unset:
+**404 passed, 2 skipped and 23 subtests passed in 11.30 seconds**. The skips were the
+real-Redis rate-limiter test and the Linux-only seccomp runtime test. The Redis test carries an
+integration marker and was skipped because the shared test configuration also requires
+`FINAGENT_TEST_DATABASE_URL`; it separately requires `FINAGENT_TEST_REDIS_URL`. This is a
+user-reported local result; raw output was provided in the conversation, not retained as a
+separate artifact. It does not establish a hosted CI result or Azure integration.
+
+The skipped tests were the Redis rate-limiter integration test (gated by the unset
+`FINAGENT_TEST_DATABASE_URL`) and a Linux-only seccomp runtime test. They were **not run**,
+not passed. No test
 database was reset, no Azure service was contacted and no cloud resources were created. Raw
-console output was not retained separately. Rerun the complete unit suite, including the skipped
-checks in an appropriate environment, before treating the suite as fully verified.
+console output was not retained separately. Run the two skipped checks in suitable database and
+Linux environments before describing the entire suite as verified without exclusions.
