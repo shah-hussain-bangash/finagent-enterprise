@@ -27,7 +27,8 @@ export default async function PolicyAdmin({ searchParams }: { searchParams: Prom
       {error ? <ErrorState error={error} what="Policies" /> : null}
       {data && data.items.length === 0 ? <Empty>No policy versions.</Empty> : null}
       {data && data.items.length > 0 ? (
-        <table>
+        <div className="admin-table" role="region" aria-label="Policy versions table" tabIndex={0}><table>
+          <caption>Policy versions</caption>
           <thead><tr><th scope="col">Policy</th><th scope="col">Version</th><th scope="col">Effective</th><th scope="col">Status</th><th scope="col">Access</th><th scope="col">Action</th></tr></thead>
           <tbody>{data.items.map((v) => (
             <tr key={v.policy_version_id}>
@@ -51,7 +52,7 @@ export default async function PolicyAdmin({ searchParams }: { searchParams: Prom
                 ) : "-"}
               </td>
             </tr>))}</tbody>
-        </table>
+        </table></div>
       ) : null}
     </section>
   );
