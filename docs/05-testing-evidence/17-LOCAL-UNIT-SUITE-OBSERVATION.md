@@ -15,12 +15,19 @@ The three failures were:
   `test_parser_network_isolation.py`. Both reported `PARSER_LINUX_ENGINE_UNAVAILABLE`.
 
 The sandbox session could not access the Docker engine, and `wsl --status` failed due to its
-logon session. These observations limit diagnosis; they do not establish whether the parser
-tests will pass in the user's own terminal or in CI. An initial run also encountered a temporary
-directory permission error; the fresh-directory rerun resolved that error.
+logon session. An initial run also encountered a temporary directory permission error; the
+fresh-directory rerun resolved that error.
+
+## Follow-up in the user's terminal
+
+On 21 November 2026, the user reported rerunning the two named test functions in their own
+PowerShell session against `finagent-ready`: **3 passed in 4.54 seconds**, including both
+parameterized parser transport cases. This is a user-reported focused result, not a complete
+rerun of the unit suite or hosted CI. It shows that the three parser cases passed in that terminal;
+the isolated session's runtime-access failure is not evidence of a parser defect there.
 
 The skipped tests were an access-policy test requiring `FINAGENT_TEST_DATABASE_URL`, which was
 not supplied, and a Linux-only seccomp runtime test. They were **not run**, not passed. No test
 database was reset, no Azure service was contacted and no cloud resources were created. Raw
-console output was not retained separately. Rerun the parser tests in an environment with the
-required Linux runtime and investigate any remaining failures before treating this suite as green.
+console output was not retained separately. Rerun the complete unit suite, including the skipped
+checks in an appropriate environment, before treating the suite as fully verified.
