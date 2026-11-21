@@ -40,9 +40,18 @@ disposable local Redis service: **1 passed in 0.08 seconds**. This focused resul
 Redis case that the full unit-suite run had skipped. It is user-reported and does not change the
 historical full-suite count.
 
+The user also reported running the program embedded in
+`test_native_network_and_process_syscalls_are_denied` inside the existing
+`finagent-parser:isolated-v1` Linux image with a disposable container, disabled networking,
+read-only filesystem, dropped capabilities and a non-root user. The program reported that its
+network and process restrictions were confirmed. This is a user-reported **focused program
+check**, not a pytest execution of the skipped Linux test or a full Linux test suite. Image
+digest and raw output were not recorded, and Docker's own policies also apply to the container.
+
 The skipped tests were the Redis rate-limiter integration test (gated by the unset
 `FINAGENT_TEST_DATABASE_URL`) and a Linux-only seccomp runtime test. They were **not run**,
 not passed in the original full-suite run. No test database was reset, no Azure service was
 contacted and no cloud resources were created. Raw console output was not retained separately.
-The Redis case has since passed separately; the Linux-only seccomp check remains unrun in these
-reported results.
+The Redis case has since passed separately and the Linux test program has passed in the parser
+container. A full Linux pytest run and independently verified image and security evidence remain
+outstanding.
