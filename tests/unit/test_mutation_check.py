@@ -6,9 +6,19 @@ from types import SimpleNamespace
 
 import pytest
 import yaml
-from scripts.mutation_check import classify_result
+from scripts.mutation_check import classify_result, select_mutations
 
 ROOT = Path(__file__).resolve().parents[2]
+
+
+def test_mutation_selection_rejects_unknown_or_empty_catalog() -> None:
+    catalog = [{"id": "first"}, {"id": "second"}]
+    assert select_mutations(catalog, []) == catalog
+    assert select_mutations(catalog, ["second"]) == [{"id": "second"}]
+    with pytest.raises(ValueError, match="Unknown mutation IDs"):
+        select_mutations(catalog, ["first", "misspelled"])
+    with pytest.raises(ValueError, match="catalog is empty"):
+        select_mutations([], [])
 
 
 @pytest.mark.parametrize(

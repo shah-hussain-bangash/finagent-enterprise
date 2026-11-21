@@ -44,10 +44,23 @@ def classify_result(returncode: int, report: Path) -> str:
     return "ERROR"
 
 
+def select_mutations(mutations: list[dict], selected: list[str]) -> list[dict]:
+    """Reject empty or unknown selections before modifying any source files."""
+    if not mutations:
+        raise ValueError("Mutation catalog is empty")
+    unknown = set(selected) - {m["id"] for m in mutations}
+    if unknown:
+        raise ValueError(f"Unknown mutation IDs: {', '.join(sorted(unknown))}")
+    return [m for m in mutations if m["id"] in selected] if selected else mutations
+
+
 def main(selected: list[str]) -> int:
-    mutations = yaml.safe_load((ROOT / "tests/mutations.yaml").read_text(encoding="utf-8"))
-    if selected:
-        mutations = [m for m in mutations if m["id"] in selected]
+    catalog = yaml.safe_load((ROOT / "tests/mutations.yaml").read_text(encoding="utf-8"))
+    try:
+        mutations = select_mutations(catalog, selected)
+    except ValueError as exc:
+        print(f"[ERROR]    {exc}")
+        return 1
     survived: list[str] = []
     for m in mutations:
         path = ROOT / m["file"]
