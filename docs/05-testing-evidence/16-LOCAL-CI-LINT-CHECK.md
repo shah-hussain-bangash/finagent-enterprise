@@ -15,8 +15,12 @@ An earlier, broader `ruff check .` reported 83 findings in files outside this CI
 including `packages` and `typings`. That broader command is not the project's configured lint
 task; its findings have not been resolved. The commands above do not certify those files.
 
-The CI quality job also runs type checking and tests. A subsequent local attempt with a compatible
-Python 3.12 runtime checked 191 source files but reported four missing `webauthn` imports because
-that package was unavailable in the accessible environment. A focused check of the two new
-database identity modules passed after correcting two type errors. Project-wide type checking
-and hosted CI are **not verified**. Raw command output was not retained separately.
+The CI quality job also runs type checking and tests. A later local check at commit `75e06a6`,
+using Python 3.12 and mypy 2.4.0, passed for **191 source files**. An earlier attempt found four
+missing `webauthn` imports; the project's pinned `webauthn==3.0.1` was subsequently downloaded
+from PyPI and installed in an isolated local type-check folder. The project's existing virtual
+environment was not modified. Two new database identity type errors were corrected before the
+successful check.
+
+This is a local result: hosted CI, the full test suite, live Azure connectivity and production
+readiness are **not verified** for this revision. Raw command output was not retained separately.
