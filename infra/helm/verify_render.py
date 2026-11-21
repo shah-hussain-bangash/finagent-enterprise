@@ -196,7 +196,11 @@ def main() -> None:
     assert route["http"]["paths"][0]["backend"]["service"] == {"name": "finagent-web", "port": {"number": 80}}
     for invalid in (
         "migration.resources.limits.cpu=null",
+        "migration.resources.requests=null",
         "api.resources.requests.memory=null",
+        "worker.resources.requests.cpu=null",
+        "web.resources.limits.memory=null",
+        "web.resources=null",
         'config.FINAGENT_DATABASE_AUTH_MODE="invalid"',
         'migration.databaseAuthMode="invalid"',
         "worker.terminationGracePeriodSeconds=0",
@@ -261,7 +265,7 @@ def main() -> None:
         rejected = subprocess.run([*command, *invalid], capture_output=True, text=True, check=False)  # noqa: S603
         assert rejected.returncode != 0, f"unsafe ingress unexpectedly accepted: {invalid}"
         assert expected in rejected.stderr
-    print("Helm resource, secret, migration, ingress and network checks passed (synthetic values; no cluster).")
+    print("Helm checks passed: resources, secrets, migration, ingress and network (synthetic; no cluster).")
 
 
 if __name__ == "__main__":
