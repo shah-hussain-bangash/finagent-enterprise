@@ -17,7 +17,7 @@ The workflow artifact upload step succeeded; availability and retention should b
 
 ## Synthetic demonstration and control boundaries
 
-Start with the [workspace walkthrough](../workspace-demo-walkthrough.md), then follow the [architecture-to-code map](../02-system-architecture/06-ARCHITECTURE-TO-CODE-MAP.md) and [case study](../07-case-study/08-PORTFOLIO-CASE-STUDY.md). The connected case views depend on available authorized records; the fixed-response assistant and role selector in the workspace preview are illustrative. The separate assistant candidate is disabled. Human review remains responsible for decisions.
+Start with the [workspace walkthrough](../workspace-demo-walkthrough.md), then follow the [architecture-to-code map](../02-system-architecture/06-ARCHITECTURE-TO-CODE-MAP.md) and [case study](../07-case-study/08-CASE-STUDY.md). The connected case views depend on available authorized records; the fixed-response assistant and role selector in the workspace preview are illustrative. The separate assistant candidate is disabled. Human review remains responsible for decisions.
 
 ## Open work before a release claim
 

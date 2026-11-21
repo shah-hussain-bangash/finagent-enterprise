@@ -1,4 +1,4 @@
-# FinAgent Enterprise
+# FinAgent Enterprise Case Study
 
 ## Architecting evidence-linked AI investigations with independent human review
 
@@ -8,9 +8,9 @@
 
 | Project | At a glance |
 |---|---|
-| Portfolio owner | Shah Hussain Bangash · [GitHub](https://github.com/zenithdevelopers7-source) |
+| Project owner | Shah Hussain Bangash · [GitHub](https://github.com/zenithdevelopers7-source) |
 | Domain | Anti-money laundering investigation and case review |
-| Delivery scope | Independent engineering portfolio using synthetic identities, data and integrations |
+| Delivery scope | Independent engineering project using synthetic identities, data and integrations |
 | Application | Next.js / React / TypeScript, FastAPI / Python, PostgreSQL, Redis and LangGraph |
 | Source baseline | [`f0a32b7`, main, 20 November 2026][baseline] |
 | Directly inspected hosted evidence | [CI run 44723085210][ci]: five successful jobs; 724 passed and 11 deselected in the full-suite invocation; 82/82 defined mutations caught |
@@ -44,7 +44,7 @@ An assigned analyst opens a synthetic transaction-monitoring case, examines tran
 
 The system does not confer authority to determine guilt, move funds, freeze accounts or file regulatory reports. A narrowly guarded external case-status integration is a separate capability with explicit deployment and tenant controls.
 
-## 2. Engineering scope and portfolio contribution
+## 2. Engineering scope and contribution
 
 FinAgent's repository provides a connected set of architecture decisions, application source, contracts, migrations, tests and operating guides. These make the following contribution areas reviewable:
 
@@ -58,7 +58,7 @@ FinAgent's repository provides a connected set of architecture decisions, applic
 | Software engineering | Typed APIs, generated contract checks, migrations, behavioral tests and mutation checks |
 | Applied evaluation research | Dataset lineage, contamination controls, promotion gates and explicit limits on conclusions |
 
-The repository is engineering evidence. It does not establish an employment title, years of experience, a managed delivery team or institutional ownership. The portfolio owner should describe personal responsibilities and any tooling assistance accurately when discussing the work.
+The repository is engineering evidence. It does not establish an employment title, years of experience, a managed delivery team or institutional ownership. The project owner should describe personal responsibilities and any tooling assistance accurately when discussing the work.
 
 ## 3. Solution architecture
 
@@ -316,7 +316,7 @@ Use the [workspace walkthrough][walkthrough] for navigation and [API acceptance 
 | 4 | Operational and security assessment | Threat-model review, negative tests, accessibility/load results and restoration/rollback exercise |
 | 5 | Institution-specific pilot decision | Named business, data, security, AML, model-risk and operations owners with approved scope |
 
-FinAgent's strongest portfolio evidence is the connection between architecture and executable controls: source-bound analysis, independent version-aware review and recoverable workflow execution. The next step is to extend that evidence into representative model evaluation and an approved operating environment.
+FinAgent's strongest engineering evidence is the connection between architecture and executable controls: source-bound analysis, independent version-aware review and recoverable workflow execution. The next step is to extend that evidence into representative model evaluation and an approved operating environment.
 
 ---
 

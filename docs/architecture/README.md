@@ -17,7 +17,7 @@ This collection presents FinAgent in a clear sequence from business need to arch
 | 05 | [Engineering handbook](../06-engineering-devops/05-ENGINEERING-HANDBOOK.md) | Repository structure, engineering workflow, controls and change review |
 | 06 | [Architecture-to-code map](../02-system-architecture/06-ARCHITECTURE-TO-CODE-MAP.md) | Source locations, test entry points and remaining assurance gaps |
 | 07 | [Testing and evidence plan](../05-testing-evidence/07-TESTING-AND-EVIDENCE-PLAN.md) | Required verification, evidence records, owners and acceptance sequence |
-| 08 | [Portfolio case study](../07-case-study/08-PORTFOLIO-CASE-STUDY.md) | Technical narrative, trade-offs, selected test evidence and interview walkthrough |
+| 08 | [Case study](../07-case-study/08-CASE-STUDY.md) | Technical narrative, trade-offs, selected test evidence and interview walkthrough |
 | 09 | [Portfolio priorities](../07-case-study/09-PORTFOLIO-PRIORITIES.md) | The five artifacts to prioritize for hiring conversations |
 | 10 | [Documentation roadmap](../06-engineering-devops/10-DOCUMENTATION-ROADMAP.md) | Further phases, review criteria and institutional decisions |
 | 11 | [Source code and engineering guide](../06-engineering-devops/11-SOURCE-CODE-AND-ENGINEERING-GUIDE.md) | A reading path through the working UI, backend, AI, integration and delivery code |
@@ -25,7 +25,7 @@ This collection presents FinAgent in a clear sequence from business need to arch
 
 ## Quick paths
 
-- **Hiring manager:** start with the [project README](../../README.md), then the [portfolio case study](../07-case-study/08-PORTFOLIO-CASE-STUDY.md).
+- **Hiring manager:** start with the [project README](../../README.md), then the [case study](../07-case-study/08-CASE-STUDY.md).
 - **Architect or engineer:** read the [solution architecture](../02-system-architecture/03-ENTERPRISE-SOLUTION-ARCHITECTURE.md), [interface design](../02-system-architecture/04-INTEGRATION-AND-INTERFACE-DESIGN.md), [source guide](../06-engineering-devops/11-SOURCE-CODE-AND-ENGINEERING-GUIDE.md), and relevant [architecture decisions](../adr/).
 - **Reviewer:** read the [evidence register](../05-testing-evidence/12-TESTING-AND-EVIDENCE-REGISTER.md), [testing plan](../05-testing-evidence/07-TESTING-AND-EVIDENCE-PLAN.md), and [open decision register](../decisions/open-decisions.md); verify results against the actual commit and environment.
 

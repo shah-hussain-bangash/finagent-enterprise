@@ -16,7 +16,7 @@
 | 8. Quality and evidence | Test strategy, traceability, environment, datasets, defect rules and evidence register | [Verification plan](../05-testing-evidence/07-TESTING-AND-EVIDENCE-PLAN.md); [generated traceability](../traceability/coverage-summary.md) | Reproducible results for exact release and independent review where required |
 | 9. Operations and resilience | Monitoring, incident response, backup, restore, recovery, ownership and service objectives | [Operations runbooks](../operations/); [deployment guide](../operations/deployment.md) | Target-environment exercises and approved ownership/targets |
 | 10. Delivery and release | Engineering workflow, branch/CI, deployment, migrations, rollout and rollback | [Engineering handbook](05-ENGINEERING-HANDBOOK.md); `.github/workflows/ci.yml` | Validated staging path, change controls and accountable sign-off |
-| 11. Portfolio and handover | README, architecture case study, demo, limitations, evidence and interview walkthrough | [README](../../README.md); [portfolio brief](../07-case-study/08-PORTFOLIO-CASE-STUDY.md); [code map](../02-system-architecture/06-ARCHITECTURE-TO-CODE-MAP.md) | Current, reproducible and accurately attributed artifacts |
+| 11. Portfolio and handover | README, architecture case study, demo, limitations, evidence and interview walkthrough | [README](../../README.md); [case study](../07-case-study/08-CASE-STUDY.md); [code map](../02-system-architecture/06-ARCHITECTURE-TO-CODE-MAP.md) | Current, reproducible and accurately attributed artifacts |
 
 ## Status rules
 
