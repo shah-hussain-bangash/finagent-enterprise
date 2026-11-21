@@ -8,6 +8,11 @@ and validation passed again without warnings. The provider selection is recorded
 it does not verify credentials, Azure capabilities, connectivity, costs, a plan, or deployment.
 No cloud resources were created and no cloud cost was incurred.
 
+The CI workflow now defines an infrastructure job to repeat formatting, backend-free
+initialization, validation and mocked tests with Terraform 1.11.4 and the locked provider. Until
+a hosted run for the commit containing that job succeeds, CI execution remains unverified. This
+job does not perform a real Azure plan or apply.
+
 What it defines (PROPOSED values, see `variables.tf`): resource group, Log Analytics, Key Vault
 (RBAC, purge protection, private), PostgreSQL 16 Flexible Server (Entra auth only, private, zone
 redundant HA, geo-redundant backup), Storage (ZRS, no shared keys, versioning + soft delete),

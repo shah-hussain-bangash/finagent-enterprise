@@ -6,6 +6,9 @@ cluster, identities, secrets, networking, migration, or deployment. Default valu
 placeholders. No chart was installed. Migration credentials and network-policy renders were
 checked with synthetic values by `verify_render.py`.
 
+The CI workflow now defines a Helm lint and synthetic-render job. Hosted execution of that job
+remains unverified until a run on the commit containing it completes; it does not install the chart.
+
 The reference chart describes api, worker and web workloads, a migration job, Key Vault secrets,
 non-root containers, default-deny networking and workload PodDisruptionBudgets. Before any staging
 attempt, address and test these blockers against the selected environment:
