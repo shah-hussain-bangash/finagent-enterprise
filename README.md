@@ -16,7 +16,7 @@ FinAgent is an enterprise AI engineering portfolio project exploring how analyst
 
 > This is not a deployed bank product, a regulatory certification, or an autonomous system for deciding guilt. Local evidence and passing tests apply to the tested version and environment. Live-provider verification, independent assessment, and production acceptance remain open.
 
-**Start here:** [Synthetic investigation walkthrough](docs/workspace-demo-walkthrough.md) · [Architecture-to-code map](docs/02-system-architecture/06-ARCHITECTURE-TO-CODE-MAP.md) · [Current status and release evidence](docs/05-testing-evidence/13-CURRENT-STATUS-AND-RELEASE-EVIDENCE.md) · [Recorded main-branch CI](https://github.com/zenithdevelopers7-source/finagent-enterprise/actions/runs/44532646751)
+**Start here:** [Synthetic investigation walkthrough](docs/workspace-demo-walkthrough.md) · [Architecture-to-code map](docs/02-system-architecture/06-ARCHITECTURE-TO-CODE-MAP.md) · [Current status and release evidence](docs/05-testing-evidence/13-CURRENT-STATUS-AND-RELEASE-EVIDENCE.md) · [Verified main-branch CI · `6c0bb87` · 21 November 2026](https://github.com/zenithdevelopers7-source/finagent-enterprise/actions/runs/44917079385) · [Earlier CI baseline](https://github.com/zenithdevelopers7-source/finagent-enterprise/actions/runs/44532646751)
 
 ## Business problem
 
