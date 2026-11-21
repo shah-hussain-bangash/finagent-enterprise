@@ -49,4 +49,10 @@ method reproduced the existing Windows `h1` value from the locally installed pro
 hash was added without changing the provider version. Windows backend-free initialization with
 the read-only lock, validation, and all six mocked tests then passed. Terraform's own
 cross-platform lock command could not complete locally because of temporary-folder access
-errors; the Linux fix remains unverified until GitHub CI reruns it.
+errors; the Linux fix was not yet verified at that point.
+
+GitHub Actions [run #24](https://github.com/zenithdevelopers7-source/finagent-enterprise/actions/runs/44878502791)
+subsequently passed the infrastructure job at `1d5aa3d`: Terraform validation and all six
+mock-provider tests passed, followed by Helm lint and synthetic render checks. This verifies the
+Linux checksum and the configured CI checks for that revision; it does not establish an Azure
+deployment or cluster behavior. Check the workflow link for the outcome of the other jobs.
