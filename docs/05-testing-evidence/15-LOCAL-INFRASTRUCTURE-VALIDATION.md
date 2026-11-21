@@ -35,3 +35,18 @@ Remaining work includes actual Azure identity and database access, certificate t
 and token expiry behavior, identity and database role provisioning, cluster policy enforcement,
 container builds and full regression testing. See the [Terraform reference](../../infra/terraform/README.md)
 and [Helm reference](../../infra/helm/README.md) for current limitations.
+
+## Linux provider checksum follow-up
+
+GitHub Actions [run #23](https://github.com/zenithdevelopers7-source/finagent-enterprise/actions/runs/44877681587)
+failed the infrastructure job at `3b015da`: Terraform installed AzureRM on Linux but its
+unpacked package did not match the existing lock-file package hash. The Windows lock file did
+not include an `h1` hash for the Linux package. Hosted Helm checks in that job were skipped.
+
+The Linux `h1` hash was calculated from the official AzureRM 4.81.0 Linux archive after verifying
+its ZIP SHA-256 against an existing `zh` checksum in the lock file. The same directory-hash
+method reproduced the existing Windows `h1` value from the locally installed provider. The Linux
+hash was added without changing the provider version. Windows backend-free initialization with
+the read-only lock, validation, and all six mocked tests then passed. Terraform's own
+cross-platform lock command could not complete locally because of temporary-folder access
+errors; the Linux fix remains unverified until GitHub CI reruns it.
