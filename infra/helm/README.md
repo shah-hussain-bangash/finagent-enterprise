@@ -25,6 +25,9 @@ attempt, address and test these blockers against the selected environment:
   because the default parser and model timeouts can each be 60 seconds; this is not a guarantee
   that every operation completes before shutdown. Choose settings using the actual configured
   timeouts and validate forced termination, lease recovery and duplicate handling in the cluster.
+- The chart requires CPU and memory requests and limits for the API, worker, web and migration
+  job. Values are proposals, not sizing evidence. Helm checks their presence, not whether the
+  values are appropriate or sufficient; review quantities and test actual workload behavior.
 - The API, worker and web each have a PodDisruptionBudget requiring one available pod during
   voluntary evictions. A single-replica deployment can therefore block a node drain; plan
   maintenance and capacity accordingly. Budgets do not prevent involuntary outages or guarantee

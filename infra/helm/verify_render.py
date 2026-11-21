@@ -47,6 +47,8 @@ def main() -> None:
     pod = job["spec"]["template"]["spec"]
     assert pod["serviceAccountName"] == "finagent-migrator"
     container = pod["containers"][0]
+    for section in ("requests", "limits"):
+        assert all(container["resources"][section].get(key) for key in ("cpu", "memory"))
     migration_env = {item["name"]: item["value"] for item in container["env"]}
     assert migration_env["FINAGENT_MIGRATION_DATABASE_AUTH_MODE"] == "password"
     assert container["securityContext"]["runAsUser"] == 10001
@@ -121,6 +123,8 @@ def main() -> None:
         assert spec["terminationGracePeriodSeconds"] == (120 if name == "worker" else 30)
         assert spec["serviceAccountName"] == f"finagent-{name}"
         workload = spec["containers"][0]
+        for section in ("requests", "limits"):
+            assert all(workload["resources"][section].get(key) for key in ("cpu", "memory"))
         assert workload["securityContext"]["runAsUser"] == (10003 if name == "web" else 10001)
         if name == "api":
             assert workload["startupProbe"]["httpGet"] == {"path": "/health/live", "port": 8000}
@@ -191,6 +195,8 @@ def main() -> None:
     assert route["host"] == "finagent.example.test"
     assert route["http"]["paths"][0]["backend"]["service"] == {"name": "finagent-web", "port": {"number": 80}}
     for invalid in (
+        "migration.resources.limits.cpu=null",
+        "api.resources.requests.memory=null",
         'config.FINAGENT_DATABASE_AUTH_MODE="invalid"',
         'migration.databaseAuthMode="invalid"',
         "worker.terminationGracePeriodSeconds=0",
@@ -255,7 +261,7 @@ def main() -> None:
         rejected = subprocess.run([*command, *invalid], capture_output=True, text=True, check=False)  # noqa: S603
         assert rejected.returncode != 0, f"unsafe ingress unexpectedly accepted: {invalid}"
         assert expected in rejected.stderr
-    print("Helm secret, migration, ingress and network checks passed (synthetic values; no cluster).")
+    print("Helm resource, secret, migration, ingress and network checks passed (synthetic values; no cluster).")
 
 
 if __name__ == "__main__":
