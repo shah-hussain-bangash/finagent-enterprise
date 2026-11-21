@@ -12,6 +12,10 @@ from urllib.parse import parse_qsl, urlsplit
 POSTGRES_SCOPE = "https://ossrdbms-aad.database.windows.net/.default"
 
 
+class DisposableEngine(Protocol):
+    def dispose(self) -> None: ...
+
+
 def validate_postgres_url(url: str) -> None:
     """Reject unsafe public-Azure connection URLs before selecting token authentication.
 
@@ -36,7 +40,7 @@ def validate_postgres_url(url: str) -> None:
             parsed.scheme == "postgresql+psycopg"
             and bool(parsed.username)
             and parsed.password is None
-            and bool(hostname)
+            and hostname is not None
             and hostname.endswith(".postgres.database.azure.com")
             and hostname != ".postgres.database.azure.com"
             and bool(parsed.path.strip("/"))
@@ -88,12 +92,12 @@ def attach_token_callback(
     return callback
 
 
-def create_azure_postgres_engine(
+def create_azure_postgres_engine[EngineType: DisposableEngine](
     url: str,
     credential: TokenCredential,
-    create_engine: Callable[..., Any],
+    create_engine: Callable[..., EngineType],
     listen: Callable[..., Any],
-) -> Any:
+) -> EngineType:
     """Build an inactive-by-default Azure engine without opening a database connection.
 
     The caller owns the credential lifecycle.
