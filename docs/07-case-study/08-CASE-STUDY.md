@@ -8,7 +8,7 @@
 
 | Project | At a glance |
 |---|---|
-| Project owner | Shah Hussain Bangash · [GitHub](https://github.com/zenithdevelopers7-source) |
+| Project owner | Shah Hussain Bangash · [GitHub](https://github.com/shah-hussain-bangash) |
 | Domain | Anti-money laundering investigation and case review |
 | Delivery scope | Independent engineering project using synthetic identities, data and integrations |
 | Application | Next.js / React / TypeScript, FastAPI / Python, PostgreSQL, Redis and LangGraph |
@@ -322,29 +322,29 @@ FinAgent's strongest engineering evidence is the connection between architecture
 
 **Evidence date:** 21 November 2026. Source statements refer to the pinned baseline below. Later application changes require their own verification. Repository documents with historical local results retain their original scope.
 
-[baseline]: https://github.com/zenithdevelopers7-source/finagent-enterprise/commit/f0a32b7908d766a2e4c9fb7b9c97906c27ab3c9a
-[ci]: https://github.com/zenithdevelopers7-source/finagent-enterprise/actions/runs/44723085210
-[business]: https://github.com/zenithdevelopers7-source/finagent-enterprise/blob/f0a32b7908d766a2e4c9fb7b9c97906c27ab3c9a/docs/01-business-requirements/01-BUSINESS-SCOPE-AND-ACCEPTANCE.md
-[code-map]: https://github.com/zenithdevelopers7-source/finagent-enterprise/blob/f0a32b7908d766a2e4c9fb7b9c97906c27ab3c9a/docs/02-system-architecture/06-ARCHITECTURE-TO-CODE-MAP.md
-[adrs]: https://github.com/zenithdevelopers7-source/finagent-enterprise/tree/f0a32b7908d766a2e4c9fb7b9c97906c27ab3c9a/docs/adr
-[gateway]: https://github.com/zenithdevelopers7-source/finagent-enterprise/blob/f0a32b7908d766a2e4c9fb7b9c97906c27ab3c9a/src/finagent/agents/gateway.py
-[validator]: https://github.com/zenithdevelopers7-source/finagent-enterprise/blob/f0a32b7908d766a2e4c9fb7b9c97906c27ab3c9a/src/finagent/agents/validation.py
-[graph]: https://github.com/zenithdevelopers7-source/finagent-enterprise/blob/f0a32b7908d766a2e4c9fb7b9c97906c27ab3c9a/src/finagent/orchestration/graphs/aml.py
-[protocol]: https://github.com/zenithdevelopers7-source/finagent-enterprise/blob/f0a32b7908d766a2e4c9fb7b9c97906c27ab3c9a/docs/adr/0010-no-runtime-mcp-a2a-in-release-1.md
-[retrieval]: https://github.com/zenithdevelopers7-source/finagent-enterprise/blob/f0a32b7908d766a2e4c9fb7b9c97906c27ab3c9a/docs/adr/0018-policy-retrieval.md
-[review]: https://github.com/zenithdevelopers7-source/finagent-enterprise/blob/f0a32b7908d766a2e4c9fb7b9c97906c27ab3c9a/src/finagent/services/review_service/review.py
-[durability]: https://github.com/zenithdevelopers7-source/finagent-enterprise/blob/f0a32b7908d766a2e4c9fb7b9c97906c27ab3c9a/docs/adr/0015-durable-workflow-runtime.md
-[effects]: https://github.com/zenithdevelopers7-source/finagent-enterprise/blob/f0a32b7908d766a2e4c9fb7b9c97906c27ab3c9a/src/finagent/services/workflow_service/external_ops.py
-[access]: https://github.com/zenithdevelopers7-source/finagent-enterprise/blob/f0a32b7908d766a2e4c9fb7b9c97906c27ab3c9a/docs/security/access-control.md
-[regulatory]: https://github.com/zenithdevelopers7-source/finagent-enterprise/blob/f0a32b7908d766a2e4c9fb7b9c97906c27ab3c9a/docs/security/regulatory-applicability-register.md
-[terraform]: https://github.com/zenithdevelopers7-source/finagent-enterprise/blob/f0a32b7908d766a2e4c9fb7b9c97906c27ab3c9a/infra/terraform/main.tf
-[helm]: https://github.com/zenithdevelopers7-source/finagent-enterprise/tree/f0a32b7908d766a2e4c9fb7b9c97906c27ab3c9a/infra/helm
-[deployment]: https://github.com/zenithdevelopers7-source/finagent-enterprise/blob/f0a32b7908d766a2e4c9fb7b9c97906c27ab3c9a/docs/operations/deployment.md
-[mutations]: https://github.com/zenithdevelopers7-source/finagent-enterprise/blob/f0a32b7908d766a2e4c9fb7b9c97906c27ab3c9a/tests/mutations.yaml
-[acceptance]: https://github.com/zenithdevelopers7-source/finagent-enterprise/blob/f0a32b7908d766a2e4c9fb7b9c97906c27ab3c9a/docs/05-testing-evidence/14-SYNTHETIC-ACCEPTANCE-RECORD.md
-[dataset-code]: https://github.com/zenithdevelopers7-source/finagent-enterprise/blob/f0a32b7908d766a2e4c9fb7b9c97906c27ab3c9a/src/finagent/evaluation/dataset_control.py
-[datasets]: https://github.com/zenithdevelopers7-source/finagent-enterprise/blob/f0a32b7908d766a2e4c9fb7b9c97906c27ab3c9a/docs/testing/evaluation-datasets.md
-[walkthrough]: https://github.com/zenithdevelopers7-source/finagent-enterprise/blob/f0a32b7908d766a2e4c9fb7b9c97906c27ab3c9a/docs/workspace-demo-walkthrough.md
-[api-journey]: https://github.com/zenithdevelopers7-source/finagent-enterprise/blob/f0a32b7908d766a2e4c9fb7b9c97906c27ab3c9a/tests/e2e/test_acceptance_journey.py
+[baseline]: https://github.com/shah-hussain-bangash/finagent-enterprise/commit/f0a32b7908d766a2e4c9fb7b9c97906c27ab3c9a
+[ci]: https://github.com/shah-hussain-bangash/finagent-enterprise/actions/runs/44723085210
+[business]: https://github.com/shah-hussain-bangash/finagent-enterprise/blob/f0a32b7908d766a2e4c9fb7b9c97906c27ab3c9a/docs/01-business-requirements/01-BUSINESS-SCOPE-AND-ACCEPTANCE.md
+[code-map]: https://github.com/shah-hussain-bangash/finagent-enterprise/blob/f0a32b7908d766a2e4c9fb7b9c97906c27ab3c9a/docs/02-system-architecture/06-ARCHITECTURE-TO-CODE-MAP.md
+[adrs]: https://github.com/shah-hussain-bangash/finagent-enterprise/tree/f0a32b7908d766a2e4c9fb7b9c97906c27ab3c9a/docs/adr
+[gateway]: https://github.com/shah-hussain-bangash/finagent-enterprise/blob/f0a32b7908d766a2e4c9fb7b9c97906c27ab3c9a/src/finagent/agents/gateway.py
+[validator]: https://github.com/shah-hussain-bangash/finagent-enterprise/blob/f0a32b7908d766a2e4c9fb7b9c97906c27ab3c9a/src/finagent/agents/validation.py
+[graph]: https://github.com/shah-hussain-bangash/finagent-enterprise/blob/f0a32b7908d766a2e4c9fb7b9c97906c27ab3c9a/src/finagent/orchestration/graphs/aml.py
+[protocol]: https://github.com/shah-hussain-bangash/finagent-enterprise/blob/f0a32b7908d766a2e4c9fb7b9c97906c27ab3c9a/docs/adr/0010-no-runtime-mcp-a2a-in-release-1.md
+[retrieval]: https://github.com/shah-hussain-bangash/finagent-enterprise/blob/f0a32b7908d766a2e4c9fb7b9c97906c27ab3c9a/docs/adr/0018-policy-retrieval.md
+[review]: https://github.com/shah-hussain-bangash/finagent-enterprise/blob/f0a32b7908d766a2e4c9fb7b9c97906c27ab3c9a/src/finagent/services/review_service/review.py
+[durability]: https://github.com/shah-hussain-bangash/finagent-enterprise/blob/f0a32b7908d766a2e4c9fb7b9c97906c27ab3c9a/docs/adr/0015-durable-workflow-runtime.md
+[effects]: https://github.com/shah-hussain-bangash/finagent-enterprise/blob/f0a32b7908d766a2e4c9fb7b9c97906c27ab3c9a/src/finagent/services/workflow_service/external_ops.py
+[access]: https://github.com/shah-hussain-bangash/finagent-enterprise/blob/f0a32b7908d766a2e4c9fb7b9c97906c27ab3c9a/docs/security/access-control.md
+[regulatory]: https://github.com/shah-hussain-bangash/finagent-enterprise/blob/f0a32b7908d766a2e4c9fb7b9c97906c27ab3c9a/docs/security/regulatory-applicability-register.md
+[terraform]: https://github.com/shah-hussain-bangash/finagent-enterprise/blob/f0a32b7908d766a2e4c9fb7b9c97906c27ab3c9a/infra/terraform/main.tf
+[helm]: https://github.com/shah-hussain-bangash/finagent-enterprise/tree/f0a32b7908d766a2e4c9fb7b9c97906c27ab3c9a/infra/helm
+[deployment]: https://github.com/shah-hussain-bangash/finagent-enterprise/blob/f0a32b7908d766a2e4c9fb7b9c97906c27ab3c9a/docs/operations/deployment.md
+[mutations]: https://github.com/shah-hussain-bangash/finagent-enterprise/blob/f0a32b7908d766a2e4c9fb7b9c97906c27ab3c9a/tests/mutations.yaml
+[acceptance]: https://github.com/shah-hussain-bangash/finagent-enterprise/blob/f0a32b7908d766a2e4c9fb7b9c97906c27ab3c9a/docs/05-testing-evidence/14-SYNTHETIC-ACCEPTANCE-RECORD.md
+[dataset-code]: https://github.com/shah-hussain-bangash/finagent-enterprise/blob/f0a32b7908d766a2e4c9fb7b9c97906c27ab3c9a/src/finagent/evaluation/dataset_control.py
+[datasets]: https://github.com/shah-hussain-bangash/finagent-enterprise/blob/f0a32b7908d766a2e4c9fb7b9c97906c27ab3c9a/docs/testing/evaluation-datasets.md
+[walkthrough]: https://github.com/shah-hussain-bangash/finagent-enterprise/blob/f0a32b7908d766a2e4c9fb7b9c97906c27ab3c9a/docs/workspace-demo-walkthrough.md
+[api-journey]: https://github.com/shah-hussain-bangash/finagent-enterprise/blob/f0a32b7908d766a2e4c9fb7b9c97906c27ab3c9a/tests/e2e/test_acceptance_journey.py
 [owasp]: https://genai.owasp.org/llmrisk/llm01-prompt-injection/
 [nist]: https://www.nist.gov/itl/ai-risk-management-framework/nist-ai-rmf-playbook
