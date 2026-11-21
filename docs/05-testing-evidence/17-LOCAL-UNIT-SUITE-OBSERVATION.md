@@ -35,9 +35,14 @@ integration marker and was skipped because the shared test configuration also re
 user-reported local result; raw output was provided in the conversation, not retained as a
 separate artifact. It does not establish a hosted CI result or Azure integration.
 
+The user then reported running `test_redis_rate_limiter_against_real_redis` using the verified
+disposable local Redis service: **1 passed in 0.08 seconds**. This focused result covers the
+Redis case that the full unit-suite run had skipped. It is user-reported and does not change the
+historical full-suite count.
+
 The skipped tests were the Redis rate-limiter integration test (gated by the unset
 `FINAGENT_TEST_DATABASE_URL`) and a Linux-only seccomp runtime test. They were **not run**,
-not passed. No test
-database was reset, no Azure service was contacted and no cloud resources were created. Raw
-console output was not retained separately. Run the two skipped checks in suitable database and
-Linux environments before describing the entire suite as verified without exclusions.
+not passed in the original full-suite run. No test database was reset, no Azure service was
+contacted and no cloud resources were created. Raw console output was not retained separately.
+The Redis case has since passed separately; the Linux-only seccomp check remains unrun in these
+reported results.

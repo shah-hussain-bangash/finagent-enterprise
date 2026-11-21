@@ -5,7 +5,7 @@ For the later local infrastructure branch checks, see the
 are separate from the default-branch baseline below. The later
 [local CI lint check](16-LOCAL-CI-LINT-CHECK.md) identifies the exact lint scope and its limits.
 The [local unit-suite observation](17-LOCAL-UNIT-SUITE-OBSERVATION.md) records the user's
-unit-suite run (404 passed, 2 skipped) and the remaining checks.
+unit-suite run (404 passed, 2 skipped), the later Redis pass and the remaining Linux-only check.
 
 **Baseline checked:** 20 November 2026, UAE. This is a synthetic engineering portfolio, not a production release or institutional acceptance. This record is the entry point for current status; update it when a newer baseline is verified. Historical results remain in the [evidence register](12-TESTING-AND-EVIDENCE-REGISTER.md).
 
