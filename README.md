@@ -2,6 +2,8 @@
 
 **Human-reviewed AML investigations · Evidence provenance · Governed AI · Enterprise architecture**
 
+**Featured case study:** [Architecting evidence-linked AI investigations with independent human review](docs/07-case-study/08-PORTFOLIO-CASE-STUDY.md) — architecture decisions, governed AI, security, recovery, current engineering evidence and the cloud delivery roadmap.
+
 FinAgent is an enterprise AI engineering portfolio project exploring how analysts can investigate financial-crime alerts with evidence-linked workflows, controlled AI assistance, and independent human review.
 
 | | |
