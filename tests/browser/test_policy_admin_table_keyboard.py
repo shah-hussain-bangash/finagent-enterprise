@@ -14,8 +14,11 @@ def local_web_auth(monkeypatch):  # type: ignore[no-untyped-def]
     monkeypatch.setenv("FINAGENT_ENVIRONMENT", "local")
 
 
-def test_policy_table_scrolls_with_keyboard_on_mobile(  # type: ignore[no-untyped-def]  # noqa: F811
-    stack, make_client, token, bank
+def test_policy_table_scrolls_with_keyboard_on_mobile(  # type: ignore[no-untyped-def]
+    stack,  # noqa: F811
+    make_client,
+    token,
+    bank,
 ):
     from playwright.sync_api import expect, sync_playwright
 
