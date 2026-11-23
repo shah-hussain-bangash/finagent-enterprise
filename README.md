@@ -109,7 +109,9 @@ The [engineering handbook](docs/06-engineering-devops/05-ENGINEERING-HANDBOOK.md
 
 On **19 November 2026**, GitHub Actions run [#16](https://github.com/shah-hussain-bangash/finagent-enterprise/actions/runs/44532646751) for main-branch commit [`a09dd9f`](https://github.com/shah-hussain-bangash/finagent-enterprise/commit/a09dd9f144eea0612b3268ec50ef2b68c160c456) reported success for all five jobs. The release-blocker selection reported 343 passed and 392 deselected; the full-suite invocation reported 724 passed and 11 deselected. The mutation check caught 82 of its 82 defined mutations. Deselected tests were not run in those invocations. This is evidence for that commit and synthetic CI environment; later changes require their own verification.
 
-| CI job | What that run checked | Scope limit |
+On **23 November 2026**, [run #62](https://github.com/shah-hussain-bangash/finagent-enterprise/actions/runs/45165370460) passed all seven jobs for integration-branch revision [`54b2936`](https://github.com/shah-hussain-bangash/finagent-enterprise/commit/54b2936a40e4faf1bef67e5c862ce39b4f99ae24). Its browser job passed nine synthetic scenarios, including keyboard navigation and recovery after a case update's response was lost; integration, selected security-control mutation checks and container image builds also passed. The browser job uploaded its test report as an artifact. The images were built without being published or signed. This result belongs to that branch and revision, and does not establish a production deployment or acceptance.
+
+| CI job | What run #16 checked | Scope limit |
 |---|---|---|
 | Quality | Python lint and type checks, unit tests, API and event-contract drift | Does not establish production behavior |
 | Security | Repository security task and secret-scan step | Not an independent penetration test or a guarantee that all secrets are absent |
