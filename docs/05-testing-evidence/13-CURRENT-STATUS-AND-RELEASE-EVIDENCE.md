@@ -9,9 +9,21 @@ unit-suite run (404 passed, 2 skipped), the later Redis pass and the focused Lin
 The [mutation verification follow-up](18-MUTATION-VERIFICATION.md) records the correction of a
 misclassified mutation result and its focused rerun.
 
-**Baseline checked:** 21 November 2026, UAE. This is a synthetic engineering portfolio, not a production release or institutional acceptance. This record is the entry point for current status; update it when a newer baseline is verified. Historical results remain in the [evidence register](12-TESTING-AND-EVIDENCE-REGISTER.md).
+**Latest recorded branch checks:** 23 November 2026, UAE. This is a synthetic engineering portfolio, not a production release or institutional acceptance. Results below identify the exact tested revisions; the latest branch result is not a claim about the current default branch. Historical results remain in the [evidence register](12-TESTING-AND-EVIDENCE-REGISTER.md).
 
-## Baseline and evidence
+## Latest verified integration-branch run
+
+| Evidence | Recorded result and boundary |
+|---|---|
+| Revision | [`54b2936a40e4faf1bef67e5c862ce39b4f99ae24`](https://github.com/shah-hussain-bangash/finagent-enterprise/commit/54b2936a40e4faf1bef67e5c862ce39b4f99ae24), on `fix/infra-validation`. Later commits require their own verification. |
+| Hosted run | [GitHub Actions run #62](https://github.com/shah-hussain-bangash/finagent-enterprise/actions/runs/45165370460) completed successfully across all seven jobs: quality, web, security, infrastructure reference validation, synthetic browser acceptance, integration, and images. |
+| Browser acceptance | Nine synthetic scenarios passed in 59.87 seconds, including analyst/reviewer flow, selected mobile keyboard interactions and uncertain-response recovery. The job checked and uploaded its JUnit report; the `browser-test-evidence` artifact is subject to GitHub retention. |
+| Integration and security | The release-blocker and full-suite steps, no-skipped-tests gate, and selected security-control mutation step passed. These are synthetic checks with defined scope, not an independent security assessment. |
+| Infrastructure and images | Terraform reference validation and Helm checks passed. Images were built without publishing or signing; no cloud deployment was established. |
+
+This result does not establish comprehensive UI accessibility, production-volume performance, live bank or identity-provider integration, or institutional release approval. See the [UI work tracker](../production-ui-work-tracker.md) for the outstanding work and detailed browser evidence.
+
+## Earlier default-branch baseline and evidence
 
 | Item | Recorded state and limit |
 |---|---|
