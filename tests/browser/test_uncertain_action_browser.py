@@ -52,7 +52,7 @@ def test_interrupted_start_requires_case_refresh(  # type: ignore[no-untyped-def
             browser.close()
 
 
-@pytest.mark.parametrize("stack", ["drop_case_update_response"], indirect=True)
+@pytest.mark.parametrize("stack", ["drop_case_update_response", "case_update_gateway_error"], indirect=True)
 def test_lost_case_update_response_requires_reload(  # type: ignore[no-untyped-def]
     stack,  # noqa: F811
     client,

@@ -9,9 +9,10 @@ import httpx
 
 
 class LostResponseProxy:
-    def __init__(self, upstream: str, *, drop_case_update: bool = False) -> None:
+    def __init__(self, upstream: str, *, drop_case_update: bool = False, gateway_error: bool = False) -> None:
         self.upstream = upstream
         self.drop_case_update = drop_case_update
+        self.gateway_error = gateway_error
         self.dropped_statuses: list[int] = []
         outer = self
 
@@ -40,6 +41,11 @@ class LostResponseProxy:
                 )
                 if drop_workflow or drop_case:
                     outer.dropped_statuses.append(response.status_code)
+                    if outer.gateway_error:
+                        self.send_response(502)
+                        self.send_header("Content-Length", "0")
+                        self.end_headers()
+                        return
                     self.connection.shutdown(socket.SHUT_RDWR)
                     self.connection.close()
                     return

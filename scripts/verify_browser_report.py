@@ -25,6 +25,10 @@ EXPECTED = {
         "tests.browser.test_uncertain_action_browser",
         "test_lost_case_update_response_requires_reload[drop_case_update_response]",
     ),
+    (
+        "tests.browser.test_uncertain_action_browser",
+        "test_lost_case_update_response_requires_reload[case_update_gateway_error]",
+    ),
 }
 
 
