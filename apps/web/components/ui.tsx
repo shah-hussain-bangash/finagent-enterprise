@@ -7,7 +7,7 @@ export function Flash({ ok, error }: { ok?: string; error?: string }) {
   if (error) {
     return (
       <p role="alert" className="flash flash-error">
-        <strong>Not saved.</strong> {error}
+        <strong>Action not confirmed.</strong> {error}
       </p>
     );
   }

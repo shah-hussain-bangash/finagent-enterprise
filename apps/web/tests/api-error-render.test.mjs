@@ -18,8 +18,16 @@ const { ApiRequestError, raw } = compile("../lib/api.ts", {
   "server-only": {}, "next/navigation": { redirect: (path) => { throw new Error(`redirect:${path}`); } },
   "@/lib/session": { requireSession: async () => ({ token: "synthetic" }) },
 });
-const { ErrorState } = compile("../components/ui.tsx", {
+const { ErrorState, Flash } = compile("../components/ui.tsx", {
   "next/link": { __esModule: true, default: ({ href, children }) => React.createElement("a", { href }, children) },
+});
+
+test("an interrupted write is not described as definitely unsaved", () => {
+  const message = "The connection was interrupted. The outcome may be unknown; check the record before trying again.";
+  const html = renderToStaticMarkup(React.createElement(Flash, { error: message }));
+  assert.match(html, /Action not confirmed/);
+  assert.match(html, /outcome may be unknown/);
+  assert.doesNotMatch(html, /Not saved/);
 });
 
 for (const body of [null, {}, { error: null }, { error: { message: {}, code: {}, correlation_id: {} } }]) {
