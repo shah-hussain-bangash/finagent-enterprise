@@ -23,6 +23,8 @@ On 23 November 2026, the operator reported an isolated web build and **1 browser
 
 On 23 November 2026, the operator reported an isolated web build and **1 browser test passed in 13.11 seconds** using application revision `74cb010607576856628fe84e8449a2f1445b4c36` and a separately supplied test. Playwright forwarded a synthetic investigation action to the web server, then dropped its response to the browser. The UI requested a refresh, removed the submit button, and an authorized API read found one workflow. This tests loss between the web server and browser; it does not simulate loss between the API and web server or establish external-bank recovery. No test report artifact was supplied.
 
+On 23 November 2026, the operator reported an isolated web build and **1 browser test passed in 14.85 seconds** using application revision `c7ea1fdd09cfeba9198083351c1a181afb2382a3` and separately supplied test and proxy files. A local synthetic proxy forwarded a workflow request to the API, observed its 202 response, and dropped that response before it reached the web server. The UI showed the uncertain-outcome warning, removed the submit button and offered a refresh; an authorized API read found one workflow. This covers the synthetic investigation-start path only, not external-bank recovery or every action. No test report artifact was supplied.
+
 ## 2. Analyst investigation
 - [ ] Verify the complete journey from authorized case queue through evidence, investigation, report, and submission.
 - [ ] Verify assignment, blockers, escalation, rework, and reopening across relevant roles.

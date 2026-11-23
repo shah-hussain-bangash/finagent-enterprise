@@ -49,7 +49,7 @@ def wait_http(url: str, timeout: float = 60) -> None:
 
 
 @pytest.fixture
-def stack(make_settings, make_worker, bank) -> Iterator[dict[str, Any]]:  # type: ignore[no-untyped-def]
+def stack(make_settings, make_worker, bank, request) -> Iterator[dict[str, Any]]:  # type: ignore[no-untyped-def]
     import uvicorn
 
     from finagent.api.main import create_app
@@ -61,11 +61,17 @@ def stack(make_settings, make_worker, bank) -> Iterator[dict[str, Any]]:  # type
     )
     threading.Thread(target=server.run, daemon=True).start()
     wait_http(f"http://127.0.0.1:{api_port}/health/live")
+    proxy = None
+    if getattr(request, "param", None) == "drop_workflow_response":
+        from tests.browser.lost_response_proxy import LostResponseProxy
+
+        proxy = LostResponseProxy(f"http://127.0.0.1:{api_port}")
+        proxy.start()
     npx = shutil.which("npx") or shutil.which("npx.cmd")
     assert npx, "npx not found"
     env = {
         **os.environ,
-        "FINAGENT_API_URL": f"http://127.0.0.1:{api_port}",
+        "FINAGENT_API_URL": proxy.url if proxy else f"http://127.0.0.1:{api_port}",
         "FINAGENT_ENVIRONMENT": "test",
         "FINAGENT_WEB_AUTH_MODE": "local",
         "FINAGENT_WEB_SESSION_SECRET": "browser-test-only-session-secret-0123456789",
@@ -97,6 +103,7 @@ def stack(make_settings, make_worker, bank) -> Iterator[dict[str, Any]]:  # type
             "settings": settings,
             "web_log": web_log,
             "stop_api": lambda: setattr(server, "should_exit", True),
+            "proxy": proxy,
         }
     finally:
         stop.set()
@@ -104,6 +111,8 @@ def stack(make_settings, make_worker, bank) -> Iterator[dict[str, Any]]:  # type
         server.should_exit = True
         web.wait(timeout=10)
         web_log.close()
+        if proxy:
+            proxy.stop()
 
 
 def sign_in(page: Any, web: str, who: str, *, mfa: str = "yes") -> None:
