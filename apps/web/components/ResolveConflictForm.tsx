@@ -8,7 +8,7 @@ export function ResolveConflictForm({caseId, conflictId}: {caseId: string; confl
   const [result, setResult] = useState<{ok: boolean; message: string} | null>(null);
   const [uncertain, setUncertain] = useState(false);
   async function submit(form: FormData) {
-    try { setResult(await resolveConflict(form)); }
+    try { const response = await resolveConflict(form); setUncertain(response.uncertain === true); setResult(response); }
     catch { setUncertain(true); setResult({ok: false, message: "Could not confirm the request. Reload the evidence before trying again."}); }
   }
   return <form action={submit} className="stack">

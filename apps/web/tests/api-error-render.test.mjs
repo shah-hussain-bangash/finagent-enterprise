@@ -105,3 +105,22 @@ test("form actions handle malformed error details and preserve valid problem cod
   currentError = new ApiRequestError(409, { error: { code: "CONFLICT", message: "Review needed", details: { problems: [{ code: "STALE" }] } } });
   await assert.rejects(() => syncPolicies(), (error) => error.message.includes("STALE"));
 });
+
+test("interrupted mutations return an explicit uncertain outcome", async () => {
+  const error = new ApiRequestError(503, { error: { code: "CONNECTION_ERROR", message: "Outcome may be unknown", correlation_id: "", details: {} } });
+  const actions = compile("../app/actions.ts", {
+    "next/cache": { revalidatePath: () => {} },
+    "next/navigation": { redirect: () => {} },
+    "@/lib/api": { ApiRequestError, api: async () => { throw error; }, raw: async () => { throw error; }, BASE: "" },
+    "@/lib/session": {}, "@/lib/auth-config": {},
+  });
+  const form = new FormData();
+  form.set("case_id", "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa");
+  form.set("record_version", "1");
+  form.set("reason", "Synthetic reason");
+  for (const name of ["startInvestigation", "reopenCase", "resolveConflict", "submitReport", "decide"]) {
+    const result = await actions[name](form);
+    assert.equal(result.ok, false, name);
+    assert.equal(result.uncertain, true, name);
+  }
+});

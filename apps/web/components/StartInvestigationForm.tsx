@@ -9,7 +9,9 @@ export function StartInvestigationForm({ caseId, requestKey }: { caseId: string;
   const [uncertain, setUncertain] = useState(false);
   async function submit(form: FormData) {
     try {
-      setResult(await startInvestigation(form));
+      const response = await startInvestigation(form);
+      setUncertain(response.uncertain === true);
+      setResult(response);
     } catch {
       setUncertain(true);
       setResult({ok: false, message: "Could not confirm the request. Reload the case before trying again."});

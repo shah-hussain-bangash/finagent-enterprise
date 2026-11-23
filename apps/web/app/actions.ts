@@ -59,14 +59,14 @@ export async function signOut(): Promise<never> {
 }
 
 // ------------------------------------------------------------------ cases and workflows
-export async function startInvestigation(form: FormData): Promise<{ok: boolean; message: string}> {
+export async function startInvestigation(form: FormData): Promise<{ok: boolean; message: string; uncertain?: boolean}> {
   const caseId = str(form, "case_id");
   try {
     await api("/api/v1/workflows", { json: { case_id: caseId }, idempotencyKey: str(form, "key") || randomUUID() });
     return {ok: true, message: "Investigation queued."};
   } catch (e) {
     if (!(e instanceof ApiRequestError)) throw e;
-    return {ok: false, message: `${e.code}: ${e.message}`};
+    return {ok: false, message: `${e.code}: ${e.message}`, uncertain: e.code === "CONNECTION_ERROR"};
   }
 }
 
@@ -90,7 +90,7 @@ export async function updateCase(form: FormData): Promise<never> {
     api(`/api/v1/cases/${caseId}`, { method: "PATCH", json: body, ifMatch: Number(str(form, "record_version")) }));
 }
 
-export async function reopenCase(form: FormData): Promise<{ok: boolean; message: string}> {
+export async function reopenCase(form: FormData): Promise<{ok: boolean; message: string; uncertain?: boolean}> {
   const caseId = str(form, "case_id");
   if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(caseId)) {
     return {ok: false, message: "Choose a valid case."};
@@ -118,7 +118,7 @@ export async function reopenCase(form: FormData): Promise<{ok: boolean; message:
     return {ok: true, message: "Case reopened. A new draft requires review."};
   } catch (e) {
     if (!(e instanceof ApiRequestError)) throw e;
-    return {ok: false, message: `${e.code}: ${e.message}`};
+    return {ok: false, message: `${e.code}: ${e.message}`, uncertain: e.code === "CONNECTION_ERROR"};
   }
 }
 
@@ -131,7 +131,7 @@ export async function reassign(form: FormData): Promise<never> {
 }
 
 // ------------------------------------------------------------------ evidence and documents
-export async function resolveConflict(form: FormData): Promise<{ok: boolean; message: string}> {
+export async function resolveConflict(form: FormData): Promise<{ok: boolean; message: string; uncertain?: boolean}> {
   const caseId = str(form, "case_id");
   try {
     await api(`/api/v1/cases/${caseId}/evidence-conflicts/${str(form, "conflict_id")}/resolution`, {
@@ -140,7 +140,7 @@ export async function resolveConflict(form: FormData): Promise<{ok: boolean; mes
     return {ok: true, message: "Conflict resolved; both source values are kept."};
   } catch (e) {
     if (!(e instanceof ApiRequestError)) throw e;
-    return {ok: false, message: `${e.code}: ${e.message}`};
+    return {ok: false, message: `${e.code}: ${e.message}`, uncertain: e.code === "CONNECTION_ERROR"};
   }
 }
 
@@ -188,7 +188,7 @@ export async function editReport(form: FormData): Promise<never> {
     }));
 }
 
-export async function submitReport(form: FormData): Promise<{ok: boolean; message: string}> {
+export async function submitReport(form: FormData): Promise<{ok: boolean; message: string; uncertain?: boolean}> {
   const caseId = str(form, "case_id");
   try {
     await api(`/api/v1/cases/${caseId}/reports/submit`, {
@@ -198,7 +198,7 @@ export async function submitReport(form: FormData): Promise<{ok: boolean; messag
     return {ok: true, message: "Submitted for independent review."};
   } catch (e) {
     if (!(e instanceof ApiRequestError)) throw e;
-    return {ok: false, message: `${e.code}: ${e.message}`};
+    return {ok: false, message: `${e.code}: ${e.message}`, uncertain: e.code === "CONNECTION_ERROR"};
   }
 }
 
@@ -208,7 +208,7 @@ export async function withdrawReport(form: FormData): Promise<never> {
     api(`/api/v1/cases/${caseId}/reports/withdraw`, { json: { reason: str(form, "reason") } }));
 }
 
-export async function decide(form: FormData): Promise<{ok: boolean; message: string}> {
+export async function decide(form: FormData): Promise<{ok: boolean; message: string; uncertain?: boolean}> {
   const id = str(form, "approval_request_id");
   try {
     const res = await raw(`/api/v1/approvals/${id}/decision`, {
@@ -224,7 +224,7 @@ export async function decide(form: FormData): Promise<{ok: boolean; message: str
     return {ok: true, message: "Decision recorded."};
   } catch (e) {
     if (!(e instanceof ApiRequestError)) throw e;
-    return {ok: false, message: `${e.code}: ${e.message}`};
+    return {ok: false, message: `${e.code}: ${e.message}`, uncertain: e.code === "CONNECTION_ERROR"};
   }
 }
 
