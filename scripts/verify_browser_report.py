@@ -7,15 +7,24 @@ import xml.etree.ElementTree as ET
 from pathlib import Path
 
 EXPECTED = {
-    "test_analyst_and_reviewer_complete_a_case_in_the_browser",
-    "test_case_checklist_can_be_collapsed_with_keyboard",
-    "test_policy_table_scrolls_with_keyboard_on_mobile",
-    "test_mobile_sidebar_is_hidden_until_opened_and_escape_returns_focus",
-    "test_transaction_table_scrolls_with_keyboard_on_mobile",
-    "test_interrupted_start_requires_case_refresh",
-    "test_lost_browser_response_does_not_repeat_start",
-    "test_api_response_lost_after_start_requires_refresh",
-    "test_lost_case_update_response_requires_reload",
+    ("tests.browser.test_ui_journey", "test_analyst_and_reviewer_complete_a_case_in_the_browser"),
+    ("tests.browser.test_case_checklist_keyboard", "test_case_checklist_can_be_collapsed_with_keyboard"),
+    ("tests.browser.test_policy_admin_table_keyboard", "test_policy_table_scrolls_with_keyboard_on_mobile"),
+    (
+        "tests.browser.test_workspace_mobile_navigation",
+        "test_mobile_sidebar_is_hidden_until_opened_and_escape_returns_focus",
+    ),
+    ("tests.browser.test_workspace_table_keyboard", "test_transaction_table_scrolls_with_keyboard_on_mobile"),
+    ("tests.browser.test_uncertain_action_browser", "test_interrupted_start_requires_case_refresh"),
+    ("tests.browser.test_uncertain_action_browser", "test_lost_browser_response_does_not_repeat_start"),
+    (
+        "tests.browser.test_uncertain_action_browser",
+        "test_api_response_lost_after_start_requires_refresh[drop_workflow_response]",
+    ),
+    (
+        "tests.browser.test_uncertain_action_browser",
+        "test_lost_case_update_response_requires_reload[drop_case_update_response]",
+    ),
 }
 
 
@@ -25,10 +34,11 @@ def verify(path: Path) -> None:
     except (OSError, ET.ParseError) as exc:
         raise ValueError("Browser test report is missing or invalid") from exc
     cases = root.findall(".//testcase")
-    names = {case.get("name", "").split("[", 1)[0] for case in cases}
+    names = {(case.get("classname", ""), case.get("name", "")) for case in cases}
     missing = EXPECTED - names
     if missing:
-        raise ValueError(f"Browser test report is missing scenarios: {', '.join(sorted(missing))}")
+        descriptions = ", ".join(".".join(item) for item in sorted(missing))
+        raise ValueError(f"Browser test report is missing scenarios: {descriptions}")
     for suite in root.findall(".//testsuite"):
         if any(suite.get(field, "0") != "0" for field in ("failures", "errors", "skipped")):
             raise ValueError("Browser test report contains failures, errors or skipped tests")
