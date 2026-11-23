@@ -18,8 +18,17 @@ const { ApiRequestError, raw } = compile("../lib/api.ts", {
   "server-only": {}, "next/navigation": { redirect: (path) => { throw new Error(`redirect:${path}`); } },
   "@/lib/session": { requireSession: async () => ({ token: "synthetic" }) },
 });
-const { ErrorState, Flash } = compile("../components/ui.tsx", {
-  "next/link": { __esModule: true, default: ({ href, children }) => React.createElement("a", { href }, children) },
+const { ErrorState, Flash, Tabs } = compile("../components/ui.tsx", {
+  "next/link": { __esModule: true, default: ({ href, children, ...props }) => React.createElement("a", { href, ...props }, children) },
+});
+
+test("case navigation preserves the selected case when opening transactions", () => {
+  const caseId = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa";
+  const html = renderToStaticMarkup(React.createElement(Tabs, { caseId, active: "/evidence" }));
+  assert.ok(html.includes(`href="/workspace/recorded-transactions?case=${caseId}"`));
+  assert.ok(html.includes(`href="/workspace/case-overview?case=${caseId}"`));
+  assert.match(html, /href="\/cases\/[^\"]+\/evidence" aria-current="page"/);
+  assert.equal((html.match(/aria-current="page"/g) ?? []).length, 1);
 });
 
 test("an interrupted write is not described as definitely unsaved", () => {

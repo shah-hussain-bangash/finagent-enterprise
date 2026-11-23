@@ -27,8 +27,8 @@ function loadPage(runResult) {
   new Function("require", "exports", "module", code)((id) => id in mocks ? mocks[id] : require(id), exports, { exports });
   return exports.default;
 }
-async function render(runResult) {
-  return renderToStaticMarkup(await loadPage(runResult)({ params: Promise.resolve({ id: caseId }), searchParams: Promise.resolve({}) }));
+async function render(runResult, search = {}) {
+  return renderToStaticMarkup(await loadPage(runResult)({ params: Promise.resolve({ id: caseId }), searchParams: Promise.resolve(search) }));
 }
 test("does not offer to start an investigation if run history is unavailable", async () => {
   const html = await render({ data: null, error: {} });
@@ -38,4 +38,27 @@ test("does not offer to start an investigation if run history is unavailable", a
 test("offers to start when run history is available and no run is active", async () => {
   const html = await render({ data: { items: [] }, error: null });
   assert.ok(html.includes("Start investigation"));
+});
+
+test("an interrupted case action requires a reload before offering more changes", async () => {
+  const html = await render({ data: { items: [] }, error: null }, { error: "CONNECTION_ERROR: Outcome may be unknown" });
+  assert.ok(html.includes("Reload case"));
+  assert.ok(html.includes(`href="/cases/${caseId}"`));
+  assert.ok(!html.includes("Start investigation"));
+  assert.ok(!html.includes("Mark blocked"));
+  assert.ok(html.includes("Investigation runs"));
+});
+
+test("a confirmed validation error does not hide the case controls", async () => {
+  const html = await render({ data: { items: [] }, error: null }, { error: "INVALID: Choose a valid reason" });
+  assert.ok(html.includes("Mark blocked"));
+  assert.ok(!html.includes("Reload case"));
+});
+
+test("an interrupted action also blocks resuming an active investigation", async () => {
+  const active = { run_id: "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb", status: "WAITING_EVIDENCE", workflow_type: "SYNTHETIC", status_reason: "Waiting", next_action: null, created_at: null };
+  const html = await render({ data: { items: [active] }, error: null }, { error: "CONNECTION_ERROR: Outcome may be unknown" });
+  assert.ok(html.includes("WAITING_EVIDENCE"));
+  assert.ok(!html.includes("Evidence supplied - continue"));
+  assert.ok(html.includes("Reload case"));
 });

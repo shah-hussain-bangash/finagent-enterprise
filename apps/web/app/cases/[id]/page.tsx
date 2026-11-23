@@ -51,6 +51,7 @@ export default async function CaseOverview({ params, searchParams }: {
   await requireSession();
   const { id } = await params;
   const sp = await searchParams;
+  const uncertainAction = typeof sp.error === "string" && sp.error.startsWith("CONNECTION_ERROR:");
   const { data: c, error } = await load<CaseDetail>(`/api/v1/cases/${id}`);
   if (error) return <ErrorState error={error} what="Case" />;
   const runs = await load<{ items: RunView[] }>(`/api/v1/cases/${id}/workflows`);
@@ -62,6 +63,7 @@ export default async function CaseOverview({ params, searchParams }: {
       <p><Link href={`/workspace/case-overview?${new URLSearchParams({ case: c.case_id })}`}>Open connected investigation overview →</Link></p>
       <Tabs caseId={id} active="" />
       <Flash ok={sp.ok} error={sp.error} />
+      {uncertainAction && <p className="warn" role="status">Check the recorded case before another action. <Link href={`/cases/${id}`}>Reload case</Link></p>}
       {c.status === "BLOCKED" ? (
         <p className="warn" role="status"><strong>Blocked:</strong> {c.blocked_reason} (owner: {c.blocked_owner_role})</p>
       ) : null}
@@ -99,10 +101,10 @@ export default async function CaseOverview({ params, searchParams }: {
           </tbody>
         </table></div>
       ) : null}
-      {runs.data && !active && ["ASSIGNED", "INVESTIGATING", "REWORK"].includes(c.status) ? (
+      {!uncertainAction && runs.data && !active && ["ASSIGNED", "INVESTIGATING", "REWORK"].includes(c.status) ? (
         <StartInvestigationForm caseId={id} requestKey={randomUUID()} />
       ) : null}
-      {active?.status === "WAITING_EVIDENCE" ? (
+      {!uncertainAction && active?.status === "WAITING_EVIDENCE" ? (
         <form action={resumeRun} className="stack panel">
           <input type="hidden" name="run_id" value={active.run_id} />
           <input type="hidden" name="action" value="EVIDENCE_SUPPLIED" />
@@ -112,7 +114,7 @@ export default async function CaseOverview({ params, searchParams }: {
           <SubmitButton>Evidence supplied - continue</SubmitButton>
         </form>
       ) : null}
-      {active?.status === "WAITING_REVIEW" && ["INVESTIGATING", "REWORK"].includes(c.status) ? (
+      {!uncertainAction && active?.status === "WAITING_REVIEW" && ["INVESTIGATING", "REWORK"].includes(c.status) ? (
         <form action={resumeRun} className="stack panel">
           <input type="hidden" name="run_id" value={active.run_id} />
           <input type="hidden" name="action" value="REANALYZE" />
@@ -122,7 +124,7 @@ export default async function CaseOverview({ params, searchParams }: {
           <SubmitButton>Re-run evidence and analysis</SubmitButton>
         </form>
       ) : null}
-      {["INVESTIGATING", "BLOCKED"].includes(c.status) ? (
+      {!uncertainAction && ["INVESTIGATING", "BLOCKED"].includes(c.status) ? (
         <form action={updateCase} className="inline panel">
           <input type="hidden" name="case_id" value={id} />
           <input type="hidden" name="record_version" value={c.record_version} />
@@ -134,7 +136,7 @@ export default async function CaseOverview({ params, searchParams }: {
         </form>
       ) : null}
 
-      {c.status === "COMPLETED" && c.can_reopen ? (
+      {!uncertainAction && c.status === "COMPLETED" && c.can_reopen ? (
         <div className="panel" aria-labelledby="reopen-heading">
           <h2 id="reopen-heading">Reopen completed case</h2>
           <p id="reopen-help">

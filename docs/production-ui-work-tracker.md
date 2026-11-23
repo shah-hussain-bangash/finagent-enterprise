@@ -25,6 +25,8 @@ On 23 November 2026, the operator reported an isolated web build and **1 browser
 
 On 23 November 2026, the operator reported an isolated web build and **1 browser test passed in 14.85 seconds** using application revision `c7ea1fdd09cfeba9198083351c1a181afb2382a3` and separately supplied test and proxy files. A local synthetic proxy forwarded a workflow request to the API, observed its 202 response, and dropped that response before it reached the web server. The UI showed the uncertain-outcome warning, removed the submit button and offered a refresh; an authorized API read found one workflow. This covers the synthetic investigation-start path only, not external-bank recovery or every action. No test report artifact was supplied.
 
+On 23 November 2026, the operator reported a successful isolated web build and **1 browser test passed in 11.32 seconds** for the case checklist at a 390 × 844 viewport. The application was revision `7ce708ef09b429a24781a5ceaa33da9c0a77d01a`, with the browser test supplied separately. The synthetic test checked initial visibility, keyboard collapse and expansion, and preservation of the selected case in the evidence briefing link. No test report artifact was supplied; wider accessibility review remains open.
+
 ## 2. Analyst investigation
 - [ ] Verify the complete journey from authorized case queue through evidence, investigation, report, and submission.
 - [ ] Verify assignment, blockers, escalation, rework, and reopening across relevant roles.

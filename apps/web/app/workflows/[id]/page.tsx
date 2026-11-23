@@ -20,6 +20,7 @@ export default async function RunMonitor({ params, searchParams }: {
   await requireSession();
   const { id } = await params;
   const sp = await searchParams;
+  const uncertainAction = typeof sp.error === "string" && sp.error.startsWith("CONNECTION_ERROR:");
   const { data: r, error } = await load<Run>(`/api/v1/workflows/${id}`);
   if (error) return <ErrorState error={error} what="Workflow run" />;
   const terminal = ["SUCCEEDED", "FAILED", "CANCELLED"].includes(r.status);
@@ -32,6 +33,7 @@ export default async function RunMonitor({ params, searchParams }: {
       {r.attempt > r.max_attempts && <p className="warn">The recorded count is above the failure-handling threshold. Review the execution history for context; this does not by itself establish that a retry limit was breached.</p>}
       <p><Link href={`/workspace/recorded-monitor?${new URLSearchParams({ case: r.case_id, run: r.run_id })}`}>View recorded investigation run →</Link></p>
       <Flash ok={sp.ok} error={sp.error} />
+      {uncertainAction && <p className="warn" role="status">Check the recorded run before another action. <Link href={`/workflows/${id}`}>Reload run</Link></p>}
       <p>Status <span className={`badge badge-${r.status.toLowerCase()}`}>{r.status}</span> - {r.status_reason}
         {r.cancel_requested ? " (cancellation requested)" : ""}</p>
       {r.next_action ? <p className="warn">{r.next_action}</p> : null}
@@ -39,7 +41,7 @@ export default async function RunMonitor({ params, searchParams }: {
         <ul>{r.blockers.map((b, i) => <li key={i}>{b.code}{b.reason ? `: ${b.reason}` : ""}
           {b.operation_id ? <> - <Link href="/operations">reconcile operation {b.operation_id.slice(0, 8)}</Link></> : null}</li>)}</ul>
       ) : null}
-      {r.status === "HUMAN_REVIEW" ? (
+      {!uncertainAction && r.status === "HUMAN_REVIEW" ? (
         <form action={resumeRun} className="stack panel">
           <input type="hidden" name="run_id" value={id} />
           <input type="hidden" name="action" value="RETRY" />
@@ -48,7 +50,7 @@ export default async function RunMonitor({ params, searchParams }: {
           <SubmitButton>Retry from last checkpoint</SubmitButton>
         </form>
       ) : null}
-      {!terminal && r.status !== "OUTCOME_UNCERTAIN" ? (
+      {!uncertainAction && !terminal && r.status !== "OUTCOME_UNCERTAIN" ? (
         <form action={cancelRun} className="inline panel">
           <input type="hidden" name="run_id" value={id} />
           <label htmlFor="cr">Cancel (committed effects are kept): reason</label>

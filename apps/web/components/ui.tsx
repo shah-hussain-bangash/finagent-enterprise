@@ -72,6 +72,7 @@ export function Tabs({ caseId, active }: { caseId: string; active: string }) {
         </Link>
       ))}
       <Link href={`/workspace/case-overview?${new URLSearchParams({ case: caseId })}`}>Investigation overview</Link>
+      <Link href={`/workspace/recorded-transactions?${new URLSearchParams({ case: caseId })}`}>Transactions</Link>
     </nav>
   );
 }
