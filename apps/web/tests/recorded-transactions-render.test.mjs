@@ -83,3 +83,27 @@ test("sums exact posted amounts separately and discloses excluded or unrecognize
   assert.equal(result.excluded, 2);
   assert.equal(result.unrecognized, 2);
 });
+
+test("keeps large synthetic sources separate when filtering and paging", async () => {
+  const sample = structuredClone(evidence);
+  const sourceA = sample.items[0];
+  const sourceB = structuredClone(sourceA);
+  sourceB.evidence_item_id = "e2";
+  sourceB.source_ref = "source-b";
+  const rows = (prefix, count, amount) => Array.from({ length: count }, (_, index) => ({
+    source_transaction_id: `${prefix}-${String(index + 1).padStart(4, "0")}`,
+    booking_time: "2026-01-01", amount, currency: "AED", direction: "CREDIT", status: "POSTED", counterparty_ref: "sample",
+  }));
+  sourceA.content.items = rows("first", 1000, "1.00");
+  sourceB.content.items = rows("second", 700, "2.00");
+  sample.items.push(sourceB);
+  const html = renderToStaticMarkup(await loadPage(sample)({ searchParams: Promise.resolve({
+    case: caseId, q: "sample", direction: "CREDIT", page_source: "e1", page: "2",
+  }) }));
+  assert.ok(html.includes("first-0026") && html.includes("first-0050"));
+  assert.ok(!html.includes("first-0025") && !html.includes("first-0051"));
+  assert.ok(html.includes("second-0001") && html.includes("second-0025"));
+  assert.ok(!html.includes("second-0026"));
+  assert.ok(html.includes("1000.00") && html.includes("1400.00"));
+  assert.ok(html.includes("of 1000 filtered transactions") && html.includes("of 700 filtered transactions"));
+});
