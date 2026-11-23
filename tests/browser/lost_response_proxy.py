@@ -41,8 +41,8 @@ class LostResponseProxy:
                 self.end_headers()
                 self.wfile.write(response.content)
 
-            do_GET = forward
-            do_POST = forward
+            do_GET = forward  # noqa: N815 - required by BaseHTTPRequestHandler
+            do_POST = forward  # noqa: N815 - required by BaseHTTPRequestHandler
 
         self.server = ThreadingHTTPServer(("127.0.0.1", 0), Handler)
         self.thread = Thread(target=self.server.serve_forever, daemon=True)
