@@ -15,6 +15,8 @@ Earlier combined verification: 52 frontend rendering and behavior tests passed, 
 
 On 21 November 2026, the operator reported a successful isolated web build and **2 browser tests passed in 18.66 seconds** at revision `df02bf4cf80b04b390e10e436dc02dd8561e8fb6`. These synthetic tests check keyboard opening and closing of the mobile workspace navigation, focus return, and keyboard scrolling of the mobile transactions table at a 390 × 844 viewport. An earlier attempt had been blocked by a local database container process failure. The passing run does not establish screen-reader support, contrast, other viewport coverage, or full accessibility acceptance; no test report artifact was supplied.
 
+On 23 November 2026, the operator reported a successful isolated web build and **1 browser test passed in 14.11 seconds** for keyboard scrolling of the policy versions table at a 390 × 844 viewport. The application snapshot was revision `74bd657b5cd14619f8f39997624599b7133ec339`; the browser test was supplied separately and its function signature was subsequently reformatted. The run used synthetic data and a disposable local test database. The result was operator-reported without an attached test report; screen-reader and wider accessibility assessment remain open.
+
 ## 2. Analyst investigation
 - [ ] Verify the complete journey from authorized case queue through evidence, investigation, report, and submission.
 - [ ] Verify assignment, blockers, escalation, rework, and reopening across relevant roles.
