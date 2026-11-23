@@ -49,3 +49,44 @@ def test_interrupted_start_requires_case_refresh(  # type: ignore[no-untyped-def
             expect(page.get_by_role("link", name="Refresh case")).to_be_visible()
         finally:
             browser.close()
+
+
+def test_lost_browser_response_does_not_repeat_start(  # type: ignore[no-untyped-def]
+    stack,  # noqa: F811
+    client,
+    token,
+):
+    from playwright.sync_api import expect, sync_playwright
+
+    case_id = ingest(client, token)["case_id"]
+    analyst = assigned_analyst(client, token, case_id)
+    responses: list[int] = []
+    with sync_playwright() as playwright:
+        browser = playwright.chromium.launch()
+        try:
+            page = browser.new_page()
+            sign_in(page, stack["web"], analyst)
+            page.goto(f"{stack['web']}/cases/{case_id}")
+            start = page.get_by_role("button", name="Start investigation")
+            expect(start).to_be_visible()
+
+            def lose_response(route):  # type: ignore[no-untyped-def]
+                if route.request.method != "POST":
+                    route.continue_()
+                    return
+                # Forward the server action to completion, then drop its browser response.
+                response = route.fetch()
+                responses.append(response.status)
+                route.abort("failed")
+
+            page.route(f"**/cases/{case_id}", lose_response)
+            start.click()
+            expect(page.get_by_role("alert").filter(has_text="Could not confirm the request")).to_be_visible()
+            expect(start).to_have_count(0)
+            expect(page.get_by_role("link", name="Refresh case")).to_be_visible()
+            assert responses == [200]
+            runs = client.get(f"/api/v1/cases/{case_id}/workflows", headers=token(analyst))
+            assert runs.status_code == 200
+            assert len(runs.json()["items"]) == 1
+        finally:
+            browser.close()

@@ -21,6 +21,8 @@ On 23 November 2026, the operator reported a successful isolated web build and *
 
 On 23 November 2026, the operator reported an isolated web build and **1 browser test passed in 15.09 seconds** using application revision `25298010ba978d11fef5396128fb520099bb8897` and separately supplied browser test files. After a synthetic case loaded, the test stopped its local API before submitting an investigation request. The UI displayed the uncertain-outcome warning, removed the submit button and offered a case refresh. This test does not demonstrate a write that reached the API before its response was lost; no test report artifact was supplied.
 
+On 23 November 2026, the operator reported an isolated web build and **1 browser test passed in 13.11 seconds** using application revision `74cb010607576856628fe84e8449a2f1445b4c36` and a separately supplied test. Playwright forwarded a synthetic investigation action to the web server, then dropped its response to the browser. The UI requested a refresh, removed the submit button, and an authorized API read found one workflow. This tests loss between the web server and browser; it does not simulate loss between the API and web server or establish external-bank recovery. No test report artifact was supplied.
+
 ## 2. Analyst investigation
 - [ ] Verify the complete journey from authorized case queue through evidence, investigation, report, and submission.
 - [ ] Verify assignment, blockers, escalation, rework, and reopening across relevant roles.
