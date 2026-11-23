@@ -59,7 +59,8 @@ def stack(make_settings, make_worker, bank, request) -> Iterator[dict[str, Any]]
     server = uvicorn.Server(
         uvicorn.Config(create_app(settings), host="127.0.0.1", port=api_port, log_level="warning")
     )
-    threading.Thread(target=server.run, daemon=True).start()
+    api_thread = threading.Thread(target=server.run, daemon=True)
+    api_thread.start()
     wait_http(f"http://127.0.0.1:{api_port}/health/live")
     proxy = None
     if getattr(request, "param", None) == "drop_workflow_response":
@@ -94,7 +95,8 @@ def stack(make_settings, make_worker, bank, request) -> Iterator[dict[str, Any]]
                 worker.tick()
             stop.wait(0.5)
 
-    threading.Thread(target=loop, daemon=True).start()
+    worker_thread = threading.Thread(target=loop, daemon=True)
+    worker_thread.start()
     try:
         wait_http(f"http://127.0.0.1:{web_port}/signin", timeout=90)
         yield {
@@ -107,12 +109,16 @@ def stack(make_settings, make_worker, bank, request) -> Iterator[dict[str, Any]]
         }
     finally:
         stop.set()
+        worker_thread.join(timeout=15)
         web.terminate()
         server.should_exit = True
         web.wait(timeout=10)
+        api_thread.join(timeout=15)
         web_log.close()
         if proxy:
             proxy.stop()
+        if worker_thread.is_alive() or api_thread.is_alive():
+            raise RuntimeError("Synthetic browser stack did not stop cleanly")
 
 
 def sign_in(page: Any, web: str, who: str, *, mfa: str = "yes") -> None:
