@@ -37,6 +37,14 @@ test("keeps the case and document context in navigation", async () => {
   assert.ok(html.includes('href="/cases/case-1/documents"'));
   assert.ok(html.includes('case=case-1&amp;document=document-1'));
 });
+
+test("an interrupted correction leaves extracted fields visible and requires reload", async () => {
+  const html = renderToStaticMarkup(await loadPage()({ params: Promise.resolve({ id: "document-1" }), searchParams: Promise.resolve({ error: "CONNECTION_ERROR: Outcome unknown" }) }));
+  assert.ok(html.includes("Reload document"));
+  assert.ok(html.includes('href="/documents/document-1"'));
+  assert.ok(html.includes("full_name") && html.includes("expiry_date"));
+  assert.ok(!html.includes("Save correction for full_name"));
+});
 test("explains a quarantined file without offering a download", async () => {
   const version = { version_id: "version-1", version_no: 1, status: "QUARANTINED", downloadable: false, quarantine: { reason_code: "SCAN", detail: "Review required", owner_role: "ANALYST" }, extraction: null, sha256: "abc", size_bytes: 10 };
   const html = renderToStaticMarkup(await loadPage([version])({ params: Promise.resolve({ id: "document-1" }), searchParams: Promise.resolve({}) }));

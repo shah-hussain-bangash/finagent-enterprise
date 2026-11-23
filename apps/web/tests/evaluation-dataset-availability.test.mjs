@@ -28,3 +28,11 @@ test("does not offer to run an evaluation without a returned dataset", async () 
   assert.ok(!html.includes("Run evaluation"));
   assert.ok(html.includes("/workspace/evaluation-comparison"));
 });
+
+test("an interrupted evaluation action requires a reload before starting another", async () => {
+  const html = renderToStaticMarkup(await pageWith({ datasets: ["synthetic-v1"], items: [] })({ searchParams: Promise.resolve({ error: "CONNECTION_ERROR: Outcome unknown" }) }));
+  assert.ok(html.includes("Reload evaluations"));
+  assert.ok(html.includes('href="/evaluations"'));
+  assert.ok(!html.includes(">Run evaluation</button>"));
+  assert.ok(html.includes("No evaluation runs were returned"));
+});

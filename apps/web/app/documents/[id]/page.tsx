@@ -33,6 +33,7 @@ export default async function DocumentReview({ params, searchParams }: {
   await requireSession();
   const { id } = await params;
   const sp = await searchParams;
+  const uncertainAction = typeof sp.error === "string" && sp.error.startsWith("CONNECTION_ERROR:");
   const { data: d, error } = await load<Doc>(`/api/v1/documents/${id}`);
   if (error) return <ErrorState error={error} what="Document" />;
   const current = d.versions[0];
@@ -42,6 +43,7 @@ export default async function DocumentReview({ params, searchParams }: {
       <p><Link href={`/cases/${d.case_id}/documents`}>← Back to case documents</Link></p>
       <p><Link href={`/workspace/recorded-provenance?${new URLSearchParams({ case: d.case_id, document: d.document_id })}#document-details`}>View recorded document provenance →</Link></p>
       <Flash ok={sp.ok} error={sp.error} />
+      {uncertainAction && <p className="warn" role="status">Check the recorded document before another action. <a href={`/documents/${id}`}>Reload document</a></p>}
       {current?.quarantine ? (
         <p role="alert" className="flash flash-error">Quarantined ({current.quarantine.reason_code}): {current.quarantine.detail}
           {" "}Owner: {current.quarantine.owner_role}. The original file is not available for download while quarantined.</p>
@@ -65,7 +67,7 @@ export default async function DocumentReview({ params, searchParams }: {
                 <td>{where(f)}</td>
                 <td>{f.origin}{f.correction_reason ? <div className="muted">{f.correction_reason}</div> : null}</td>
                 <td>
-                  <form action={correctField} className="stack">
+                  {!uncertainAction && <form action={correctField} className="stack">
                     <input type="hidden" name="document_id" value={id} />
                     <input type="hidden" name="field_id" value={f.field_id} />
                     <label htmlFor={`v-${f.field_id}`}>New value for {f.field_key}</label>
@@ -73,7 +75,7 @@ export default async function DocumentReview({ params, searchParams }: {
                     <label htmlFor={`r-${f.field_id}`}>Reason for correcting {f.field_key}</label>
                     <input id={`r-${f.field_id}`} name="reason" required minLength={10} maxLength={300} />
                     <SubmitButton>{`Save correction for ${f.field_key}`}</SubmitButton>
-                  </form>
+                  </form>}
                 </td>
               </tr>
             ))}

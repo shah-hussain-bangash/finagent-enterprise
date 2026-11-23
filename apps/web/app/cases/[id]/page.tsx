@@ -63,7 +63,7 @@ export default async function CaseOverview({ params, searchParams }: {
       <p><Link href={`/workspace/case-overview?${new URLSearchParams({ case: c.case_id })}`}>Open connected investigation overview →</Link></p>
       <Tabs caseId={id} active="" />
       <Flash ok={sp.ok} error={sp.error} />
-      {uncertainAction && <p className="warn" role="status">Check the recorded case before another action. <Link href={`/cases/${id}`}>Reload case</Link></p>}
+      {uncertainAction && <p className="warn" role="status">Check the recorded case before another action. <a href={`/cases/${id}`}>Reload case</a></p>}
       {c.status === "BLOCKED" ? (
         <p className="warn" role="status"><strong>Blocked:</strong> {c.blocked_reason} (owner: {c.blocked_owner_role})</p>
       ) : null}

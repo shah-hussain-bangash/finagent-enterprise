@@ -25,6 +25,7 @@ export default async function ReportPage({ params, searchParams }: {
   await requireSession();
   const { id } = await params;
   const sp = await searchParams;
+  const uncertainAction = typeof sp.error === "string" && sp.error.startsWith("CONNECTION_ERROR:");
   const list = await load<Reports>(`/api/v1/cases/${id}/reports`);
   if (list.error) return <ErrorState error={list.error} what="Report" />;
   const report = list.data.report;
@@ -39,6 +40,7 @@ export default async function ReportPage({ params, searchParams }: {
       <Tabs caseId={id} active="/report" />
       <p><Link href={`/workspace/recorded-review?${new URLSearchParams({ case: id })}`}>Compare recorded report versions →</Link></p>
       <Flash ok={sp.ok} error={sp.error} />
+      {uncertainAction && <p className="warn" role="status">Check the recorded report before another action. <a href={`/cases/${id}/report`}>Reload report</a></p>}
       {invalidVersion && <p role="alert">The selected report version was not returned for this case. Choose a version from the revision history.</p>}
       {!report ? <Empty>No draft yet. The draft is produced by the investigation run after evidence and analysis.</Empty> : null}
       {v?.error ? <ErrorState error={v.error} what="Report version" /> : null}
@@ -53,7 +55,7 @@ export default async function ReportPage({ params, searchParams }: {
             <div role="alert" className="flash flash-error">Validation problems (block submission):
               <ul>{v.data.validation.problems?.map((p, i) => <li key={i}>{p.code}{p.section ? ` in ${p.section}` : ""}</li>)}</ul></div>
           ) : <p className="flash flash-ok">Deterministic validation passed.</p>}
-          {isCurrent && report?.status === "DRAFT" ? (
+          {!uncertainAction && isCurrent && report?.status === "DRAFT" ? (
             <form action={editReport} className="stack">
               <input type="hidden" name="case_id" value={id} />
               <input type="hidden" name="base_version_no" value={v.data.version_no} />
@@ -89,11 +91,11 @@ export default async function ReportPage({ params, searchParams }: {
               ))}
             </details>
           ) : null}
-          {isCurrent && report?.status === "DRAFT" && v.data.validation.valid ? (
+          {!uncertainAction && isCurrent && report?.status === "DRAFT" && v.data.validation.valid ? (
             <SubmitReportForm caseId={id} version={v.data.version_no} requestKey={randomUUID()} />
           ) : null}
           {isCurrent && report?.status === "DRAFT" && !v.data.validation.valid ? <p className="warn">Resolve the validation problems above before submitting this version for review.</p> : null}
-          {isCurrent && report?.status === "SUBMITTED" ? (
+          {!uncertainAction && isCurrent && report?.status === "SUBMITTED" ? (
             <form action={withdrawReport} className="inline panel">
               <input type="hidden" name="case_id" value={id} />
               <label htmlFor="wreason">Reason for withdrawing the current submission</label>
@@ -101,12 +103,12 @@ export default async function ReportPage({ params, searchParams }: {
               <SubmitButton danger>Withdraw current submission</SubmitButton>
             </form>
           ) : null}
-          <form action={createExport} className="inline panel">
+          {!uncertainAction && <form action={createExport} className="inline panel">
             <input type="hidden" name="case_id" value={id} />
             <input type="hidden" name="version_no" value={v.data.version_no} />
             <SubmitButton>Export this version</SubmitButton>
             <span className="muted">Reviewers and supervisors only. Unapproved versions carry a DRAFT watermark.</span>
-          </form>
+          </form>}
         </>
       ) : null}
       {list.data.versions.length ? (

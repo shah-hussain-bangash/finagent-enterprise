@@ -15,15 +15,17 @@ const NEXT: Record<string, string[]> = { DRAFT: ["approve", "revoke", "reindex"]
 export default async function PolicyAdmin({ searchParams }: { searchParams: Promise<Record<string, string | undefined>> }) {
   await requireSession();
   const sp = await searchParams;
+  const uncertainAction = typeof sp.error === "string" && sp.error.startsWith("CONNECTION_ERROR:");
   const { data, error } = await load<{ items: Version[] }>("/api/v1/knowledge/policies");
   return (
     <section aria-labelledby="h">
       <h1 id="h">Policy administration</h1>
       <Flash ok={sp.ok} error={sp.error} />
-      <form action={syncPolicies} className="inline panel">
+      {uncertainAction && <p className="warn" role="status">Check the recorded policies before another action. <a href="/policies/admin">Reload policies</a></p>}
+      {!uncertainAction && <form action={syncPolicies} className="inline panel">
         <SubmitButton>Synchronise from the policy repository</SubmitButton>
         <span className="muted">New versions arrive as DRAFT and are never retrievable until approved.</span>
-      </form>
+      </form>}
       {error ? <ErrorState error={error} what="Policies" /> : null}
       {data && data.items.length === 0 ? <Empty>No policy versions.</Empty> : null}
       {data && data.items.length > 0 ? (
@@ -38,7 +40,7 @@ export default async function PolicyAdmin({ searchParams }: { searchParams: Prom
               <td>{v.approval_status} / {v.ingestion_status} ({v.active_chunks} chunks){v.status_reason ? <div className="muted">{v.status_reason}</div> : null}</td>
               <td>{v.classification}<div className="muted">{v.allowed_roles.join(", ")}</div></td>
               <td>
-                {(NEXT[v.approval_status] ?? []).length ? (
+                {!uncertainAction && (NEXT[v.approval_status] ?? []).length ? (
                   <form action={policyLifecycle} className="stack">
                     <input type="hidden" name="version_id" value={v.policy_version_id} />
                     <label htmlFor={`a-${v.policy_version_id}`}>Action</label>

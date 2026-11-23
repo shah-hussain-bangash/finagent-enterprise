@@ -27,6 +27,8 @@ On 23 November 2026, the operator reported an isolated web build and **1 browser
 
 On 23 November 2026, the operator reported a successful isolated web build and **1 browser test passed in 11.32 seconds** for the case checklist at a 390 × 844 viewport. The application was revision `7ce708ef09b429a24781a5ceaa33da9c0a77d01a`, with the browser test supplied separately. The synthetic test checked initial visibility, keyboard collapse and expansion, and preservation of the selected case in the evidence briefing link. No test report artifact was supplied; wider accessibility review remains open.
 
+On 23 November 2026, the working tree based on `17de145` passed the web type check and **105 UI, 88 authentication and 18 passkey proxy tests** locally. An isolated optimized web build also completed using a copy of the existing installed dependencies. The UI rendering tests include uncertain-action reload safeguards for evidence, document upload and correction, reports, operations, administration, policies, evaluations and security verification. These checks use synthetic data and mocks; they do not replace browser testing of each screen, screen-reader review or target-environment acceptance.
+
 ## 2. Analyst investigation
 - [ ] Verify the complete journey from authorized case queue through evidence, investigation, report, and submission.
 - [ ] Verify assignment, blockers, escalation, rework, and reopening across relevant roles.

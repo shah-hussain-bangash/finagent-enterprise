@@ -52,3 +52,13 @@ test("does not fetch a malformed or unlisted report version", async () => {
     assert.ok(html.includes("selected report version was not returned"));
   }
 });
+
+test("an interrupted report action requires reload while recorded claims remain visible", async () => {
+  const html = renderToStaticMarkup(await pageWithValidation(true)({ params: Promise.resolve({ id: "case-1" }), searchParams: Promise.resolve({ error: "CONNECTION_ERROR: Outcome unknown" }) }));
+  assert.ok(html.includes("Reload report"));
+  assert.ok(html.includes('href="/cases/case-1/report"'));
+  assert.ok(html.includes("Claims and evidence links"));
+  assert.ok(!html.includes("Save as new version"));
+  assert.ok(!html.includes("Submit version 1 for independent review"));
+  assert.ok(!html.includes("Export this version"));
+});

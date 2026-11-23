@@ -14,6 +14,7 @@ interface Run {
 export default async function Evaluations({ searchParams }: { searchParams: Promise<Record<string, string | undefined>> }) {
   await requireSession();
   const sp = await searchParams;
+  const uncertainAction = typeof sp.error === "string" && sp.error.startsWith("CONNECTION_ERROR:");
   const { data, error } = await load<{ items: Run[]; datasets: string[] }>("/api/v1/evaluations");
   return (
     <section aria-labelledby="h">
@@ -22,8 +23,9 @@ export default async function Evaluations({ searchParams }: { searchParams: Prom
         acceptance decision.</p>
       <p><Link href="/workspace/evaluation-comparison">Compare recorded evaluation runs →</Link></p>
       <Flash ok={sp.ok} error={sp.error} />
+      {uncertainAction && <p className="warn" role="status">Check the recorded evaluations before another action. <a href="/evaluations">Reload evaluations</a></p>}
       {error ? <ErrorState error={error} what="Evaluations" /> : null}
-      {data && data.datasets.length > 0 ? (
+      {!uncertainAction && data && data.datasets.length > 0 ? (
         <form action={startEvaluation} className="inline panel">
           <label htmlFor="dataset">Dataset</label>
           <select id="dataset" name="dataset">{data.datasets.map((d) => <option key={d}>{d}</option>)}</select>

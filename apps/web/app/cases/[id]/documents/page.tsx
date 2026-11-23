@@ -18,6 +18,7 @@ export default async function Documents({ params, searchParams }: {
   await requireSession();
   const { id } = await params;
   const sp = await searchParams;
+  const uncertainAction = typeof sp.error === "string" && sp.error.startsWith("CONNECTION_ERROR:");
   const { data, error } = await load<{ items: Doc[] }>(`/api/v1/cases/${id}/documents`);
   return (
     <section aria-labelledby="h">
@@ -25,7 +26,8 @@ export default async function Documents({ params, searchParams }: {
       <Tabs caseId={id} active="/documents" />
       <p><Link href={`/workspace/recorded-provenance?${new URLSearchParams({ case: id })}`}>View recorded document provenance →</Link></p>
       <Flash ok={sp.ok} error={sp.error} />
-      <form action={uploadDocument} className="stack panel">
+      {uncertainAction && <p className="warn" role="status">Check the recorded documents before another action. <a href={`/cases/${id}/documents`}>Reload documents</a></p>}
+      {!uncertainAction && <form action={uploadDocument} className="stack panel">
         <input type="hidden" name="case_id" value={id} />
         <input type="hidden" name="key" value={randomUUID()} />
         <label htmlFor="file">File (PDF, DOCX or CSV; up to 20 MiB; scanned before use)</label>
@@ -39,7 +41,7 @@ export default async function Documents({ params, searchParams }: {
           <option value="OTHER">Other</option>
         </select>
         <SubmitButton>Upload</SubmitButton>
-      </form>
+      </form>}
       {error ? <ErrorState error={error} what="Documents" /> : null}
       {data && data.items.length === 0 ? <Empty>No documents for this case.</Empty> : null}
       {data && data.items.length > 0 ? (

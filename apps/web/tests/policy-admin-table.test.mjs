@@ -36,3 +36,11 @@ test("an empty policy list does not render a table", async () => {
   assert.match(html, /No policy versions/);
   assert.doesNotMatch(html, /<table/);
 });
+
+test("an interrupted policy action retains records and requires reload", async () => {
+  const html = renderToStaticMarkup(await loadPage([item])({ searchParams: Promise.resolve({ error: "CONNECTION_ERROR: Outcome unknown" }) }));
+  assert.ok(html.includes("Synthetic policy"));
+  assert.ok(html.includes('href="/policies/admin"'));
+  assert.ok(!html.includes("Synchronise from the policy repository"));
+  assert.ok(!html.includes(">Apply</button>"));
+});
