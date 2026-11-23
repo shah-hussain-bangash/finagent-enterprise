@@ -72,7 +72,11 @@ export async function startInvestigation(form: FormData): Promise<{ok: boolean; 
 
 export async function resumeRun(form: FormData): Promise<never> {
   const runId = str(form, "run_id");
-  return run(str(form, "back") || `/workflows/${runId}`, "Resume requested.", () =>
+  const uuid = "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}";
+  if (!new RegExp(`^${uuid}$`, "i").test(runId)) return to("/operations", "error", "Invalid workflow identifier.");
+  const requestedBack = str(form, "back");
+  const back = new RegExp(`^/cases/${uuid}$`, "i").test(requestedBack) ? requestedBack : `/workflows/${runId}`;
+  return run(back, "Resume requested.", () =>
     api(`/api/v1/workflows/${runId}/resume`, { json: { action: str(form, "action"), reason: str(form, "reason") } }));
 }
 

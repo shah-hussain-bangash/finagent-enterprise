@@ -124,3 +124,30 @@ test("interrupted mutations return an explicit uncertain outcome", async () => {
     assert.equal(result.uncertain, true, name);
   }
 });
+
+test("workflow resume only redirects to an allowed local case or its workflow", async () => {
+  const requests = [];
+  const { resumeRun } = compile("../app/actions.ts", {
+    "next/cache": { revalidatePath: () => {} },
+    "next/navigation": { redirect: (path) => { throw new Error(`redirect:${path}`); } },
+    "@/lib/api": { ApiRequestError, api: async (path) => { requests.push(path); }, BASE: "", raw: () => {} },
+    "@/lib/session": {}, "@/lib/auth-config": {},
+  });
+  const runId = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa";
+  const casePath = "/cases/bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb";
+  for (const back of ["https://evil.example", "//evil.example", "/\\evil.example", `${casePath}?next=bad`, "/cases/../signin"]) {
+    const form = new FormData();
+    form.set("run_id", runId);
+    form.set("back", back);
+    await assert.rejects(() => resumeRun(form), (error) => error.message.startsWith(`redirect:/workflows/${runId}?ok=`));
+  }
+  const valid = new FormData();
+  valid.set("run_id", runId);
+  valid.set("back", casePath);
+  await assert.rejects(() => resumeRun(valid), (error) => error.message.startsWith(`redirect:${casePath}?ok=`));
+  assert.equal(requests.length, 6);
+  const invalid = new FormData();
+  invalid.set("run_id", "../../outside");
+  await assert.rejects(() => resumeRun(invalid), (error) => error.message.startsWith("redirect:/operations?error="));
+  assert.equal(requests.length, 6);
+});
