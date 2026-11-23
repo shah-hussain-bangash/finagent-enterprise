@@ -147,8 +147,8 @@ jobs:
             tests/browser/test_workspace_table_keyboard.py \
             tests/browser/test_uncertain_action_browser.py \
             --junitxml=reports/junit-browser.xml -q --tb=short
-      - name: Reject skipped browser checks
-        run: "! grep -q '<skipped' reports/junit-browser.xml"
+      - name: Verify browser evidence is complete and passing
+        run: python scripts/verify_browser_report.py reports/junit-browser.xml
       - uses: actions/upload-artifact@v4
         if: always()
         with:

@@ -29,7 +29,7 @@ On 23 November 2026, the operator reported a successful isolated web build and *
 
 On 23 November 2026, the working tree based on `17de145` passed the web type check and **105 UI, 88 authentication and 18 passkey proxy tests** locally. An isolated optimized web build also completed using a copy of the existing installed dependencies. The UI rendering tests include uncertain-action reload safeguards for evidence, document upload and correction, reports, operations, administration, policies, evaluations and security verification. These checks use synthetic data and mocks; they do not replace browser testing of each screen, screen-reader review or target-environment acceptance.
 
-The CI configuration now defines a separate synthetic browser-acceptance job for eight targeted tests, a disposable PostgreSQL service and a browser-test report. The job's result must be checked on the actual GitHub run for the candidate revision; its presence in configuration is not evidence that the browser tests passed there.
+The CI configuration now defines a separate synthetic browser-acceptance job for eight targeted tests, a disposable PostgreSQL service and a browser-test report. A report gate rejects missing scenarios, failures, errors and skips; its six local unit checks passed. The job's result must be checked on the actual GitHub run for the candidate revision; its presence in configuration is not evidence that the browser tests passed there.
 
 ## 2. Analyst investigation
 - [ ] Verify the complete journey from authorized case queue through evidence, investigation, report, and submission.
