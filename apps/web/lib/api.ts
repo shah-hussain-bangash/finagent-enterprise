@@ -81,7 +81,16 @@ export async function api<T>(path: string, init: Init = {}): Promise<T> {
     const body = (await res.json().catch(() => null)) as ApiError | null;
     throw new ApiRequestError(res.status, body);
   }
-  return (await res.json()) as T;
+  try {
+    return (await res.json()) as T;
+  } catch {
+    const method = init.method ?? (init.json !== undefined || init.body ? "POST" : "GET");
+    const isRead = ["GET", "HEAD"].includes(method.toUpperCase());
+    const message = isRead
+      ? "The service response could not be read. Please try again."
+      : "The response could not be read. The outcome may be unknown; check the record before trying again.";
+    throw new ApiRequestError(502, { error: { code: isRead ? "INVALID_RESPONSE" : "CONNECTION_ERROR", message, correlation_id: "", details: {} } });
+  }
 }
 
 /** For pages: returns the error instead of throwing so the page can render an error state. */

@@ -14,7 +14,7 @@ function compile(relativePath, mocks) {
   new Function("require", "exports", "module", code)((id) => id in mocks ? mocks[id] : require(id), exports, { exports });
   return exports;
 }
-const { ApiRequestError, raw } = compile("../lib/api.ts", {
+const { ApiRequestError, api, raw } = compile("../lib/api.ts", {
   "server-only": {}, "next/navigation": { redirect: (path) => { throw new Error(`redirect:${path}`); } },
   "@/lib/session": { requireSession: async () => ({ token: "synthetic" }) },
 });
@@ -92,6 +92,34 @@ test("a failed write warns that its outcome may be unknown", async () => {
     await assert.rejects(() => raw("/synthetic", { json: { value: 1 } }), (error) => {
       assert.equal(error.code, "CONNECTION_ERROR");
       assert.match(error.message, /outcome may be unknown; check the record/);
+      return true;
+    });
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
+test("an unreadable successful write response requires checking the recorded outcome", async () => {
+  const originalFetch = globalThis.fetch;
+  globalThis.fetch = async () => new Response("not-json", { status: 200 });
+  try {
+    await assert.rejects(() => api("/synthetic", { json: { value: 1 } }), (error) => {
+      assert.equal(error.code, "CONNECTION_ERROR");
+      assert.match(error.message, /outcome may be unknown; check the record/);
+      return true;
+    });
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
+test("an unreadable successful read response reports a safe error", async () => {
+  const originalFetch = globalThis.fetch;
+  globalThis.fetch = async () => new Response("not-json", { status: 200 });
+  try {
+    await assert.rejects(() => api("/synthetic"), (error) => {
+      assert.equal(error.code, "INVALID_RESPONSE");
+      assert.match(error.message, /response could not be read/);
       return true;
     });
   } finally {
