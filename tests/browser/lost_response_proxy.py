@@ -22,7 +22,8 @@ class LostResponseProxy:
                 length = int(self.headers.get("Content-Length", "0"))
                 body = self.rfile.read(length) if length else b""
                 headers = {
-                    key: value for key, value in self.headers.items()
+                    key: value
+                    for key, value in self.headers.items()
                     if key.lower() not in {"host", "connection", "content-length", "accept-encoding"}
                 }
                 headers["Accept-Encoding"] = "identity"
