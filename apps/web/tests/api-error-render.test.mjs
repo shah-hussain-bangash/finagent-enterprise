@@ -127,6 +127,30 @@ test("an unreadable successful read response reports a safe error", async () => 
   }
 });
 
+test("a server error after a write warns that the outcome may be unknown", async () => {
+  const originalFetch = globalThis.fetch;
+  globalThis.fetch = async () => new Response("gateway error", { status: 502 });
+  try {
+    await assert.rejects(() => raw("/synthetic", { method: "PATCH" }), (error) => {
+      assert.equal(error.code, "CONNECTION_ERROR");
+      assert.match(error.message, /outcome may be unknown; check the record/);
+      return true;
+    });
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
+test("a server error on a read remains available for normal error handling", async () => {
+  const originalFetch = globalThis.fetch;
+  globalThis.fetch = async () => new Response("unavailable", { status: 503 });
+  try {
+    assert.equal((await raw("/synthetic")).status, 503);
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
 test("form actions handle malformed error details and preserve valid problem codes", async () => {
   let currentError;
   const { syncPolicies } = compile("../app/actions.ts", {

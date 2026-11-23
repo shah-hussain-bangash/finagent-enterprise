@@ -68,6 +68,11 @@ export async function raw(path: string, init: Init = {}): Promise<Response> {
       : "The connection was interrupted. The outcome may be unknown; check the record before trying again.";
     throw new ApiRequestError(503, { error: { code: "CONNECTION_ERROR", message, correlation_id: "", details: {} } });
   }
+  if (!["GET", "HEAD"].includes(method.toUpperCase()) && res.status >= 500) {
+    // A server or gateway failure can occur after a write was accepted.
+    const message = "The service reported a problem. The outcome may be unknown; check the record before trying again.";
+    throw new ApiRequestError(res.status, { error: { code: "CONNECTION_ERROR", message, correlation_id: "", details: {} } });
+  }
   if (res.status === 401) {
     const body = (await res.clone().json().catch(() => null)) as ApiError | null;
     if (body?.error?.code !== "MFA_REQUIRED") redirect("/signin?expired=1"); // session expired
