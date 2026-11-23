@@ -10,6 +10,7 @@
     "build": "next build",
     "typecheck": "tsc --noEmit",
     "lint": "next lint",
+    "test:ui": "node scripts/test-ui.mjs",
     "test:auth": "node scripts/test-auth.mjs",
     "test:auth:redis": "node scripts/test-auth.mjs --redis",
     "test:passkeys": "node scripts/test-passkeys.mjs"

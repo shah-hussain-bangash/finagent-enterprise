@@ -117,6 +117,12 @@ jobs:
       - run: npm ci --no-audit --no-fund
       - run: npm audit --omit=dev --audit-level=moderate
       - run: npm run typecheck
+      - name: UI rendering and behavior tests
+        run: npm run test:ui
+      - name: Authentication tests
+        run: npm run test:auth
+      - name: Passkey proxy tests
+        run: npm run test:passkeys
       - run: npm run build
         env: {NEXT_TELEMETRY_DISABLED: "1", FINAGENT_WEB_SESSION_SECRET: "ci-build-only-placeholder-not-a-secret-000"}
 
