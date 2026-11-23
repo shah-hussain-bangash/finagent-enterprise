@@ -51,12 +51,23 @@ export async function raw(path: string, init: Init = {}): Promise<Response> {
   if (init.json !== undefined) headers["Content-Type"] = "application/json";
   if (init.idempotencyKey) headers["Idempotency-Key"] = init.idempotencyKey;
   if (init.ifMatch !== undefined) headers["If-Match"] = `"${init.ifMatch}"`;
-  const res = await fetch(`${BASE}${path}`, {
-    method: init.method ?? (init.json !== undefined || init.body ? "POST" : "GET"),
-    headers,
-    body: init.json !== undefined ? JSON.stringify(init.json) : init.body,
-    cache: "no-store",
-  });
+  const method = init.method ?? (init.json !== undefined || init.body ? "POST" : "GET");
+  const body = init.json !== undefined ? JSON.stringify(init.json) : init.body;
+  let res: Response;
+  try {
+    res = await fetch(`${BASE}${path}`, {
+      method,
+      headers,
+      body,
+      cache: "no-store",
+    });
+  } catch {
+    // A failed connection does not establish whether a write reached the service.
+    const message = ["GET", "HEAD"].includes(method.toUpperCase())
+      ? "The service could not be reached. Please try again."
+      : "The connection was interrupted. The outcome may be unknown; check the record before trying again.";
+    throw new ApiRequestError(503, { error: { code: "CONNECTION_ERROR", message, correlation_id: "", details: {} } });
+  }
   if (res.status === 401) {
     const body = (await res.clone().json().catch(() => null)) as ApiError | null;
     if (body?.error?.code !== "MFA_REQUIRED") redirect("/signin?expired=1"); // session expired

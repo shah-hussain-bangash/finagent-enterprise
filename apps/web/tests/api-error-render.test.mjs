@@ -52,6 +52,36 @@ test("a malformed unauthorized response still redirects to sign-in", async () =>
   }
 });
 
+test("a failed read shows an unavailable state without exposing network details", async () => {
+  const originalFetch = globalThis.fetch;
+  globalThis.fetch = async () => { throw new TypeError("sensitive internal address"); };
+  try {
+    await assert.rejects(() => raw("/synthetic"), (error) => {
+      assert.equal(error.code, "CONNECTION_ERROR");
+      const html = renderToStaticMarkup(React.createElement(ErrorState, { error, what: "Cases" }));
+      assert.match(html, /service could not be reached/);
+      assert.doesNotMatch(html, /sensitive internal address|status 503/);
+      return true;
+    });
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
+test("a failed write warns that its outcome may be unknown", async () => {
+  const originalFetch = globalThis.fetch;
+  globalThis.fetch = async () => { throw new TypeError("synthetic failure"); };
+  try {
+    await assert.rejects(() => raw("/synthetic", { json: { value: 1 } }), (error) => {
+      assert.equal(error.code, "CONNECTION_ERROR");
+      assert.match(error.message, /outcome may be unknown; check the record/);
+      return true;
+    });
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
 test("form actions handle malformed error details and preserve valid problem codes", async () => {
   let currentError;
   const { syncPolicies } = compile("../app/actions.ts", {

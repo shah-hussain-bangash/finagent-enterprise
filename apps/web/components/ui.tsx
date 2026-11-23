@@ -32,7 +32,7 @@ export function ErrorState({ error, what }: { error: ApiRequestError; what: stri
           ? "It does not exist or you do not have access to it."
           : forbidden
             ? error.message
-            : `${error.message} (status ${error.status})`}
+            : error.code === "CONNECTION_ERROR" ? error.message : `${error.message} (status ${error.status})`}
       </p>
       {typeof error.body?.error?.correlation_id === "string" && error.body.error.correlation_id ? <p className="muted">Correlation ID: {error.body.error.correlation_id}</p> : null}
       {error.code === "MFA_REQUIRED" ? <p><Link href="/security">Open security verification</Link></p> : null}
