@@ -8,7 +8,7 @@ import ts from "typescript";
 
 const require = createRequire(import.meta.url);
 const caseId = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa";
-function loadPage(deny = false) {
+function loadPage(deny = false, gaps = [{ code: "MISSING", severity: "BLOCKING", detail: "Document missing", source_type: "DOCUMENT_EXTRACTION", source_ref: "doc-example" }]) {
   const calls = [];
   const mocks = {
     "next/link": { __esModule: true, default: ({ href, children }) => React.createElement("a", { href }, children) },
@@ -18,7 +18,7 @@ function loadPage(deny = false) {
     "@/lib/api": { ApiRequestError: class extends Error {}, listCases: async () => ({ items: [{ case_id: caseId, status: "INVESTIGATING" }], next_cursor: "next-token" }), load: async (path) => {
       calls.push(path);
       if (path.endsWith(caseId)) return deny ? { data: null, error: {} } : { data: { case_id: caseId, status: "INVESTIGATING", priority: "HIGH", alert_type: "AML", due_at: null, assigned_analyst_id: null, blocked_reason: null }, error: null };
-      if (path.endsWith("/evidence")) return { data: { items: [], gaps: [{ code: "MISSING", severity: "BLOCKING", detail: "Document missing", source_type: "DOCUMENT_EXTRACTION", source_ref: "doc-example" }] }, error: null };
+      if (path.endsWith("/evidence")) return { data: { items: [], gaps }, error: null };
       return { data: { items: [{ output_id: "out1", snapshot_id: "snapshot-1", findings: [{ claim_id: "sample", claim: "Synthetic indicator", support_status: "SUPPORTED" }] }] }, error: null };
     } },
   };
@@ -46,4 +46,17 @@ test("does not request evidence or agent outputs after case access fails", async
   const html = renderToStaticMarkup(await page({ searchParams: Promise.resolve({ case: caseId }) }));
   assert.equal(calls.length, 1);
   assert.ok(html.includes("Access unavailable"));
+});
+
+test("keeps a large checklist visible by default and lets analysts collapse it", async () => {
+  const gaps = Array.from({ length: 150 }, (_, index) => ({
+    code: "MISSING", severity: "REVIEW", detail: `Synthetic gap ${index + 1}`,
+    source_type: "DOCUMENT_EXTRACTION", source_ref: `doc-${index + 1}`,
+  }));
+  const { page } = loadPage(false, gaps);
+  const html = renderToStaticMarkup(await page({ searchParams: Promise.resolve({ case: caseId }) }));
+  assert.match(html, /<details open=""><summary>150 checklist gap\(s\) · expand or collapse<\/summary>/);
+  assert.ok(html.includes("Synthetic gap 1") && html.includes("Synthetic gap 150"));
+  assert.ok(html.includes("doc-150"));
+  assert.ok(html.includes(`/workspace/evidence-briefing?case=${caseId}`));
 });
