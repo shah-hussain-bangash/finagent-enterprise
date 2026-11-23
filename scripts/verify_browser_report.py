@@ -15,6 +15,7 @@ EXPECTED = {
     "test_interrupted_start_requires_case_refresh",
     "test_lost_browser_response_does_not_repeat_start",
     "test_api_response_lost_after_start_requires_refresh",
+    "test_lost_case_update_response_requires_reload",
 }
 
 

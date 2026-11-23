@@ -63,10 +63,12 @@ def stack(make_settings, make_worker, bank, request) -> Iterator[dict[str, Any]]
     api_thread.start()
     wait_http(f"http://127.0.0.1:{api_port}/health/live")
     proxy = None
-    if getattr(request, "param", None) == "drop_workflow_response":
+    if getattr(request, "param", None) in {"drop_workflow_response", "drop_case_update_response"}:
         from tests.browser.lost_response_proxy import LostResponseProxy
 
-        proxy = LostResponseProxy(f"http://127.0.0.1:{api_port}")
+        proxy = LostResponseProxy(
+            f"http://127.0.0.1:{api_port}", drop_case_update=request.param == "drop_case_update_response"
+        )
         proxy.start()
     npx = shutil.which("npx") or shutil.which("npx.cmd")
     assert npx, "npx not found"

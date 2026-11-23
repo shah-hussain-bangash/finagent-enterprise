@@ -9,8 +9,9 @@ import httpx
 
 
 class LostResponseProxy:
-    def __init__(self, upstream: str) -> None:
+    def __init__(self, upstream: str, *, drop_case_update: bool = False) -> None:
         self.upstream = upstream
+        self.drop_case_update = drop_case_update
         self.dropped_statuses: list[int] = []
         outer = self
 
@@ -30,7 +31,14 @@ class LostResponseProxy:
                 response = httpx.request(
                     self.command, f"{outer.upstream}{self.path}", headers=headers, content=body, timeout=30
                 )
-                if self.command == "POST" and urlsplit(self.path).path == "/api/v1/workflows":
+                path = urlsplit(self.path).path
+                drop_workflow = (
+                    not outer.drop_case_update and self.command == "POST" and path == "/api/v1/workflows"
+                )
+                drop_case = (
+                    outer.drop_case_update and self.command == "PATCH" and path.startswith("/api/v1/cases/")
+                )
+                if drop_workflow or drop_case:
                     outer.dropped_statuses.append(response.status_code)
                     self.connection.shutdown(socket.SHUT_RDWR)
                     self.connection.close()
@@ -44,6 +52,7 @@ class LostResponseProxy:
 
             do_GET = forward  # noqa: N815 - required by BaseHTTPRequestHandler
             do_POST = forward  # noqa: N815 - required by BaseHTTPRequestHandler
+            do_PATCH = forward  # noqa: N815 - required by BaseHTTPRequestHandler
 
         self.server = ThreadingHTTPServer(("127.0.0.1", 0), Handler)
         self.thread = Thread(target=self.server.serve_forever, daemon=True)
