@@ -96,6 +96,7 @@ def stack(make_settings, make_worker, bank) -> Iterator[dict[str, Any]]:  # type
             "api": f"http://127.0.0.1:{api_port}",
             "settings": settings,
             "web_log": web_log,
+            "stop_api": lambda: setattr(server, "should_exit", True),
         }
     finally:
         stop.set()
