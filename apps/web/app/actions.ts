@@ -41,14 +41,24 @@ async function run(back: string, okMessage: string, fn: () => Promise<unknown>):
 export async function signIn(form: FormData): Promise<never> {
   if (authMode() !== "local") redirect("/signin?error=Development%20sign-in%20is%20disabled.");
   const subject = str(form, "subject");
-  const res = await fetch(`${BASE}/api/v1/dev/session`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ subject, mfa: str(form, "mfa") !== "no" }),
-    cache: "no-store",
-  });
+  let res: Response;
+  try {
+    res = await fetch(`${BASE}/api/v1/dev/session`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ subject, mfa: str(form, "mfa") !== "no" }),
+      cache: "no-store",
+      signal: AbortSignal.timeout(10000),
+    });
+  } catch {
+    return to("/signin", "error", "Sign-in is unavailable. Please try again.");
+  }
   if (!res.ok) to("/signin", "error", "Sign-in failed or the development issuer is disabled.");
-  const body = (await res.json()) as { access_token: string; expires_in: number };
+  const body = await res.json().catch(() => null) as { access_token?: unknown; expires_in?: unknown } | null;
+  if (typeof body?.access_token !== "string" || !body.access_token ||
+      typeof body.expires_in !== "number" || !Number.isFinite(body.expires_in) || body.expires_in <= 0) {
+    return to("/signin", "error", "Sign-in is unavailable. Please try again.");
+  }
   await setSession({ token: body.access_token, subject, exp: Math.floor(Date.now() / 1000) + body.expires_in });
   redirect("/");
 }

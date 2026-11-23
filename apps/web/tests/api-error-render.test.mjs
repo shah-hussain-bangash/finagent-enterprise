@@ -151,3 +151,34 @@ test("workflow resume only redirects to an allowed local case or its workflow", 
   await assert.rejects(() => resumeRun(invalid), (error) => error.message.startsWith("redirect:/operations?error="));
   assert.equal(requests.length, 6);
 });
+
+test("local sign-in handles unavailable or malformed identity responses without creating a session", async () => {
+  const sessions = [];
+  const { signIn } = compile("../app/actions.ts", {
+    "next/cache": { revalidatePath: () => {} },
+    "next/navigation": { redirect: (path) => { throw new Error(`redirect:${path}`); } },
+    "@/lib/api": { ApiRequestError, BASE: "http://synthetic.invalid" },
+    "@/lib/session": { setSession: async (session) => sessions.push(session) },
+    "@/lib/auth-config": { authMode: () => "local" },
+  });
+  const form = new FormData();
+  form.set("subject", "synthetic-analyst");
+  const originalFetch = globalThis.fetch;
+  try {
+    for (const result of [null, new Response("not-json"), new Response("{}"), new Response('{"access_token":"t","expires_in":0}'), new Response("unavailable", { status: 503 })]) {
+      globalThis.fetch = async () => { if (result === null) throw new Error("internal service details"); return result; };
+      await assert.rejects(() => signIn(form), (error) => {
+        assert.ok(error.message.startsWith("redirect:/signin?error="));
+        assert.ok(!error.message.includes("internal service details"));
+        return true;
+      });
+      assert.equal(sessions.length, 0);
+    }
+    globalThis.fetch = async () => new Response('{"access_token":"synthetic-token","expires_in":60}');
+    await assert.rejects(() => signIn(form), /redirect:\/$/);
+    assert.equal(sessions.length, 1);
+    assert.equal(sessions[0].subject, "synthetic-analyst");
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
