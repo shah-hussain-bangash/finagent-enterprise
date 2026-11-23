@@ -1,0 +1,56 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="850" viewBox="0 0 1440 850" role="img" aria-labelledby="title desc">
+<title id="title">FinAgent Enterprise architecture and verification</title>
+<desc id="desc">Synthetic AML investigation workflow with evidence, controlled analysis, independent review and durable execution. The inspected November 20, 2026 CI run passed five jobs, with 724 tests passed and 11 deselected in its full-suite invocation, and 82 of 82 defined mutations caught. Azure remains a reference design.</desc>
+<defs>
+ <linearGradient id="bg" x2="1" y2="1"><stop stop-color="#0b1326"/><stop offset="1" stop-color="#122f43"/></linearGradient>
+ <linearGradient id="accent"><stop stop-color="#5eead4"/><stop offset="1" stop-color="#7dd3fc"/></linearGradient>
+ <marker id="arrow" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto"><path d="M0 0L8 4L0 8" fill="none" stroke="#79b9cb" stroke-width="1.5"/></marker>
+ <style>text{font-family:Segoe UI,Arial,sans-serif} .label{fill:#8fb3c8;font-size:16px;font-weight:600;letter-spacing:2px}.body{fill:#b9cbd9;font-size:18px}.node{fill:#152b40;stroke:#36576e;stroke-width:1.5}.title{fill:#f2f8fc;font-weight:600;font-size:23px}.small{fill:#afc3d3;font-size:16px}.line{fill:none;stroke:#79b9cb;stroke-width:2;marker-end:url(#arrow)}</style>
+</defs>
+<rect width="1440" height="850" rx="24" fill="url(#bg)"/>
+<rect x="56" y="53" width="60" height="5" rx="2" fill="url(#accent)"/>
+<text x="56" y="96" class="label">ENTERPRISE AI ENGINEERING CASE STUDY</text>
+<text x="53" y="165" fill="#f4f8fc" font-size="58" font-weight="700">FinAgent Enterprise</text>
+<text x="56" y="207" fill="#c4d8e6" font-size="25">Evidence-linked investigations. Independent human review.</text>
+<rect x="1095" y="70" width="288" height="42" rx="21" fill="#173e48" stroke="#2e6e70"/>
+<text x="1239" y="97" text-anchor="middle" fill="#8cf1d5" font-size="16" font-weight="600">SYNTHETIC DEVELOPMENT SYSTEM</text>
+<line x1="56" y1="246" x2="1384" y2="246" stroke="#30465a"/>
+<text x="56" y="286" class="label">LOGICAL INVESTIGATION FLOW</text>
+<rect x="56" y="313" width="280" height="124" rx="14" class="node"/>
+<text x="78" y="351" class="title">01  Scoped evidence</text>
+<text x="78" y="384" class="body">Case and tenant authorization</text>
+<text x="78" y="411" class="body">Documents and source versions</text>
+<path d="M341 375H391" class="line"/>
+<rect x="398" y="313" width="280" height="124" rx="14" class="node"/>
+<text x="420" y="351" class="title">02  Controlled analysis</text>
+<text x="420" y="384" class="body">Model and tool gateways</text>
+<text x="420" y="411" class="body">Deterministic validation</text>
+<path d="M683 375H733" class="line"/>
+<rect x="740" y="313" width="280" height="124" rx="14" class="node"/>
+<text x="762" y="351" class="title">03  Versioned report</text>
+<text x="762" y="384" class="body">Evidence snapshot binding</text>
+<text x="762" y="411" class="body">Analyst edits and submission</text>
+<path d="M1025 375H1075" class="line"/>
+<rect x="1082" y="313" width="302" height="124" rx="14" fill="#153d43" stroke="#408b83" stroke-width="1.5"/>
+<text x="1104" y="351" class="title">04  Independent review</text>
+<text x="1104" y="384" class="body">Distinct reviewer and rationale</text>
+<text x="1104" y="411" class="body">Revalidate before finalization</text>
+<rect x="56" y="459" width="1328" height="65" rx="12" fill="#0c1f32" stroke="#304b61"/>
+<text x="80" y="499" fill="#8ce4df" font-size="19" font-weight="600">DURABLE EXECUTION</text>
+<text x="339" y="499" class="body">PostgreSQL state  ·  Fenced workers  ·  Checkpoints  ·  Explicit uncertain-outcome reconciliation</text>
+<text x="56" y="573" class="label">INSPECTED HOSTED CI · 20 NOVEMBER 2026 · f0a32b7</text>
+<g>
+ <rect x="56" y="595" width="422" height="126" rx="14" fill="#142a3f"/>
+ <text x="80" y="645" fill="#f0f8ff" font-size="39" font-weight="700">724 passed</text>
+ <text x="80" y="682" class="body">Full-suite invocation · 11 deselected</text>
+ <rect x="509" y="595" width="422" height="126" rx="14" fill="#142a3f"/>
+ <text x="533" y="645" fill="#f0f8ff" font-size="39" font-weight="700">82 / 82 caught</text>
+ <text x="533" y="682" class="body">Selected deliberate control mutations</text>
+ <rect x="962" y="595" width="422" height="126" rx="14" fill="#142a3f"/>
+ <text x="986" y="645" fill="#f0f8ff" font-size="39" font-weight="700">5 jobs passed</text>
+ <text x="986" y="682" class="body">Quality · security · web · integration · images</text>
+</g>
+<text x="56" y="767" class="small">Local and synthetic evidence. Live model acceptance and institutional approval remain open.</text>
+<text x="56" y="797" class="small">Azure: reference infrastructure, not a verified deployment. No production performance or commercial impact claim.</text>
+<text x="1384" y="797" text-anchor="end" fill="#7f9fb5" font-size="16">SHAH HUSSAIN BANGASH</text>
+</svg>

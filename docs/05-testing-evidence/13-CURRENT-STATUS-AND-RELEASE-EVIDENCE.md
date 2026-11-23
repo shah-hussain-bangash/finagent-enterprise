@@ -9,14 +9,15 @@ unit-suite run (404 passed, 2 skipped), the later Redis pass and the focused Lin
 The [mutation verification follow-up](18-MUTATION-VERIFICATION.md) records the correction of a
 misclassified mutation result and its focused rerun.
 
-**Baseline checked:** 20 November 2026, UAE. This is a synthetic engineering portfolio, not a production release or institutional acceptance. This record is the entry point for current status; update it when a newer baseline is verified. Historical results remain in the [evidence register](12-TESTING-AND-EVIDENCE-REGISTER.md).
+**Baseline checked:** 21 November 2026, UAE. This is a synthetic engineering portfolio, not a production release or institutional acceptance. This record is the entry point for current status; update it when a newer baseline is verified. Historical results remain in the [evidence register](12-TESTING-AND-EVIDENCE-REGISTER.md).
 
 ## Baseline and evidence
 
 | Item | Recorded state and limit |
 |---|---|
-| Default branch revision | [`a09dd9f144eea0612b3268ec50ef2b68c160c456`](https://github.com/zenithdevelopers7-source/finagent-enterprise/commit/a09dd9f144eea0612b3268ec50ef2b68c160c456), observed at review. Later changes require their own evidence. |
-| Hosted CI | [CI #16](https://github.com/zenithdevelopers7-source/finagent-enterprise/actions/runs/44532646751), triggered by that main-branch commit, completed successfully. Quality, security, web, integration and image jobs reported success. |
+| Verified default-branch revision | [`1b1d41a`](https://github.com/zenithdevelopers7-source/finagent-enterprise/commit/1b1d41ade21f1a3e18dc13a3bfa10e24037121ae), the case-study update checked on 21 November. |
+| Hosted CI for that revision | [GitHub Actions run 44881988342](https://github.com/zenithdevelopers7-source/finagent-enterprise/actions/runs/44881988342) completed successfully. |
+| Workflow-fix baseline | [`f0a32b7`](https://github.com/zenithdevelopers7-source/finagent-enterprise/commit/f0a32b7908d766a2e4c9fb7b9c97906c27ab3c9a) passed all five jobs in [run 44723085210](https://github.com/zenithdevelopers7-source/finagent-enterprise/actions/runs/44723085210). The numerical evidence below applies to that run. |
 | Integration log | Release-blocker selection: **343 passed, 392 deselected**. Full-suite invocation: **724 passed, 11 deselected**. Deselected tests were not executed in the respective invocation. |
 | Mutation testing | **82 of 82 defined mutations caught** in that run; this is limited to the selected deliberate changes and tests. |
 | Images | CI built images; the job did not push, sign or deploy them. No staging deployment or release is claimed by this record. |
@@ -26,7 +27,7 @@ The workflow artifact upload step succeeded; availability and retention should b
 
 ## Synthetic demonstration and control boundaries
 
-Start with the [workspace walkthrough](../workspace-demo-walkthrough.md), then follow the [architecture-to-code map](../02-system-architecture/06-ARCHITECTURE-TO-CODE-MAP.md) and [case study](../07-case-study/08-PORTFOLIO-CASE-STUDY.md). The connected case views depend on available authorized records; the fixed-response assistant and role selector in the workspace preview are illustrative. The separate assistant candidate is disabled. Human review remains responsible for decisions.
+Start with the [workspace walkthrough](../workspace-demo-walkthrough.md), then follow the [architecture-to-code map](../02-system-architecture/06-ARCHITECTURE-TO-CODE-MAP.md) and [case study](../07-case-study/08-CASE-STUDY.md). The connected case views depend on available authorized records; the fixed-response assistant and role selector in the workspace preview are illustrative. The separate assistant candidate is disabled. Human review remains responsible for decisions.
 
 ## Open work before a release claim
 

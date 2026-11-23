@@ -12,6 +12,6 @@ For the current documented baseline, open the [status and release evidence recor
 | 04 | [Security and governance](04-security-governance/) | Identity, access, tenant isolation, policy and risk references |
 | 05 | [Testing and evidence](05-testing-evidence/) | Verification plan, recorded CI results, gaps and acceptance |
 | 06 | [Engineering and DevOps](06-engineering-devops/) | Engineering handbook, code navigation and documentation roadmap |
-| 07 | [Portfolio case study](07-case-study/) | Architecture narrative, trade-offs, evidence and interview priorities |
+| 07 | [Case study](07-case-study/) | Architecture narrative, trade-offs, evidence and interview priorities |
 
 For a document-by-document sequence see the [architecture and engineering index](architecture/README.md). The material is an engineering portfolio using synthetic data, not an approved production deployment. CI results apply only to the recorded commits and environments.

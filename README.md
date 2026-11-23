@@ -2,6 +2,8 @@
 
 **Human-reviewed AML investigations · Evidence provenance · Governed AI · Enterprise architecture**
 
+**Featured case study:** [Architecting evidence-linked AI investigations with independent human review](docs/07-case-study/08-CASE-STUDY.md) — architecture decisions, governed AI, security, recovery, current engineering evidence and the cloud delivery roadmap.
+
 FinAgent is an enterprise AI engineering portfolio project exploring how analysts can investigate financial-crime alerts with evidence-linked workflows, controlled AI assistance, and independent human review.
 
 | | |
@@ -14,7 +16,7 @@ FinAgent is an enterprise AI engineering portfolio project exploring how analyst
 
 > This is not a deployed bank product, a regulatory certification, or an autonomous system for deciding guilt. Local evidence and passing tests apply to the tested version and environment. Live-provider verification, independent assessment, and production acceptance remain open.
 
-**Start here:** [Synthetic investigation walkthrough](docs/workspace-demo-walkthrough.md) · [Architecture-to-code map](docs/02-system-architecture/06-ARCHITECTURE-TO-CODE-MAP.md) · [Current status and release evidence](docs/05-testing-evidence/13-CURRENT-STATUS-AND-RELEASE-EVIDENCE.md) · [Recorded main-branch CI](https://github.com/zenithdevelopers7-source/finagent-enterprise/actions/runs/44532646751)
+**Start here:** [Synthetic investigation walkthrough](docs/workspace-demo-walkthrough.md) · [Architecture-to-code map](docs/02-system-architecture/06-ARCHITECTURE-TO-CODE-MAP.md) · [Current status and release evidence](docs/05-testing-evidence/13-CURRENT-STATUS-AND-RELEASE-EVIDENCE.md) · [Verified main-branch CI · `6c0bb87` · 21 November 2026](https://github.com/shah-hussain-bangash/finagent-enterprise/actions/runs/44917079385) · [Earlier CI baseline](https://github.com/shah-hussain-bangash/finagent-enterprise/actions/runs/44532646751)
 
 ## Business problem
 
@@ -105,7 +107,7 @@ The [engineering handbook](docs/06-engineering-devops/05-ENGINEERING-HANDBOOK.md
 
 ## Verification and evidence
 
-On **19 November 2026**, GitHub Actions run [#16](https://github.com/zenithdevelopers7-source/finagent-enterprise/actions/runs/44532646751) for main-branch commit [`a09dd9f`](https://github.com/zenithdevelopers7-source/finagent-enterprise/commit/a09dd9f144eea0612b3268ec50ef2b68c160c456) reported success for all five jobs. The release-blocker selection reported 343 passed and 392 deselected; the full-suite invocation reported 724 passed and 11 deselected. The mutation check caught 82 of its 82 defined mutations. Deselected tests were not run in those invocations. This is evidence for that commit and synthetic CI environment; later changes require their own verification.
+On **19 November 2026**, GitHub Actions run [#16](https://github.com/shah-hussain-bangash/finagent-enterprise/actions/runs/44532646751) for main-branch commit [`a09dd9f`](https://github.com/shah-hussain-bangash/finagent-enterprise/commit/a09dd9f144eea0612b3268ec50ef2b68c160c456) reported success for all five jobs. The release-blocker selection reported 343 passed and 392 deselected; the full-suite invocation reported 724 passed and 11 deselected. The mutation check caught 82 of its 82 defined mutations. Deselected tests were not run in those invocations. This is evidence for that commit and synthetic CI environment; later changes require their own verification.
 
 | CI job | What that run checked | Scope limit |
 |---|---|---|
@@ -129,7 +131,7 @@ The [documentation index](docs/README.md) provides a numbered, end-to-end readin
 | [04 · Security and governance](docs/04-security-governance/) | Identity, access, risk and control references |
 | [05 · Testing and evidence](docs/05-testing-evidence/) | Recorded test results, limitations and verification plan |
 | [06 · Engineering and DevOps](docs/06-engineering-devops/) | Source walkthrough, engineering practices and roadmap |
-| [07 · Portfolio case study](docs/07-case-study/) | Architecture decisions, engineering evidence and interview narrative |
+| [07 · Case study](docs/07-case-study/) | Architecture decisions, engineering evidence and interview narrative |
 
 For current gaps and decisions, see the [UI tracker](docs/production-ui-work-tracker.md), [implementation status](docs/implementation-status.md), and [open decision register](docs/decisions/open-decisions.md).
 
