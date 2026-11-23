@@ -27,10 +27,10 @@ export interface ApiError {
 
 export class ApiRequestError extends Error {
   constructor(public status: number, public body: ApiError | null) {
-    super(body?.error.message ?? `Request failed (${status})`);
+    super(typeof body?.error?.message === "string" ? body.error.message : `Request failed (${status})`);
   }
   get code(): string {
-    return this.body?.error.code ?? "HTTP_" + this.status;
+    return typeof this.body?.error?.code === "string" ? this.body.error.code : "HTTP_" + this.status;
   }
 }
 
@@ -59,7 +59,7 @@ export async function raw(path: string, init: Init = {}): Promise<Response> {
   });
   if (res.status === 401) {
     const body = (await res.clone().json().catch(() => null)) as ApiError | null;
-    if (body?.error.code !== "MFA_REQUIRED") redirect("/signin?expired=1"); // session expired
+    if (body?.error?.code !== "MFA_REQUIRED") redirect("/signin?expired=1"); // session expired
   }
   return res;
 }

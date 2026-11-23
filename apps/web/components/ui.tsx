@@ -34,7 +34,7 @@ export function ErrorState({ error, what }: { error: ApiRequestError; what: stri
             ? error.message
             : `${error.message} (status ${error.status})`}
       </p>
-      {error.body?.error.correlation_id ? <p className="muted">Correlation ID: {error.body.error.correlation_id}</p> : null}
+      {typeof error.body?.error?.correlation_id === "string" && error.body.error.correlation_id ? <p className="muted">Correlation ID: {error.body.error.correlation_id}</p> : null}
       {error.code === "MFA_REQUIRED" ? <p><Link href="/security">Open security verification</Link></p> : null}
     </section>
   );
