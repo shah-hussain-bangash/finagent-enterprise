@@ -25,8 +25,14 @@ async function run(back: string, okMessage: string, fn: () => Promise<unknown>):
     await fn();
   } catch (e) {
     if (!(e instanceof ApiRequestError)) throw e;
-    const problems = (e.body?.error.details as { problems?: { code: string }[] } | undefined)?.problems;
-    failure = `${e.code}: ${e.message}${problems ? " (" + problems.map((p) => p.code).join(", ") + ")" : ""}`;
+    const problems = e.body?.error?.details?.problems;
+    const codes = Array.isArray(problems)
+      ? problems.flatMap((problem: unknown) => {
+          if (!problem || typeof problem !== "object" || !("code" in problem)) return [];
+          return typeof problem.code === "string" ? [problem.code] : [];
+        })
+      : [];
+    failure = `${e.code}: ${e.message}${codes.length ? " (" + codes.join(", ") + ")" : ""}`;
   }
   return failure ? to(back, "error", failure) : to(back, "ok", okMessage);
 }

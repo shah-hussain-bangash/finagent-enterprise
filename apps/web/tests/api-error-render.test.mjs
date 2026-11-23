@@ -51,3 +51,19 @@ test("a malformed unauthorized response still redirects to sign-in", async () =>
     globalThis.fetch = originalFetch;
   }
 });
+
+test("form actions handle malformed error details and preserve valid problem codes", async () => {
+  let currentError;
+  const { syncPolicies } = compile("../app/actions.ts", {
+    "next/cache": { revalidatePath: () => {} },
+    "next/navigation": { redirect: (path) => { throw new Error(`redirect:${path}`); } },
+    "@/lib/api": { ApiRequestError, api: async () => { throw currentError; }, BASE: "", raw: () => {} },
+    "@/lib/session": {}, "@/lib/auth-config": {},
+  });
+  for (const body of [{}, { error: { details: { problems: "invalid" } } }, { error: { details: { problems: [null, {}, { code: 42 }] } } }]) {
+    currentError = new ApiRequestError(502, body);
+    await assert.rejects(() => syncPolicies(), /redirect:\/policies\/admin\?error=HTTP_502/);
+  }
+  currentError = new ApiRequestError(409, { error: { code: "CONFLICT", message: "Review needed", details: { problems: [{ code: "STALE" }] } } });
+  await assert.rejects(() => syncPolicies(), (error) => error.message.includes("STALE"));
+});
