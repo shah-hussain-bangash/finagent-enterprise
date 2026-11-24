@@ -7,7 +7,10 @@ import xml.etree.ElementTree as ET
 from pathlib import Path
 
 EXPECTED = {
-    ("tests.browser.test_ui_journey", "test_analyst_and_reviewer_complete_a_case_in_the_browser"),
+    (
+        "tests.browser.test_ui_journey",
+        "test_analyst_and_reviewer_complete_a_case_in_the_browser[case_update_gateway_error]",
+    ),
     ("tests.browser.test_case_checklist_keyboard", "test_case_checklist_can_be_collapsed_with_keyboard"),
     ("tests.browser.test_policy_admin_table_keyboard", "test_policy_table_scrolls_with_keyboard_on_mobile"),
     (

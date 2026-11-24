@@ -164,6 +164,7 @@ def wait_text(page: Any, url: str, text: str, timeout: float = 120) -> None:
     "FR-010",
     "FR-006",
 )
+@pytest.mark.parametrize("stack", ["case_update_gateway_error"], indirect=True)
 def test_analyst_and_reviewer_complete_a_case_in_the_browser(stack, client, token) -> None:  # type: ignore[no-untyped-def]
     from playwright.sync_api import TimeoutError as PlaywrightTimeoutError
     from playwright.sync_api import sync_playwright
@@ -268,6 +269,19 @@ def test_analyst_and_reviewer_complete_a_case_in_the_browser(stack, client, toke
                 f"main: {main_text}"
             ) from exc
         wait_text(page, f"{web}/cases/{case_id}", "WAITING_REVIEW")
+        # The case update is saved, but the proxy substitutes a gateway error.
+        page.get_by_label("Block case: reason").fill("Synthetic evidence needs review")
+        page.get_by_role("button", name="Mark blocked").click()
+        page.get_by_text("Check the recorded case before another action.").wait_for(timeout=30_000)
+        assert stack["proxy"].dropped_statuses == [200]
+        saved = client.get(f"/api/v1/cases/{case_id}", headers=token(analyst))
+        assert saved.status_code == 200 and saved.json()["status"] == "BLOCKED"
+        page.get_by_role("link", name="Reload case").click()
+        page.get_by_label("Resolve block: reason").fill("Synthetic evidence review complete")
+        page.get_by_role("button", name="Resume investigation").click()
+        wait_text(page, f"{web}/cases/{case_id}", "WAITING_REVIEW")
+        resumed = client.get(f"/api/v1/cases/{case_id}", headers=token(analyst))
+        assert resumed.status_code == 200 and resumed.json()["status"] == "INVESTIGATING"
         page.goto(f"{web}/cases/{case_id}/evidence")
         page.locator("main").get_by_text("date_of_birth", exact=False).first.wait_for(timeout=30_000)
         page.get_by_label("Resolution", exact=True).select_option("USE_A")

@@ -39,7 +39,7 @@ class LostResponseProxy:
                 drop_case = (
                     outer.drop_case_update and self.command == "PATCH" and path.startswith("/api/v1/cases/")
                 )
-                if drop_workflow or drop_case:
+                if (drop_workflow or drop_case) and not outer.dropped_statuses:
                     outer.dropped_statuses.append(response.status_code)
                     if outer.gateway_error:
                         self.send_response(502)
