@@ -270,9 +270,25 @@ def test_analyst_and_reviewer_complete_a_case_in_the_browser(stack, client, toke
             ) from exc
         wait_text(page, f"{web}/cases/{case_id}", "WAITING_REVIEW")
         # The case update is saved, but the proxy substitutes a gateway error.
+        page.goto(f"{web}/cases/{case_id}")
+        page.wait_for_load_state("networkidle")
         page.get_by_label("Block case: reason").fill("Synthetic evidence needs review")
         page.get_by_role("button", name="Mark blocked").click()
-        page.get_by_text("Check the recorded case before another action.").wait_for(timeout=30_000)
+        try:
+            page.get_by_text("Check the recorded case before another action.").wait_for(timeout=30_000)
+        except PlaywrightTimeoutError as exc:
+            actual_case = client.get(f"/api/v1/cases/{case_id}", headers=token(analyst))
+            actual_status = (
+                actual_case.json().get("status")
+                if actual_case.status_code == 200
+                else actual_case.status_code
+            )
+            raise AssertionError(
+                f"Recovery warning missing; page: {page.url}; "
+                f"upstream statuses: {stack['proxy'].dropped_statuses}; "
+                f"case status: {actual_status}; "
+                f"main: {page.locator('main').inner_text()}"
+            ) from exc
         assert stack["proxy"].dropped_statuses == [200]
         saved = client.get(f"/api/v1/cases/{case_id}", headers=token(analyst))
         assert saved.status_code == 200 and saved.json()["status"] == "BLOCKED"
