@@ -14,6 +14,7 @@
 | Application | Next.js / React / TypeScript, FastAPI / Python, PostgreSQL, Redis and LangGraph |
 | Source baseline | [`f0a32b7`, main, 20 November 2026][baseline] |
 | Directly inspected hosted evidence | [CI run 44723085210][ci]: five successful jobs; 724 passed and 11 deselected in the full-suite invocation; 82/82 defined mutations caught |
+| Later investigation evidence | [CI run #77](https://github.com/shah-hussain-bangash/finagent-enterprise/actions/runs/45394113664), branch commit [`a6c157b`](https://github.com/shah-hussain-bangash/finagent-enterprise/commit/a6c157b8d059fdc1ac93cbaa3d158050395c7ebf): seven successful jobs and 17 synthetic browser scenarios |
 | Current maturity | Implemented synthetic workflow; cloud deployment, live-provider acceptance and institutional approval remain open |
 
 **The architectural contribution:** FinAgent connects evidence gathering, bounded AI capabilities, deterministic financial checks, versioned reports and independent review within a recoverable workflow. Its most useful demonstration is the control path from an authorized case to a reviewed decision—and the behavior when evidence, permissions or external outcomes change.
@@ -43,6 +44,8 @@ These are measurement objectives. Analyst productivity, fraud-detection improvem
 An assigned analyst opens a synthetic transaction-monitoring case, examines transactions and document provenance, and inspects calculation-backed findings. Missing evidence or conflicting policy can interrupt the workflow. The analyst reviews a draft, edits it and submits a specific version. An eligible independent reviewer inspects the report and snapshot, supplies a rationale, and records a decision. Finalization rechecks the relevant authority and context.
 
 The system does not confer authority to determine guilt, move funds, freeze accounts or file regulatory reports. A narrowly guarded external case-status integration is a separate capability with explicit deployment and tenant controls.
+
+The hosted browser journey demonstrates one such synthetic case: the analyst recovers an accepted update after a simulated gateway error, resolves conflicting evidence and submits report version 2. A different reviewer approves the recorded version and snapshot; the test checks its evidence references and observes case completion. A supervisor then reopens the case, leaving the test in rework. Separate scenarios verify recovery after a report withdrawal or workflow cancellation receives a gateway error. See the [acceptance record](../05-testing-evidence/14-SYNTHETIC-ACCEPTANCE-RECORD.md) for the tested revision, reproduction and limits. These results do not establish live-provider behavior or production acceptance.
 
 ## 2. Engineering scope and contribution
 
