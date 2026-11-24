@@ -43,6 +43,7 @@ export interface Init {
   headers?: Record<string, string>;
   idempotencyKey?: string;
   ifMatch?: number;
+  timeoutMs?: number;
 }
 
 export async function raw(path: string, init: Init = {}): Promise<Response> {
@@ -60,6 +61,7 @@ export async function raw(path: string, init: Init = {}): Promise<Response> {
       headers,
       body,
       cache: "no-store",
+      signal: init.timeoutMs === undefined ? undefined : AbortSignal.timeout(init.timeoutMs),
     });
   } catch {
     // A failed connection does not establish whether a write reached the service.

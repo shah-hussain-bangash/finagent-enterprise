@@ -141,6 +141,22 @@ test("a server error after a write warns that the outcome may be unknown", async
   }
 });
 
+test("a timed-out write reports an uncertain outcome", async () => {
+  const originalFetch = globalThis.fetch;
+  globalThis.fetch = async (_url, init) => new Promise((_resolve, reject) => {
+    init.signal.addEventListener("abort", () => reject(new Error("synthetic timeout")), { once: true });
+  });
+  try {
+    await assert.rejects(() => raw("/synthetic", { method: "PATCH", timeoutMs: 10 }), (error) => {
+      assert.equal(error.code, "CONNECTION_ERROR");
+      assert.match(error.message, /outcome may be unknown; check the record/);
+      return true;
+    });
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
 test("a server error on a read remains available for normal error handling", async () => {
   const originalFetch = globalThis.fetch;
   globalThis.fetch = async () => new Response("unavailable", { status: 503 });
@@ -184,6 +200,22 @@ test("interrupted mutations return an explicit uncertain outcome", async () => {
     assert.equal(result.ok, false, name);
     assert.equal(result.uncertain, true, name);
   }
+});
+
+test("case status updates use a bounded request timeout", async () => {
+  let options;
+  const { updateCase } = compile("../app/actions.ts", {
+    "next/cache": { revalidatePath: () => {} },
+    "next/navigation": { redirect: () => {} },
+    "@/lib/api": { ApiRequestError, api: async (_path, init) => { options = init; return {}; }, BASE: "" },
+    "@/lib/session": {}, "@/lib/auth-config": {},
+  });
+  const form = new FormData();
+  form.set("case_id", "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa");
+  form.set("record_version", "1");
+  form.set("reason", "Synthetic reason");
+  assert.equal((await updateCase(form)).ok, true);
+  assert.equal(options.timeoutMs, 30_000);
 });
 
 test("workflow resume only redirects to an allowed local case or its workflow", async () => {

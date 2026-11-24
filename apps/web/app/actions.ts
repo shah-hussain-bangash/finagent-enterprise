@@ -101,7 +101,7 @@ export async function updateCase(form: FormData): Promise<{ok: boolean; message:
   const body: Record<string, string> = { reason: str(form, "reason") };
   for (const k of ["status", "priority", "blocked_owner_role"]) if (str(form, k)) body[k] = str(form, k);
   try {
-    await api(`/api/v1/cases/${caseId}`, { method: "PATCH", json: body, ifMatch: Number(str(form, "record_version")) });
+    await api(`/api/v1/cases/${caseId}`, { method: "PATCH", json: body, ifMatch: Number(str(form, "record_version")), timeoutMs: 30_000 });
     return {ok: true, message: "Case updated."};
   } catch (e) {
     if (!(e instanceof ApiRequestError)) throw e;
