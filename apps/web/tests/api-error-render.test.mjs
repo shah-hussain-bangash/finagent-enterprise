@@ -205,6 +205,24 @@ test("interrupted mutations return an explicit uncertain outcome", async () => {
   }
 });
 
+test("an interrupted document upload returns an uncertain outcome", async () => {
+  const error = new ApiRequestError(503, { error: { code: "CONNECTION_ERROR", message: "Outcome may be unknown", correlation_id: "", details: {} } });
+  const { uploadDocument } = compile("../app/actions.ts", {
+    "next/cache": { revalidatePath: () => {} },
+    "next/navigation": { redirect: () => {} },
+    "@/lib/api": { ApiRequestError, raw: async () => { throw error; }, BASE: "" },
+    "@/lib/session": {}, "@/lib/auth-config": {},
+  });
+  const form = new FormData();
+  form.set("case_id", "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa");
+  form.set("file", new File(["name,amount\nsample,10\n"], "synthetic.csv", { type: "text/csv" }));
+  form.set("document_type", "OTHER");
+  form.set("key", "synthetic-upload-key");
+  const result = await uploadDocument(form);
+  assert.equal(result.ok, false);
+  assert.equal(result.uncertain, true);
+});
+
 test("case status updates use a bounded request timeout", async () => {
   let options;
   const { updateCase } = compile("../app/actions.ts", {

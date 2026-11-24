@@ -169,13 +169,13 @@ export async function freezeSnapshot(form: FormData): Promise<never> {
     api(`/api/v1/cases/${caseId}/snapshots`, { method: "POST" }));
 }
 
-export async function uploadDocument(form: FormData): Promise<never> {
+export async function uploadDocument(form: FormData): Promise<{ok: boolean; message: string; uncertain?: boolean}> {
   const caseId = str(form, "case_id");
   const file = form.get("file");
-  if (!(file instanceof File) || file.size === 0) to(`/cases/${caseId}/documents`, "error", "Choose a file to upload.");
+  if (!(file instanceof File) || file.size === 0) return {ok: false, message: "Choose a file to upload."};
   const f = file as File;
   const q = new URLSearchParams({ case_id: caseId, document_type: str(form, "document_type"), filename: f.name });
-  return run(`/cases/${caseId}/documents`, "Uploaded. Scanning and parsing status is shown below.", async () => {
+  try {
     const res = await raw(`/api/v1/documents?${q}`, {
       method: "POST",
       body: Buffer.from(await f.arrayBuffer()),
@@ -183,7 +183,11 @@ export async function uploadDocument(form: FormData): Promise<never> {
       idempotencyKey: str(form, "key") || randomUUID(),
     });
     if (!res.ok) throw new ApiRequestError(res.status, await res.json().catch(() => null));
-  });
+    return {ok: true, message: "Uploaded. Scanning and parsing status is shown below."};
+  } catch (e) {
+    if (!(e instanceof ApiRequestError)) throw e;
+    return {ok: false, message: `${e.code}: ${e.message}`, uncertain: e.code === "CONNECTION_ERROR"};
+  }
 }
 
 export async function correctField(form: FormData): Promise<never> {

@@ -14,6 +14,7 @@ for (const [component, action, props, button, refresh] of [
   ["ReopenCaseForm", "reopenCase", { caseId: "case-1", recordVersion: 1 }, "Reopen case", "Reload case"],
   ["CaseStatusForm", "updateCase", { caseId: "case-1", recordVersion: 1, blocked: false }, "Mark blocked", "Reload case"],
   ["ReportEditForm", "editReport", { caseId: "case-1", version: 1, sections: [] }, "Save as new version", "Reload report"],
+  ["UploadDocumentForm", "uploadDocument", { caseId: "case-1", requestKey: "key" }, "Upload", "Reload documents"],
 ]) {
   test(`${component} requires a refresh after an uncertain response`, async () => {
     const state = [];
@@ -47,5 +48,6 @@ for (const [component, action, props, button, refresh] of [
     assert.ok(!html.includes(`>${button}</button>`));
     if (component === "CaseStatusForm") assert.match(navigation, /\/cases\/case-1\?error=CONNECTION_ERROR/);
     if (component === "ReportEditForm") assert.match(navigation, /\/cases\/case-1\/report\?error=CONNECTION_ERROR/);
+    if (component === "UploadDocumentForm") assert.match(navigation, /\/cases\/case-1\/documents\?error=CONNECTION_ERROR/);
   });
 }

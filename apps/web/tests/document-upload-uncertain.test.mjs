@@ -5,6 +5,7 @@ import test from "node:test";
 import React from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import ts from "typescript";
+import { loadComponent } from "./load-component.mjs";
 
 const require = createRequire(import.meta.url);
 function loadPage() {
@@ -16,6 +17,7 @@ function loadPage() {
     "@/lib/session": { requireSession: async () => {} },
     "@/lib/api": { load: async () => ({ data: { items: [{ document_id: "doc-1", title: "Synthetic document", current_version_no: 1 }] }, error: null }) },
   };
+  mocks["@/components/UploadDocumentForm"] = loadComponent("UploadDocumentForm", mocks);
   const source = readFileSync(new URL("../app/cases/[id]/documents/page.tsx", import.meta.url), "utf8");
   const code = ts.transpileModule(source, { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022, jsx: ts.JsxEmit.ReactJSX, esModuleInterop: true } }).outputText;
   const exports = {};

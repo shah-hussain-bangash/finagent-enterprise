@@ -36,6 +36,10 @@ EXPECTED = {
         "tests.browser.test_uncertain_action_browser",
         "test_report_edit_gateway_error_requires_reload[report_edit_gateway_error]",
     ),
+    (
+        "tests.browser.test_uncertain_action_browser",
+        "test_document_upload_gateway_error_requires_reload[document_upload_gateway_error]",
+    ),
 }
 
 
