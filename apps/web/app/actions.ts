@@ -200,12 +200,18 @@ export async function uploadDocument(form: FormData): Promise<{ok: boolean; mess
   }
 }
 
-export async function correctField(form: FormData): Promise<never> {
+export async function correctField(form: FormData): Promise<{ok: boolean; message: string; uncertain?: boolean}> {
   const docId = str(form, "document_id");
-  return run(`/documents/${docId}`, "Correction saved; the original value is preserved.", () =>
-    api(`/api/v1/documents/${docId}/fields/${str(form, "field_id")}/correction`, {
+  try {
+    await api(`/api/v1/documents/${docId}/fields/${str(form, "field_id")}/correction`, {
       json: { value: str(form, "value"), reason: str(form, "reason") },
-    }));
+      timeoutMs: 30_000,
+    });
+    return {ok: true, message: "Correction saved; the original value is preserved."};
+  } catch (e) {
+    if (!(e instanceof ApiRequestError)) throw e;
+    return {ok: false, message: `${e.code}: ${e.message}`, uncertain: e.code === "CONNECTION_ERROR"};
+  }
 }
 
 // ------------------------------------------------------------------ reports and review

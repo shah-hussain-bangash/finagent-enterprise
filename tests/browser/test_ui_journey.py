@@ -71,6 +71,7 @@ def stack(make_settings, make_worker, bank, request) -> Iterator[dict[str, Any]]
         "document_upload_gateway_error",
         "workflow_resume_gateway_error",
         "snapshot_gateway_error",
+        "field_correction_gateway_error",
     }:
         from tests.browser.lost_response_proxy import LostResponseProxy
 
@@ -81,6 +82,7 @@ def stack(make_settings, make_worker, bank, request) -> Iterator[dict[str, Any]]
             drop_document_upload=request.param == "document_upload_gateway_error",
             drop_workflow_resume=request.param == "workflow_resume_gateway_error",
             drop_snapshot=request.param == "snapshot_gateway_error",
+            drop_field_correction=request.param == "field_correction_gateway_error",
             gateway_error=request.param
             in {
                 "case_update_gateway_error",
@@ -88,6 +90,7 @@ def stack(make_settings, make_worker, bank, request) -> Iterator[dict[str, Any]]
                 "document_upload_gateway_error",
                 "workflow_resume_gateway_error",
                 "snapshot_gateway_error",
+                "field_correction_gateway_error",
             },
         )
         proxy.start()

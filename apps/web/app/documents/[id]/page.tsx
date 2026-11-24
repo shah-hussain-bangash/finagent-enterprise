@@ -1,6 +1,5 @@
 import Link from "next/link";
-import { correctField } from "@/app/actions";
-import { SubmitButton } from "@/components/SubmitButton";
+import { CorrectDocumentFieldForm } from "@/components/CorrectDocumentFieldForm";
 import { Empty, ErrorState, Flash, Json, When } from "@/components/ui";
 import { load } from "@/lib/api";
 import { requireSession } from "@/lib/session";
@@ -67,15 +66,7 @@ export default async function DocumentReview({ params, searchParams }: {
                 <td>{where(f)}</td>
                 <td>{f.origin}{f.correction_reason ? <div className="muted">{f.correction_reason}</div> : null}</td>
                 <td>
-                  {!uncertainAction && <form action={correctField} className="stack">
-                    <input type="hidden" name="document_id" value={id} />
-                    <input type="hidden" name="field_id" value={f.field_id} />
-                    <label htmlFor={`v-${f.field_id}`}>New value for {f.field_key}</label>
-                    <input id={`v-${f.field_id}`} name="value" required maxLength={1000} />
-                    <label htmlFor={`r-${f.field_id}`}>Reason for correcting {f.field_key}</label>
-                    <input id={`r-${f.field_id}`} name="reason" required minLength={10} maxLength={300} />
-                    <SubmitButton>{`Save correction for ${f.field_key}`}</SubmitButton>
-                  </form>}
+                  {!uncertainAction && <CorrectDocumentFieldForm documentId={id} fieldId={f.field_id} fieldKey={f.field_key} />}
                 </td>
               </tr>
             ))}

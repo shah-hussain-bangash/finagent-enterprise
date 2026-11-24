@@ -17,6 +17,7 @@ for (const [component, action, props, button, refresh] of [
   ["UploadDocumentForm", "uploadDocument", { caseId: "case-1", requestKey: "key" }, "Upload", "Reload documents"],
   ["ResumeWorkflowForm", "resumeRun", { runId: "run-1", action: "RETRY", returnPath: "/workflows/run-1", label: "Reason", button: "Retry" }, "Retry", "Reload status"],
   ["FreezeSnapshotForm", "freezeSnapshot", { caseId: "case-1" }, "Freeze current evidence", "Reload evidence"],
+  ["CorrectDocumentFieldForm", "correctField", { documentId: "document-1", fieldId: "field-1", fieldKey: "date_of_birth" }, "Save correction for date_of_birth", "Reload document"],
 ]) {
   test(`${component} requires a refresh after an uncertain response`, async () => {
     const state = [];
@@ -53,5 +54,6 @@ for (const [component, action, props, button, refresh] of [
     if (component === "UploadDocumentForm") assert.match(navigation, /\/cases\/case-1\/documents\?error=CONNECTION_ERROR/);
     if (component === "ResumeWorkflowForm") assert.match(navigation, /\/workflows\/run-1\?error=CONNECTION_ERROR/);
     if (component === "FreezeSnapshotForm") assert.match(navigation, /\/cases\/case-1\/evidence\?error=CONNECTION_ERROR/);
+    if (component === "CorrectDocumentFieldForm") assert.match(navigation, /\/documents\/document-1\?error=CONNECTION_ERROR/);
   });
 }

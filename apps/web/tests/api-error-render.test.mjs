@@ -198,7 +198,7 @@ test("interrupted mutations return an explicit uncertain outcome", async () => {
   form.set("case_id", "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa");
   form.set("record_version", "1");
   form.set("reason", "Synthetic reason");
-  for (const name of ["startInvestigation", "reopenCase", "updateCase", "resolveConflict", "freezeSnapshot", "editReport", "submitReport", "decide"]) {
+  for (const name of ["startInvestigation", "reopenCase", "updateCase", "resolveConflict", "freezeSnapshot", "correctField", "editReport", "submitReport", "decide"]) {
     const result = await actions[name](form);
     assert.equal(result.ok, false, name);
     assert.equal(result.uncertain, true, name);

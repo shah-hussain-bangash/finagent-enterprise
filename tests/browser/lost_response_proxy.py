@@ -18,6 +18,7 @@ class LostResponseProxy:
         drop_document_upload: bool = False,
         drop_workflow_resume: bool = False,
         drop_snapshot: bool = False,
+        drop_field_correction: bool = False,
         gateway_error: bool = False,
     ) -> None:
         self.upstream = upstream
@@ -26,6 +27,7 @@ class LostResponseProxy:
         self.drop_document_upload = drop_document_upload
         self.drop_workflow_resume = drop_workflow_resume
         self.drop_snapshot = drop_snapshot
+        self.drop_field_correction = drop_field_correction
         self.gateway_error = gateway_error
         self.dropped_statuses: list[int] = []
         outer = self
@@ -53,6 +55,7 @@ class LostResponseProxy:
                     and not outer.drop_document_upload
                     and not outer.drop_workflow_resume
                     and not outer.drop_snapshot
+                    and not outer.drop_field_correction
                     and self.command == "POST"
                     and path == "/api/v1/workflows"
                 )
@@ -80,8 +83,21 @@ class LostResponseProxy:
                     and path.startswith("/api/v1/cases/")
                     and path.endswith("/snapshots")
                 )
+                drop_correction = (
+                    outer.drop_field_correction
+                    and self.command == "POST"
+                    and path.startswith("/api/v1/documents/")
+                    and "/fields/" in path
+                    and path.endswith("/correction")
+                )
                 if (
-                    drop_workflow or drop_case or drop_report or drop_upload or drop_resume or drop_snapshot
+                    drop_workflow
+                    or drop_case
+                    or drop_report
+                    or drop_upload
+                    or drop_resume
+                    or drop_snapshot
+                    or drop_correction
                 ) and not outer.dropped_statuses:
                     outer.dropped_statuses.append(response.status_code)
                     if outer.gateway_error:

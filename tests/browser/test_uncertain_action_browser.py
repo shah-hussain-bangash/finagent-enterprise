@@ -13,6 +13,69 @@ from tests.integration.test_case_commands import force_status
 pytestmark = [pytest.mark.browser, pytest.mark.integration]
 
 
+@pytest.mark.parametrize("stack", ["field_correction_gateway_error"], indirect=True)
+def test_field_correction_gateway_error_requires_reload(  # type: ignore[no-untyped-def]
+    stack,  # noqa: F811
+    client,
+    token,
+):
+    from playwright.sync_api import expect, sync_playwright
+
+    from tests.doc_fixtures import pdf
+
+    case_id = ingest(client, token)["case_id"]
+    analyst = assigned_analyst(client, token, case_id)
+    upload = client.post(
+        "/api/v1/documents",
+        params={"case_id": case_id, "document_type": "PASSPORT", "filename": "synthetic-passport.pdf"},
+        content=pdf("Full name: Synthetic Person", "Date of birth: 03/04/1985"),
+        headers={
+            **token(analyst),
+            "Content-Type": "application/pdf",
+            "Idempotency-Key": "synthetic-field-upload",
+        },
+    )
+    assert upload.status_code == 201, upload.text
+    document_id = upload.json()["document_id"]
+    deadline = time.monotonic() + 60
+    while time.monotonic() < deadline:
+        current = client.get(f"/api/v1/documents/{document_id}", headers=token(analyst))
+        assert current.status_code == 200, current.text
+        if any(f["field_key"] == "date_of_birth" for f in current.json()["fields"]):
+            break
+        time.sleep(0.5)
+    else:
+        pytest.fail("Synthetic document did not produce the expected field")
+    with sync_playwright() as playwright:
+        browser = playwright.chromium.launch()
+        try:
+            page = browser.new_page()
+            sign_in(page, stack["web"], analyst)
+            page.goto(f"{stack['web']}/documents/{document_id}")
+            page.get_by_label("New value for date_of_birth").fill("1985-04-03")
+            page.get_by_label("Reason for correcting date_of_birth").fill(
+                "Confirmed against synthetic original"
+            )
+            page.get_by_role("button", name="Save correction for date_of_birth").click()
+            expect(page.get_by_text("Check the recorded document before another action.")).to_be_visible(
+                timeout=30_000
+            )
+            assert stack["proxy"].dropped_statuses == [201]
+            result = client.get(f"/api/v1/documents/{document_id}", headers=token(analyst))
+            assert result.status_code == 200
+            assert [f["value"] for f in result.json()["fields"] if f["field_key"] == "date_of_birth"] == [
+                "1985-04-03"
+            ]
+            assert [
+                f["value"] for f in result.json()["field_history"] if f["field_key"] == "date_of_birth"
+            ] == ["03/04/1985"]
+            page.get_by_role("link", name="Reload document").click()
+            expect(page.get_by_text("1985-04-03", exact=True).first).to_be_visible()
+            expect(page.get_by_text("03/04/1985", exact=False).first).to_be_visible()
+        finally:
+            browser.close()
+
+
 @pytest.mark.parametrize("stack", ["snapshot_gateway_error"], indirect=True)
 def test_snapshot_gateway_error_requires_reload(  # type: ignore[no-untyped-def]
     stack,  # noqa: F811
