@@ -12,6 +12,7 @@ for (const [component, action, props, button, refresh] of [
   ["SubmitReportForm", "submitReport", { caseId: "case-1", version: 1, requestKey: "key" }, "Submit version 1", "Refresh report"],
   ["ResolveConflictForm", "resolveConflict", { caseId: "case-1", conflictId: "conflict-1" }, "Record resolution", "Refresh evidence"],
   ["ReopenCaseForm", "reopenCase", { caseId: "case-1", recordVersion: 1 }, "Reopen case", "Reload case"],
+  ["CaseStatusForm", "updateCase", { caseId: "case-1", recordVersion: 1, blocked: false }, "Mark blocked", "Reload case"],
 ]) {
   test(`${component} requires a refresh after an uncertain response`, async () => {
     const state = [];
@@ -32,12 +33,17 @@ for (const [component, action, props, button, refresh] of [
     new Function("require", "exports", "module", code)((id) => id in mocks ? mocks[id] : require(id), exports, { exports });
     let element = exports[component](props);
     assert.ok(renderToStaticMarkup(element).includes(button));
-    await element.props.action(new FormData());
+    const previousWindow = globalThis.window;
+    let navigation = "";
+    globalThis.window = { location: { assign: (url) => { navigation = url; } } };
+    try { await element.props.action(new FormData()); }
+    finally { if (previousWindow === undefined) delete globalThis.window; else globalThis.window = previousWindow; }
     index = 0;
     element = exports[component](props);
     const html = renderToStaticMarkup(element);
     assert.ok(html.includes("Outcome unknown"));
     assert.ok(html.includes(refresh));
     assert.ok(!html.includes(`>${button}</button>`));
+    if (component === "CaseStatusForm") assert.match(navigation, /\/cases\/case-1\?error=CONNECTION_ERROR/);
   });
 }

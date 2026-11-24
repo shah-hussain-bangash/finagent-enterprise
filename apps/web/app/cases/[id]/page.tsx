@@ -1,6 +1,7 @@
 import { randomUUID } from "node:crypto";
 import Link from "next/link";
-import { resumeRun, updateCase } from "@/app/actions";
+import { resumeRun } from "@/app/actions";
+import { CaseStatusForm } from "@/components/CaseStatusForm";
 import { StartInvestigationForm } from "@/components/StartInvestigationForm";
 import { ReopenCaseForm } from "@/components/ReopenCaseForm";
 import { StatusBadge } from "@/components/StatusBadge";
@@ -125,15 +126,7 @@ export default async function CaseOverview({ params, searchParams }: {
         </form>
       ) : null}
       {!uncertainAction && ["INVESTIGATING", "BLOCKED"].includes(c.status) ? (
-        <form action={updateCase} className="inline panel">
-          <input type="hidden" name="case_id" value={id} />
-          <input type="hidden" name="record_version" value={c.record_version} />
-          <input type="hidden" name="status" value={c.status === "BLOCKED" ? "INVESTIGATING" : "BLOCKED"} />
-          {c.status === "INVESTIGATING" ? <input type="hidden" name="blocked_owner_role" value="ANALYST" /> : null}
-          <label htmlFor="creason">{c.status === "BLOCKED" ? "Resolve block" : "Block case"}: reason</label>
-          <input id="creason" name="reason" required minLength={3} maxLength={300} />
-          <SubmitButton>{c.status === "BLOCKED" ? "Resume investigation" : "Mark blocked"}</SubmitButton>
-        </form>
+        <CaseStatusForm caseId={id} recordVersion={c.record_version} blocked={c.status === "BLOCKED"} />
       ) : null}
 
       {!uncertainAction && c.status === "COMPLETED" && c.can_reopen ? (

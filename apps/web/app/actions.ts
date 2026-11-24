@@ -96,12 +96,17 @@ export async function cancelRun(form: FormData): Promise<never> {
     api(`/api/v1/workflows/${runId}/cancel`, { json: { reason: str(form, "reason") } }));
 }
 
-export async function updateCase(form: FormData): Promise<never> {
+export async function updateCase(form: FormData): Promise<{ok: boolean; message: string; uncertain?: boolean}> {
   const caseId = str(form, "case_id");
   const body: Record<string, string> = { reason: str(form, "reason") };
   for (const k of ["status", "priority", "blocked_owner_role"]) if (str(form, k)) body[k] = str(form, k);
-  return run(`/cases/${caseId}`, "Case updated.", () =>
-    api(`/api/v1/cases/${caseId}`, { method: "PATCH", json: body, ifMatch: Number(str(form, "record_version")) }));
+  try {
+    await api(`/api/v1/cases/${caseId}`, { method: "PATCH", json: body, ifMatch: Number(str(form, "record_version")) });
+    return {ok: true, message: "Case updated."};
+  } catch (e) {
+    if (!(e instanceof ApiRequestError)) throw e;
+    return {ok: false, message: `${e.code}: ${e.message}`, uncertain: e.code === "CONNECTION_ERROR"};
+  }
 }
 
 export async function reopenCase(form: FormData): Promise<{ok: boolean; message: string; uncertain?: boolean}> {
