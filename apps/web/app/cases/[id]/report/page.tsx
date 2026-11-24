@@ -1,6 +1,7 @@
 import { randomUUID } from "node:crypto";
 import Link from "next/link";
-import { createExport, withdrawReport } from "@/app/actions";
+import { createExport } from "@/app/actions";
+import { RecoveryReasonForm } from "@/components/RecoveryReasonForm";
 import { ReportEditForm } from "@/components/ReportEditForm";
 import { SubmitReportForm } from "@/components/SubmitReportForm";
 import { FindingTag, type FindingKind } from "@/components/StatusBadge";
@@ -83,12 +84,7 @@ export default async function ReportPage({ params, searchParams }: {
           ) : null}
           {isCurrent && report?.status === "DRAFT" && !v.data.validation.valid ? <p className="warn">Resolve the validation problems above before submitting this version for review.</p> : null}
           {!uncertainAction && isCurrent && report?.status === "SUBMITTED" ? (
-            <form action={withdrawReport} className="inline panel">
-              <input type="hidden" name="case_id" value={id} />
-              <label htmlFor="wreason">Reason for withdrawing the current submission</label>
-              <input id="wreason" name="reason" required minLength={5} maxLength={300} />
-              <SubmitButton danger>Withdraw current submission</SubmitButton>
-            </form>
+            <RecoveryReasonForm kind="withdraw" recordId={id} />
           ) : null}
           {!uncertainAction && <form action={createExport} className="inline panel">
             <input type="hidden" name="case_id" value={id} />

@@ -20,6 +20,7 @@ function loadPage() {
     "@/lib/api": { load: async () => ({ data: { run_id: runId, case_id: caseId, status: "HUMAN_REVIEW", workflow_type: "SYNTHETIC", graph_version: "1", attempt: 1, max_attempts: 3, blockers: [], steps: [], history: [] }, error: null }) },
   };
   mocks["@/components/ResumeWorkflowForm"] = loadComponent("ResumeWorkflowForm", mocks);
+  mocks["@/components/RecoveryReasonForm"] = loadComponent("RecoveryReasonForm", mocks);
   const source = readFileSync(new URL("../app/workflows/[id]/page.tsx", import.meta.url), "utf8");
   const code = ts.transpileModule(source, { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022, jsx: ts.JsxEmit.ReactJSX, esModuleInterop: true } }).outputText;
   const exports = {};

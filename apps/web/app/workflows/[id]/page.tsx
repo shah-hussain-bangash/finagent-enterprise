@@ -1,7 +1,6 @@
 import Link from "next/link";
-import { cancelRun } from "@/app/actions";
+import { RecoveryReasonForm } from "@/components/RecoveryReasonForm";
 import { ResumeWorkflowForm } from "@/components/ResumeWorkflowForm";
-import { SubmitButton } from "@/components/SubmitButton";
 import { ErrorState, Flash, When } from "@/components/ui";
 import { load } from "@/lib/api";
 import { requireSession } from "@/lib/session";
@@ -46,12 +45,7 @@ export default async function RunMonitor({ params, searchParams }: {
         <ResumeWorkflowForm runId={id} action="RETRY" returnPath={`/workflows/${id}`} label="Retry after review (reason)" button="Retry from last checkpoint" />
       ) : null}
       {!uncertainAction && !terminal && r.status !== "OUTCOME_UNCERTAIN" ? (
-        <form action={cancelRun} className="inline panel">
-          <input type="hidden" name="run_id" value={id} />
-          <label htmlFor="cr">Cancel (committed effects are kept): reason</label>
-          <input id="cr" name="reason" required minLength={3} maxLength={300} />
-          <SubmitButton danger>Cancel run</SubmitButton>
-        </form>
+        <RecoveryReasonForm kind="cancel" recordId={id} />
       ) : null}
       <h2>Steps</h2>
       {r.steps.length === 0 ? <p>No steps were returned for this run.</p> : <div className="workflow-steps-table" role="region" aria-label="Workflow steps table" tabIndex={0}><table>

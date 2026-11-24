@@ -95,10 +95,15 @@ export async function resumeRun(form: FormData): Promise<{ok: boolean; message: 
   }
 }
 
-export async function cancelRun(form: FormData): Promise<never> {
+export async function cancelRun(form: FormData): Promise<{ok: boolean; message: string; uncertain?: boolean}> {
   const runId = str(form, "run_id");
-  return run(`/workflows/${runId}`, "Cancellation requested.", () =>
-    api(`/api/v1/workflows/${runId}/cancel`, { json: { reason: str(form, "reason") } }));
+  try {
+    await api(`/api/v1/workflows/${runId}/cancel`, { json: { reason: str(form, "reason") }, timeoutMs: 30_000 });
+    return {ok: true, message: "Cancellation requested."};
+  } catch (e) {
+    if (!(e instanceof ApiRequestError)) throw e;
+    return {ok: false, message: `${e.code}: ${e.message}`, uncertain: e.code === "CONNECTION_ERROR"};
+  }
 }
 
 export async function updateCase(form: FormData): Promise<{ok: boolean; message: string; uncertain?: boolean}> {
@@ -247,10 +252,15 @@ export async function submitReport(form: FormData): Promise<{ok: boolean; messag
   }
 }
 
-export async function withdrawReport(form: FormData): Promise<never> {
+export async function withdrawReport(form: FormData): Promise<{ok: boolean; message: string; uncertain?: boolean}> {
   const caseId = str(form, "case_id");
-  return run(`/cases/${caseId}/report`, "Submission withdrawn.", () =>
-    api(`/api/v1/cases/${caseId}/reports/withdraw`, { json: { reason: str(form, "reason") } }));
+  try {
+    await api(`/api/v1/cases/${caseId}/reports/withdraw`, { json: { reason: str(form, "reason") }, timeoutMs: 30_000 });
+    return {ok: true, message: "Submission withdrawn."};
+  } catch (e) {
+    if (!(e instanceof ApiRequestError)) throw e;
+    return {ok: false, message: `${e.code}: ${e.message}`, uncertain: e.code === "CONNECTION_ERROR"};
+  }
 }
 
 export async function decide(form: FormData): Promise<{ok: boolean; message: string; uncertain?: boolean}> {

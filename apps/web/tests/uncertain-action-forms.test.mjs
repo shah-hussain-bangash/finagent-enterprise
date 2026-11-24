@@ -18,6 +18,8 @@ for (const [component, action, props, button, refresh] of [
   ["ResumeWorkflowForm", "resumeRun", { runId: "run-1", action: "RETRY", returnPath: "/workflows/run-1", label: "Reason", button: "Retry" }, "Retry", "Reload status"],
   ["FreezeSnapshotForm", "freezeSnapshot", { caseId: "case-1" }, "Freeze current evidence", "Reload evidence"],
   ["CorrectDocumentFieldForm", "correctField", { documentId: "document-1", fieldId: "field-1", fieldKey: "date_of_birth" }, "Save correction for date_of_birth", "Reload document"],
+  ["RecoveryReasonForm", "cancelRun", { kind: "cancel", recordId: "run-1" }, "Cancel run", "Reload status"],
+  ["RecoveryReasonForm", "withdrawReport", { kind: "withdraw", recordId: "case-1" }, "Withdraw current submission", "Reload status"],
 ]) {
   test(`${component} requires a refresh after an uncertain response`, async () => {
     const state = [];
@@ -55,5 +57,7 @@ for (const [component, action, props, button, refresh] of [
     if (component === "ResumeWorkflowForm") assert.match(navigation, /\/workflows\/run-1\?error=CONNECTION_ERROR/);
     if (component === "FreezeSnapshotForm") assert.match(navigation, /\/cases\/case-1\/evidence\?error=CONNECTION_ERROR/);
     if (component === "CorrectDocumentFieldForm") assert.match(navigation, /\/documents\/document-1\?error=CONNECTION_ERROR/);
+    if (component === "RecoveryReasonForm" && props.kind === "cancel") assert.match(navigation, /\/workflows\/run-1\?error=CONNECTION_ERROR/);
+    if (component === "RecoveryReasonForm" && props.kind === "withdraw") assert.match(navigation, /\/cases\/case-1\/report\?error=CONNECTION_ERROR/);
   });
 }

@@ -20,6 +20,7 @@ function pageWithValidation(valid, calls = [], history = false) {
   };
   mocks["@/components/SubmitReportForm"] = loadComponent("SubmitReportForm", mocks);
   mocks["@/components/ReportEditForm"] = loadComponent("ReportEditForm", mocks);
+  mocks["@/components/RecoveryReasonForm"] = loadComponent("RecoveryReasonForm", mocks);
   const source = readFileSync(new URL("../app/cases/[id]/report/page.tsx", import.meta.url), "utf8");
   const code = ts.transpileModule(source, { compilerOptions: { module: ts.ModuleKind.CommonJS, jsx: ts.JsxEmit.ReactJSX, esModuleInterop: true } }).outputText;
   const exports = {};

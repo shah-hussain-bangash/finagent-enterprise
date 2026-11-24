@@ -19,6 +19,8 @@ class LostResponseProxy:
         drop_workflow_resume: bool = False,
         drop_snapshot: bool = False,
         drop_field_correction: bool = False,
+        drop_workflow_cancel: bool = False,
+        drop_report_withdrawal: bool = False,
         gateway_error: bool = False,
     ) -> None:
         self.upstream = upstream
@@ -28,6 +30,8 @@ class LostResponseProxy:
         self.drop_workflow_resume = drop_workflow_resume
         self.drop_snapshot = drop_snapshot
         self.drop_field_correction = drop_field_correction
+        self.drop_workflow_cancel = drop_workflow_cancel
+        self.drop_report_withdrawal = drop_report_withdrawal
         self.gateway_error = gateway_error
         self.dropped_statuses: list[int] = []
         outer = self
@@ -56,6 +60,8 @@ class LostResponseProxy:
                     and not outer.drop_workflow_resume
                     and not outer.drop_snapshot
                     and not outer.drop_field_correction
+                    and not outer.drop_workflow_cancel
+                    and not outer.drop_report_withdrawal
                     and self.command == "POST"
                     and path == "/api/v1/workflows"
                 )
@@ -90,6 +96,14 @@ class LostResponseProxy:
                     and "/fields/" in path
                     and path.endswith("/correction")
                 )
+                drop_cancel = (
+                    outer.drop_workflow_cancel and self.command == "POST"
+                    and path.startswith("/api/v1/workflows/") and path.endswith("/cancel")
+                )
+                drop_withdrawal = (
+                    outer.drop_report_withdrawal and self.command == "POST"
+                    and path.startswith("/api/v1/cases/") and path.endswith("/reports/withdraw")
+                )
                 if (
                     drop_workflow
                     or drop_case
@@ -97,7 +111,7 @@ class LostResponseProxy:
                     or drop_upload
                     or drop_resume
                     or drop_snapshot
-                    or drop_correction
+                    or drop_correction or drop_cancel or drop_withdrawal
                 ) and not outer.dropped_statuses:
                     outer.dropped_statuses.append(response.status_code)
                     if outer.gateway_error:

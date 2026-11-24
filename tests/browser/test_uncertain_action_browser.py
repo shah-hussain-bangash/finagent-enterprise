@@ -13,6 +13,88 @@ from tests.integration.test_case_commands import force_status
 pytestmark = [pytest.mark.browser, pytest.mark.integration]
 
 
+@pytest.mark.parametrize("stack", ["workflow_cancel_gateway_error"], indirect=True)
+def test_workflow_cancel_gateway_error_requires_reload(stack, client, token):  # type: ignore[no-untyped-def] # noqa: F811
+    from playwright.sync_api import expect, sync_playwright
+
+    case_id = ingest(client, token)["case_id"]
+    analyst = assigned_analyst(client, token, case_id)
+    with sync_playwright() as playwright:
+        browser = playwright.chromium.launch()
+        try:
+            page = browser.new_page()
+            sign_in(page, stack["web"], analyst)
+            page.goto(f"{stack['web']}/cases/{case_id}")
+            page.get_by_role("button", name="Start investigation").click()
+            page.get_by_text("Investigation queued.").first.wait_for(timeout=30_000)
+            wait_text(page, f"{stack['web']}/cases/{case_id}", "WAITING_REVIEW")
+            runs = client.get(f"/api/v1/cases/{case_id}/workflows", headers=token(analyst))
+            assert runs.status_code == 200 and len(runs.json()["items"]) == 1
+            run_id = runs.json()["items"][0]["run_id"]
+            page.goto(f"{stack['web']}/workflows/{run_id}")
+            page.get_by_label("Cancel (committed effects are kept): reason").fill("Synthetic cancellation")
+            page.get_by_role("button", name="Cancel run").click()
+            expect(page.get_by_text("Check the recorded run before another action.")).to_be_visible(
+                timeout=30_000
+            )
+            assert stack["proxy"].dropped_statuses == [202]
+            result = client.get(f"/api/v1/workflows/{run_id}", headers=token(analyst))
+            assert result.status_code == 200 and result.json()["status"] == "CANCELLED"
+            page.get_by_role("link", name="Reload run").click()
+            expect(page.get_by_text("CANCELLED", exact=False).first).to_be_visible()
+        finally:
+            browser.close()
+
+
+@pytest.mark.parametrize("stack", ["report_withdrawal_gateway_error"], indirect=True)
+def test_report_withdrawal_gateway_error_requires_reload(stack, client, token):  # type: ignore[no-untyped-def] # noqa: F811
+    from playwright.sync_api import expect, sync_playwright
+
+    case_id = ingest(client, token)["case_id"]
+    analyst = assigned_analyst(client, token, case_id)
+    with sync_playwright() as playwright:
+        browser = playwright.chromium.launch()
+        try:
+            page = browser.new_page()
+            sign_in(page, stack["web"], analyst)
+            page.goto(f"{stack['web']}/cases/{case_id}")
+            page.get_by_role("button", name="Start investigation").click()
+            page.get_by_text("Investigation queued.").first.wait_for(timeout=30_000)
+            wait_text(page, f"{stack['web']}/cases/{case_id}", "WAITING_REVIEW")
+            page.goto(f"{stack['web']}/cases/{case_id}/evidence")
+            page.get_by_label("Resolution", exact=True).select_option("USE_A")
+            page.get_by_label("Reason (recorded; neither source is deleted)").fill(
+                "Synthetic evidence reviewed"
+            )
+            page.get_by_role("button", name="Record resolution").click()
+            page.get_by_text("Conflict resolved").first.wait_for(timeout=30_000)
+            page.goto(f"{stack['web']}/cases/{case_id}")
+            page.get_by_label("Re-analyse with fresh evidence (reason)").fill("Synthetic conflict resolved")
+            page.get_by_role("button", name="Re-run evidence and analysis").click()
+            wait_text(page, f"{stack['web']}/cases/{case_id}/report", "version 2 of 2")
+            page.get_by_role("button", name="Submit version 2 for independent review").click()
+            page.get_by_text("Submitted for independent review.").first.wait_for(timeout=30_000)
+            page.goto(f"{stack['web']}/cases/{case_id}/report")
+            page.get_by_label("Reason for withdrawing the current submission").fill(
+                "Synthetic review correction"
+            )
+            page.get_by_role("button", name="Withdraw current submission").click()
+            expect(page.get_by_text("Check the recorded report before another action.")).to_be_visible(
+                timeout=30_000
+            )
+            assert stack["proxy"].dropped_statuses == [200]
+            report = client.get(f"/api/v1/cases/{case_id}/reports", headers=token(analyst))
+            assert report.status_code == 200
+            assert report.json()["report"]["status"] == "DRAFT"
+            assert report.json()["report"]["current_version_no"] == 2
+            case = client.get(f"/api/v1/cases/{case_id}", headers=token(analyst))
+            assert case.status_code == 200 and case.json()["status"] == "REWORK"
+            page.get_by_role("link", name="Reload report").click()
+            expect(page.get_by_text("version 2 of 2", exact=False)).to_be_visible()
+        finally:
+            browser.close()
+
+
 @pytest.mark.parametrize("stack", ["field_correction_gateway_error"], indirect=True)
 def test_field_correction_gateway_error_requires_reload(  # type: ignore[no-untyped-def]
     stack,  # noqa: F811

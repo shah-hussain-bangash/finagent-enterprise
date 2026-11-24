@@ -52,6 +52,14 @@ EXPECTED = {
         "tests.browser.test_uncertain_action_browser",
         "test_field_correction_gateway_error_requires_reload[field_correction_gateway_error]",
     ),
+    (
+        "tests.browser.test_uncertain_action_browser",
+        "test_workflow_cancel_gateway_error_requires_reload[workflow_cancel_gateway_error]",
+    ),
+    (
+        "tests.browser.test_uncertain_action_browser",
+        "test_report_withdrawal_gateway_error_requires_reload[report_withdrawal_gateway_error]",
+    ),
 }
 
 
