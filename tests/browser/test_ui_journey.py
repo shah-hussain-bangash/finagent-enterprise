@@ -67,13 +67,15 @@ def stack(make_settings, make_worker, bank, request) -> Iterator[dict[str, Any]]
         "drop_workflow_response",
         "drop_case_update_response",
         "case_update_gateway_error",
+        "report_edit_gateway_error",
     }:
         from tests.browser.lost_response_proxy import LostResponseProxy
 
         proxy = LostResponseProxy(
             f"http://127.0.0.1:{api_port}",
             drop_case_update=request.param in {"drop_case_update_response", "case_update_gateway_error"},
-            gateway_error=request.param == "case_update_gateway_error",
+            drop_report_edit=request.param == "report_edit_gateway_error",
+            gateway_error=request.param in {"case_update_gateway_error", "report_edit_gateway_error"},
         )
         proxy.start()
     npx = shutil.which("npx") or shutil.which("npx.cmd")

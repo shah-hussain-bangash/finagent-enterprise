@@ -9,9 +9,17 @@ import httpx
 
 
 class LostResponseProxy:
-    def __init__(self, upstream: str, *, drop_case_update: bool = False, gateway_error: bool = False) -> None:
+    def __init__(
+        self,
+        upstream: str,
+        *,
+        drop_case_update: bool = False,
+        drop_report_edit: bool = False,
+        gateway_error: bool = False,
+    ) -> None:
         self.upstream = upstream
         self.drop_case_update = drop_case_update
+        self.drop_report_edit = drop_report_edit
         self.gateway_error = gateway_error
         self.dropped_statuses: list[int] = []
         outer = self
@@ -34,12 +42,21 @@ class LostResponseProxy:
                 )
                 path = urlsplit(self.path).path
                 drop_workflow = (
-                    not outer.drop_case_update and self.command == "POST" and path == "/api/v1/workflows"
+                    not outer.drop_case_update
+                    and not outer.drop_report_edit
+                    and self.command == "POST"
+                    and path == "/api/v1/workflows"
                 )
                 drop_case = (
                     outer.drop_case_update and self.command == "PATCH" and path.startswith("/api/v1/cases/")
                 )
-                if (drop_workflow or drop_case) and not outer.dropped_statuses:
+                drop_report = (
+                    outer.drop_report_edit
+                    and self.command == "POST"
+                    and path.startswith("/api/v1/cases/")
+                    and path.endswith("/reports/edits")
+                )
+                if (drop_workflow or drop_case or drop_report) and not outer.dropped_statuses:
                     outer.dropped_statuses.append(response.status_code)
                     if outer.gateway_error:
                         self.send_response(502)
