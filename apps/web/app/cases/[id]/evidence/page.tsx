@@ -1,6 +1,5 @@
-import { freezeSnapshot } from "@/app/actions";
+import { FreezeSnapshotForm } from "@/components/FreezeSnapshotForm";
 import { ResolveConflictForm } from "@/components/ResolveConflictForm";
-import { SubmitButton } from "@/components/SubmitButton";
 import { Empty, ErrorState, Flash, Json, Tabs, When } from "@/components/ui";
 import { load } from "@/lib/api";
 import { requireSession } from "@/lib/session";
@@ -89,10 +88,7 @@ export default async function EvidencePage({ params, searchParams }: {
         </>
       ) : null}
       <h2>Immutable snapshots</h2>
-      {data && !uncertainAction && <form action={freezeSnapshot} className="inline">
-        <input type="hidden" name="case_id" value={id} />
-        <SubmitButton>Freeze current evidence</SubmitButton>
-      </form>}
+      {data && !uncertainAction && <FreezeSnapshotForm caseId={id} />}
       {snaps.error && <ErrorState error={snaps.error} what="Snapshot history" />}
       {snaps.data && snaps.data.items.length > 0 ? (
         <div className="case-evidence-table" role="region" aria-label="Evidence snapshots table" tabIndex={0}><table>

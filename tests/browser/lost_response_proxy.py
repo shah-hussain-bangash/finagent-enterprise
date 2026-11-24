@@ -17,6 +17,7 @@ class LostResponseProxy:
         drop_report_edit: bool = False,
         drop_document_upload: bool = False,
         drop_workflow_resume: bool = False,
+        drop_snapshot: bool = False,
         gateway_error: bool = False,
     ) -> None:
         self.upstream = upstream
@@ -24,6 +25,7 @@ class LostResponseProxy:
         self.drop_report_edit = drop_report_edit
         self.drop_document_upload = drop_document_upload
         self.drop_workflow_resume = drop_workflow_resume
+        self.drop_snapshot = drop_snapshot
         self.gateway_error = gateway_error
         self.dropped_statuses: list[int] = []
         outer = self
@@ -50,6 +52,7 @@ class LostResponseProxy:
                     and not outer.drop_report_edit
                     and not outer.drop_document_upload
                     and not outer.drop_workflow_resume
+                    and not outer.drop_snapshot
                     and self.command == "POST"
                     and path == "/api/v1/workflows"
                 )
@@ -71,8 +74,14 @@ class LostResponseProxy:
                     and path.startswith("/api/v1/workflows/")
                     and path.endswith("/resume")
                 )
+                drop_snapshot = (
+                    outer.drop_snapshot
+                    and self.command == "POST"
+                    and path.startswith("/api/v1/cases/")
+                    and path.endswith("/snapshots")
+                )
                 if (
-                    drop_workflow or drop_case or drop_report or drop_upload or drop_resume
+                    drop_workflow or drop_case or drop_report or drop_upload or drop_resume or drop_snapshot
                 ) and not outer.dropped_statuses:
                     outer.dropped_statuses.append(response.status_code)
                     if outer.gateway_error:

@@ -13,6 +13,35 @@ from tests.integration.test_case_commands import force_status
 pytestmark = [pytest.mark.browser, pytest.mark.integration]
 
 
+@pytest.mark.parametrize("stack", ["snapshot_gateway_error"], indirect=True)
+def test_snapshot_gateway_error_requires_reload(  # type: ignore[no-untyped-def]
+    stack,  # noqa: F811
+    client,
+    token,
+):
+    from playwright.sync_api import expect, sync_playwright
+
+    case_id = ingest(client, token)["case_id"]
+    analyst = assigned_analyst(client, token, case_id)
+    with sync_playwright() as playwright:
+        browser = playwright.chromium.launch()
+        try:
+            page = browser.new_page()
+            sign_in(page, stack["web"], analyst)
+            page.goto(f"{stack['web']}/cases/{case_id}/evidence")
+            page.get_by_role("button", name="Freeze current evidence").click()
+            expect(page.get_by_text("Check the recorded evidence before another action.")).to_be_visible(
+                timeout=30_000
+            )
+            assert stack["proxy"].dropped_statuses == [201]
+            snapshots = client.get(f"/api/v1/cases/{case_id}/snapshots", headers=token(analyst))
+            assert snapshots.status_code == 200 and len(snapshots.json()["items"]) == 1
+            page.get_by_role("link", name="Reload evidence").click()
+            expect(page.get_by_role("cell", name="v1", exact=True)).to_be_visible()
+        finally:
+            browser.close()
+
+
 @pytest.mark.parametrize("stack", ["workflow_resume_gateway_error"], indirect=True)
 def test_workflow_resume_gateway_error_requires_reload(  # type: ignore[no-untyped-def]
     stack,  # noqa: F811

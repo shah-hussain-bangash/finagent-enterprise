@@ -168,10 +168,15 @@ export async function resolveConflict(form: FormData): Promise<{ok: boolean; mes
   }
 }
 
-export async function freezeSnapshot(form: FormData): Promise<never> {
+export async function freezeSnapshot(form: FormData): Promise<{ok: boolean; message: string; uncertain?: boolean}> {
   const caseId = str(form, "case_id");
-  return run(`/cases/${caseId}/evidence`, "Snapshot request processed.", () =>
-    api(`/api/v1/cases/${caseId}/snapshots`, { method: "POST" }));
+  try {
+    await api(`/api/v1/cases/${caseId}/snapshots`, { method: "POST", timeoutMs: 30_000 });
+    return {ok: true, message: "Snapshot request processed."};
+  } catch (e) {
+    if (!(e instanceof ApiRequestError)) throw e;
+    return {ok: false, message: `${e.code}: ${e.message}`, uncertain: e.code === "CONNECTION_ERROR"};
+  }
 }
 
 export async function uploadDocument(form: FormData): Promise<{ok: boolean; message: string; uncertain?: boolean}> {

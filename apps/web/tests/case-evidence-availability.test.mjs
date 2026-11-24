@@ -17,6 +17,7 @@ function loadPage(evidence, snapshots) {
     "@/lib/api": { load: async (path) => path.endsWith("/snapshots") ? snapshots : evidence },
   };
   mocks["@/components/ResolveConflictForm"] = loadComponent("ResolveConflictForm", mocks);
+  mocks["@/components/FreezeSnapshotForm"] = loadComponent("FreezeSnapshotForm", mocks);
   const source = readFileSync(new URL("../app/cases/[id]/evidence/page.tsx", import.meta.url), "utf8");
   const code = ts.transpileModule(source, { compilerOptions: { module: ts.ModuleKind.CommonJS, jsx: ts.JsxEmit.ReactJSX, esModuleInterop: true } }).outputText;
   const exports = {};
