@@ -97,12 +97,16 @@ class LostResponseProxy:
                     and path.endswith("/correction")
                 )
                 drop_cancel = (
-                    outer.drop_workflow_cancel and self.command == "POST"
-                    and path.startswith("/api/v1/workflows/") and path.endswith("/cancel")
+                    outer.drop_workflow_cancel
+                    and self.command == "POST"
+                    and path.startswith("/api/v1/workflows/")
+                    and path.endswith("/cancel")
                 )
                 drop_withdrawal = (
-                    outer.drop_report_withdrawal and self.command == "POST"
-                    and path.startswith("/api/v1/cases/") and path.endswith("/reports/withdraw")
+                    outer.drop_report_withdrawal
+                    and self.command == "POST"
+                    and path.startswith("/api/v1/cases/")
+                    and path.endswith("/reports/withdraw")
                 )
                 if (
                     drop_workflow
@@ -111,7 +115,9 @@ class LostResponseProxy:
                     or drop_upload
                     or drop_resume
                     or drop_snapshot
-                    or drop_correction or drop_cancel or drop_withdrawal
+                    or drop_correction
+                    or drop_cancel
+                    or drop_withdrawal
                 ) and not outer.dropped_statuses:
                     outer.dropped_statuses.append(response.status_code)
                     if outer.gateway_error:
