@@ -1,5 +1,15 @@
 # Synthetic case acceptance record
 
+**Hosted synthetic baseline, 23 November 2026:** [GitHub Actions run #64](https://github.com/shah-hussain-bangash/finagent-enterprise/actions/runs/45171360681) passed all seven jobs at revision [`fa37f741576fcf7b8c72ae02fe889837abe88a15`](https://github.com/shah-hussain-bangash/finagent-enterprise/commit/fa37f741576fcf7b8c72ae02fe889837abe88a15). Its browser job reported **10 passed in 67.32 seconds** and uploaded `browser-test-evidence`. The journey starts with an assigned synthetic case, resolves an evidence conflict, submits report version 2, records a separate reviewer's approval and reaches completion. The browser then exercises supervisor reopening, so its final case state is rework, not completed. Separate synthetic cases exercise interrupted investigation starts and a recorded case update followed by a lost response or gateway error; they are not a single interrupted-save journey. The API acceptance test separately checks report claims, evidence references and the bound snapshot. The baseline does not establish a deployed environment or live-provider behavior.
+
+**Focused reproduction:** using the disposable PostgreSQL and synthetic services configured by the test fixtures, build `apps/web` with `npm ci` and `npm run build`, install the project's development dependencies and Playwright Chromium, then run from the repository root:
+
+```powershell
+python -m pytest -m browser tests/browser/test_ui_journey.py tests/browser/test_uncertain_action_browser.py -q --tb=short
+```
+
+The fixtures use an assigned Bank A analyst and `a.reviewer1@synthetic` for the separate reviewer, and create synthetic cases. The browser fixture also uses a synthetic supervisor for reopening. The tests can reset the configured `finagent_test` schema; verify the test database target before running. The latest local test adds explicit assertions for the report version, evidence references, reviewer identity separation and recorded approval. **Those additional assertions are not covered by run #64 and remain unverified until rerun at their committed revision.**
+
 **Status: synthetic browser journey passed locally; formal acceptance remains open.** This is not a staging or production approval. Formal acceptance criteria and accountable institutional owners remain open under [DEC-12](../decisions/open-decisions.md).
 
 **Hosted CI for the tested API revision:** [GitHub Actions run #25](https://github.com/zenithdevelopers7-source/finagent-enterprise/actions/runs/44879796510) completed successfully for `d45b60918cdb8cbb67b72d716e51d4838bc3819a`: quality, security, web, infrastructure reference validation, integration, and images jobs passed. These checks complement the local observations below; they do not establish an Azure deployment or formal acceptance. Later commits require their own checks.

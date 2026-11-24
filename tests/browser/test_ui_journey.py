@@ -306,6 +306,21 @@ def test_analyst_and_reviewer_complete_a_case_in_the_browser(stack, client, toke
         page.locator("table a").first.click()
         page.wait_for_url("**/approvals/*")
         page.get_by_text("frozen for this review", exact=False).first.wait_for(timeout=30_000)
+        reviewer = "a.reviewer1@synthetic"
+        approval_id = page.url.rsplit("/", 1)[-1]
+        approval_response = client.get(f"/api/v1/approvals/{approval_id}", headers=token(reviewer))
+        assert approval_response.status_code == 200, approval_response.text
+        approval = approval_response.json()
+        report_response = client.get(f"/api/v1/cases/{case_id}/reports/versions/2", headers=token(analyst))
+        assert report_response.status_code == 200, report_response.text
+        reviewed_report = report_response.json()
+        assert approval["case_id"] == case_id and approval["status"] == "PENDING"
+        assert approval["report_version_id"] == reviewed_report["version_id"]
+        assert approval["snapshot_id"] == reviewed_report["snapshot_id"]
+        assert approval["reviewer_id"] and approval["requested_by"] != approval["reviewer_id"]
+        assert approval["report"]["version_no"] == reviewed_report["version_no"] == 2
+        assert any(claim["evidence_refs"] for claim in reviewed_report["claims"])
+        assert approval["report"]["claims"] == reviewed_report["claims"]
         page.get_by_label("Approve").check()
         page.get_by_label("Rationale (required, recorded with your identity and the reviewed versions)").fill(
             "Evidence, calculations and policy citations reviewed."
@@ -313,6 +328,12 @@ def test_analyst_and_reviewer_complete_a_case_in_the_browser(stack, client, toke
         page.get_by_role("button", name="Record decision").click()
         page.get_by_text("Decision recorded.").first.wait_for(timeout=30_000)
         wait_text(page, f"{web}/cases/{case_id}", "to COMPLETED")  # shown only after finalization
+        recorded = client.get(f"/api/v1/approvals/{approval_id}", headers=token(reviewer))
+        assert recorded.status_code == 200, recorded.text
+        assert recorded.json()["decision"]["decision"] == "APPROVE"
+        assert recorded.json()["decision"]["reviewer_id"] == approval["reviewer_id"]
+        assert recorded.json()["report_version_id"] == reviewed_report["version_id"]
+        assert recorded.json()["snapshot_id"] == reviewed_report["snapshot_id"]
         assert page.get_by_label("Case status: Completed").count() == 1  # text label, not colour only
         # Reopening UI: no supervisor controls for analyst/reviewer identities.
         supervisor = "a.supervisor1@synthetic"
@@ -321,6 +342,9 @@ def test_analyst_and_reviewer_complete_a_case_in_the_browser(stack, client, toke
         assert reopen_form.count() == 0  # still signed in as the reviewer
         old_version = client.get(f"/api/v1/cases/{case_id}/reports/versions/2", headers=token(supervisor))
         assert old_version.status_code == 200, old_version.text
+        assert old_version.json()["version_id"] == reviewed_report["version_id"]
+        assert old_version.json()["snapshot_id"] == reviewed_report["snapshot_id"]
+        assert old_version.json()["claims"] == reviewed_report["claims"]
         preserved_fields = ("version_id", "version_no", "content_hash", "snapshot_id", "sections", "claims")
         previous = {field: old_version.json()[field] for field in preserved_fields}
         before = client.get(f"/api/v1/cases/{case_id}", headers=token(supervisor)).json()
