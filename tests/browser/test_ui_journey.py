@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import contextlib
 import os
+import re
 import shutil
 import socket
 import subprocess
@@ -313,6 +314,7 @@ def test_analyst_and_reviewer_complete_a_case_in_the_browser(stack, client, toke
         page.get_by_role("link", name="Reload case").click()
         page.get_by_label("Resolve block: reason").fill("Synthetic evidence review complete")
         page.get_by_role("button", name="Resume investigation").click()
+        page.wait_for_url(re.compile(rf"^{re.escape(web)}/cases/{re.escape(case_id)}\?ok="), timeout=30_000)
         wait_text(page, f"{web}/cases/{case_id}", "WAITING_REVIEW")
         resumed = client.get(f"/api/v1/cases/{case_id}", headers=token(analyst))
         assert resumed.status_code == 200 and resumed.json()["status"] == "INVESTIGATING"

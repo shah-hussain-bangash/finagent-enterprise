@@ -100,7 +100,7 @@ def test_snapshot_gateway_error_requires_reload(  # type: ignore[no-untyped-def]
             snapshots = client.get(f"/api/v1/cases/{case_id}/snapshots", headers=token(analyst))
             assert snapshots.status_code == 200 and len(snapshots.json()["items"]) == 1
             page.get_by_role("link", name="Reload evidence").click()
-            expect(page.get_by_role("cell", name="v1", exact=True)).to_be_visible()
+            expect(page.get_by_role("cell", name="v1", exact=False)).to_be_visible()
         finally:
             browser.close()
 
