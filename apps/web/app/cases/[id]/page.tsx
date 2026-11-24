@@ -1,11 +1,10 @@
 import { randomUUID } from "node:crypto";
 import Link from "next/link";
-import { resumeRun } from "@/app/actions";
 import { CaseStatusForm } from "@/components/CaseStatusForm";
+import { ResumeWorkflowForm } from "@/components/ResumeWorkflowForm";
 import { StartInvestigationForm } from "@/components/StartInvestigationForm";
 import { ReopenCaseForm } from "@/components/ReopenCaseForm";
 import { StatusBadge } from "@/components/StatusBadge";
-import { SubmitButton } from "@/components/SubmitButton";
 import { Empty, ErrorState, Field, Flash, Tabs, When } from "@/components/ui";
 import { type CaseStatus, load } from "@/lib/api";
 import { requireSession } from "@/lib/session";
@@ -106,24 +105,10 @@ export default async function CaseOverview({ params, searchParams }: {
         <StartInvestigationForm caseId={id} requestKey={randomUUID()} />
       ) : null}
       {!uncertainAction && active?.status === "WAITING_EVIDENCE" ? (
-        <form action={resumeRun} className="stack panel">
-          <input type="hidden" name="run_id" value={active.run_id} />
-          <input type="hidden" name="action" value="EVIDENCE_SUPPLIED" />
-          <input type="hidden" name="back" value={`/cases/${id}`} />
-          <label htmlFor="reason">What changed (required)</label>
-          <input id="reason" name="reason" required minLength={5} maxLength={300} />
-          <SubmitButton>Evidence supplied - continue</SubmitButton>
-        </form>
+        <ResumeWorkflowForm runId={active.run_id} action="EVIDENCE_SUPPLIED" returnPath={`/cases/${id}`} label="What changed (required)" button="Evidence supplied - continue" />
       ) : null}
       {!uncertainAction && active?.status === "WAITING_REVIEW" && ["INVESTIGATING", "REWORK"].includes(c.status) ? (
-        <form action={resumeRun} className="stack panel">
-          <input type="hidden" name="run_id" value={active.run_id} />
-          <input type="hidden" name="action" value="REANALYZE" />
-          <input type="hidden" name="back" value={`/cases/${id}`} />
-          <label htmlFor="reanalyze">Re-analyse with fresh evidence (reason)</label>
-          <input id="reanalyze" name="reason" required minLength={5} maxLength={300} />
-          <SubmitButton>Re-run evidence and analysis</SubmitButton>
-        </form>
+        <ResumeWorkflowForm runId={active.run_id} action="REANALYZE" returnPath={`/cases/${id}`} label="Re-analyse with fresh evidence (reason)" button="Re-run evidence and analysis" />
       ) : null}
       {!uncertainAction && ["INVESTIGATING", "BLOCKED"].includes(c.status) ? (
         <CaseStatusForm caseId={id} recordVersion={c.record_version} blocked={c.status === "BLOCKED"} />

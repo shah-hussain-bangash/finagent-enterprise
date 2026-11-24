@@ -40,6 +40,10 @@ EXPECTED = {
         "tests.browser.test_uncertain_action_browser",
         "test_document_upload_gateway_error_requires_reload[document_upload_gateway_error]",
     ),
+    (
+        "tests.browser.test_uncertain_action_browser",
+        "test_workflow_resume_gateway_error_requires_reload[workflow_resume_gateway_error]",
+    ),
 }
 
 

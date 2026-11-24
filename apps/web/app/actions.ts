@@ -80,14 +80,19 @@ export async function startInvestigation(form: FormData): Promise<{ok: boolean; 
   }
 }
 
-export async function resumeRun(form: FormData): Promise<never> {
+export async function resumeRun(form: FormData): Promise<{ok: boolean; message: string; back: string; uncertain?: boolean}> {
   const runId = str(form, "run_id");
   const uuid = "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}";
-  if (!new RegExp(`^${uuid}$`, "i").test(runId)) return to("/operations", "error", "Invalid workflow identifier.");
+  if (!new RegExp(`^${uuid}$`, "i").test(runId)) return {ok: false, message: "Invalid workflow identifier.", back: "/operations"};
   const requestedBack = str(form, "back");
   const back = new RegExp(`^/cases/${uuid}$`, "i").test(requestedBack) ? requestedBack : `/workflows/${runId}`;
-  return run(back, "Resume requested.", () =>
-    api(`/api/v1/workflows/${runId}/resume`, { json: { action: str(form, "action"), reason: str(form, "reason") } }));
+  try {
+    await api(`/api/v1/workflows/${runId}/resume`, { json: { action: str(form, "action"), reason: str(form, "reason") }, timeoutMs: 30_000 });
+    return {ok: true, message: "Resume requested.", back};
+  } catch (e) {
+    if (!(e instanceof ApiRequestError)) throw e;
+    return {ok: false, message: `${e.code}: ${e.message}`, back, uncertain: e.code === "CONNECTION_ERROR"};
+  }
 }
 
 export async function cancelRun(form: FormData): Promise<never> {

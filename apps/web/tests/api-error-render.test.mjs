@@ -223,6 +223,21 @@ test("an interrupted document upload returns an uncertain outcome", async () => 
   assert.equal(result.uncertain, true);
 });
 
+test("an interrupted workflow resume returns an uncertain outcome and safe location", async () => {
+  const error = new ApiRequestError(503, { error: { code: "CONNECTION_ERROR", message: "Outcome may be unknown", correlation_id: "", details: {} } });
+  const { resumeRun } = compile("../app/actions.ts", {
+    "next/cache": { revalidatePath: () => {} }, "next/navigation": { redirect: () => {} },
+    "@/lib/api": { ApiRequestError, api: async () => { throw error; }, BASE: "" },
+    "@/lib/session": {}, "@/lib/auth-config": {},
+  });
+  const form = new FormData();
+  form.set("run_id", "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa");
+  form.set("back", "https://evil.example");
+  const result = await resumeRun(form);
+  assert.equal(result.uncertain, true);
+  assert.equal(result.back, "/workflows/aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa");
+});
+
 test("case status updates use a bounded request timeout", async () => {
   let options;
   const { updateCase } = compile("../app/actions.ts", {
@@ -239,7 +254,7 @@ test("case status updates use a bounded request timeout", async () => {
   assert.equal(options.timeoutMs, 30_000);
 });
 
-test("workflow resume only redirects to an allowed local case or its workflow", async () => {
+test("workflow resume only returns an allowed local case or its workflow", async () => {
   const requests = [];
   const { resumeRun } = compile("../app/actions.ts", {
     "next/cache": { revalidatePath: () => {} },
@@ -253,16 +268,16 @@ test("workflow resume only redirects to an allowed local case or its workflow", 
     const form = new FormData();
     form.set("run_id", runId);
     form.set("back", back);
-    await assert.rejects(() => resumeRun(form), (error) => error.message.startsWith(`redirect:/workflows/${runId}?ok=`));
+    assert.equal((await resumeRun(form)).back, `/workflows/${runId}`);
   }
   const valid = new FormData();
   valid.set("run_id", runId);
   valid.set("back", casePath);
-  await assert.rejects(() => resumeRun(valid), (error) => error.message.startsWith(`redirect:${casePath}?ok=`));
+  assert.equal((await resumeRun(valid)).back, casePath);
   assert.equal(requests.length, 6);
   const invalid = new FormData();
   invalid.set("run_id", "../../outside");
-  await assert.rejects(() => resumeRun(invalid), (error) => error.message.startsWith("redirect:/operations?error="));
+  assert.equal((await resumeRun(invalid)).back, "/operations");
   assert.equal(requests.length, 6);
 });
 

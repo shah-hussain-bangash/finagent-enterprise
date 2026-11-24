@@ -13,6 +13,47 @@ from tests.integration.test_case_commands import force_status
 pytestmark = [pytest.mark.browser, pytest.mark.integration]
 
 
+@pytest.mark.parametrize("stack", ["workflow_resume_gateway_error"], indirect=True)
+def test_workflow_resume_gateway_error_requires_reload(  # type: ignore[no-untyped-def]
+    stack,  # noqa: F811
+    client,
+    token,
+):
+    from playwright.sync_api import expect, sync_playwright
+
+    case_id = ingest(client, token)["case_id"]
+    analyst = assigned_analyst(client, token, case_id)
+    with sync_playwright() as playwright:
+        browser = playwright.chromium.launch()
+        try:
+            page = browser.new_page()
+            sign_in(page, stack["web"], analyst)
+            page.goto(f"{stack['web']}/cases/{case_id}")
+            page.get_by_role("button", name="Start investigation").click()
+            page.get_by_text("Investigation queued.").first.wait_for(timeout=30_000)
+            wait_text(page, f"{stack['web']}/cases/{case_id}", "WAITING_REVIEW")
+            page.goto(f"{stack['web']}/cases/{case_id}/evidence")
+            page.get_by_label("Resolution", exact=True).select_option("USE_A")
+            page.get_by_label("Reason (recorded; neither source is deleted)").fill(
+                "Synthetic evidence reviewed"
+            )
+            page.get_by_role("button", name="Record resolution").click()
+            page.get_by_text("Conflict resolved").first.wait_for(timeout=30_000)
+            page.goto(f"{stack['web']}/cases/{case_id}")
+            page.get_by_label("Re-analyse with fresh evidence (reason)").fill("Synthetic conflict resolved")
+            page.get_by_role("button", name="Re-run evidence and analysis").click()
+            expect(page.get_by_text("Check the recorded case before another action.")).to_be_visible(
+                timeout=30_000
+            )
+            assert stack["proxy"].dropped_statuses == [202]
+            page.get_by_role("link", name="Reload case").click()
+            wait_text(page, f"{stack['web']}/cases/{case_id}/report", "version 2 of 2")
+            runs = client.get(f"/api/v1/cases/{case_id}/workflows", headers=token(analyst))
+            assert runs.status_code == 200 and len(runs.json()["items"]) == 1
+        finally:
+            browser.close()
+
+
 @pytest.mark.parametrize("stack", ["document_upload_gateway_error"], indirect=True)
 def test_document_upload_gateway_error_requires_reload(  # type: ignore[no-untyped-def]
     stack,  # noqa: F811

@@ -22,6 +22,7 @@ function loadPage(runResult) {
   mocks["@/components/StartInvestigationForm"] = loadComponent("StartInvestigationForm", mocks);
   mocks["@/components/ReopenCaseForm"] = loadComponent("ReopenCaseForm", mocks);
   mocks["@/components/CaseStatusForm"] = loadComponent("CaseStatusForm", mocks);
+  mocks["@/components/ResumeWorkflowForm"] = loadComponent("ResumeWorkflowForm", mocks);
   const source = readFileSync(new URL("../app/cases/[id]/page.tsx", import.meta.url), "utf8");
   const code = ts.transpileModule(source, { compilerOptions: { module: ts.ModuleKind.CommonJS, jsx: ts.JsxEmit.ReactJSX, esModuleInterop: true } }).outputText;
   const exports = {};

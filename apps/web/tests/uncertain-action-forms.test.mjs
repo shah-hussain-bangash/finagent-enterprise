@@ -15,6 +15,7 @@ for (const [component, action, props, button, refresh] of [
   ["CaseStatusForm", "updateCase", { caseId: "case-1", recordVersion: 1, blocked: false }, "Mark blocked", "Reload case"],
   ["ReportEditForm", "editReport", { caseId: "case-1", version: 1, sections: [] }, "Save as new version", "Reload report"],
   ["UploadDocumentForm", "uploadDocument", { caseId: "case-1", requestKey: "key" }, "Upload", "Reload documents"],
+  ["ResumeWorkflowForm", "resumeRun", { runId: "run-1", action: "RETRY", returnPath: "/workflows/run-1", label: "Reason", button: "Retry" }, "Retry", "Reload status"],
 ]) {
   test(`${component} requires a refresh after an uncertain response`, async () => {
     const state = [];
@@ -26,7 +27,7 @@ for (const [component, action, props, button, refresh] of [
     } };
     const mocks = {
       react: hooks,
-      "@/app/actions": { [action]: async () => ({ ok: false, uncertain: true, message: "Outcome unknown" }) },
+      "@/app/actions": { [action]: async () => ({ ok: false, uncertain: true, message: "Outcome unknown", back: props.returnPath }) },
       "@/components/SubmitButton": { SubmitButton: ({ children }) => React.createElement("button", null, children) },
     };
     const source = readFileSync(new URL(`../components/${component}.tsx`, import.meta.url), "utf8");
@@ -49,5 +50,6 @@ for (const [component, action, props, button, refresh] of [
     if (component === "CaseStatusForm") assert.match(navigation, /\/cases\/case-1\?error=CONNECTION_ERROR/);
     if (component === "ReportEditForm") assert.match(navigation, /\/cases\/case-1\/report\?error=CONNECTION_ERROR/);
     if (component === "UploadDocumentForm") assert.match(navigation, /\/cases\/case-1\/documents\?error=CONNECTION_ERROR/);
+    if (component === "ResumeWorkflowForm") assert.match(navigation, /\/workflows\/run-1\?error=CONNECTION_ERROR/);
   });
 }

@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { cancelRun, resumeRun } from "@/app/actions";
+import { cancelRun } from "@/app/actions";
+import { ResumeWorkflowForm } from "@/components/ResumeWorkflowForm";
 import { SubmitButton } from "@/components/SubmitButton";
 import { ErrorState, Flash, When } from "@/components/ui";
 import { load } from "@/lib/api";
@@ -42,13 +43,7 @@ export default async function RunMonitor({ params, searchParams }: {
           {b.operation_id ? <> - <Link href="/operations">reconcile operation {b.operation_id.slice(0, 8)}</Link></> : null}</li>)}</ul>
       ) : null}
       {!uncertainAction && r.status === "HUMAN_REVIEW" ? (
-        <form action={resumeRun} className="stack panel">
-          <input type="hidden" name="run_id" value={id} />
-          <input type="hidden" name="action" value="RETRY" />
-          <label htmlFor="rr">Retry after review (reason)</label>
-          <input id="rr" name="reason" required minLength={5} maxLength={300} />
-          <SubmitButton>Retry from last checkpoint</SubmitButton>
-        </form>
+        <ResumeWorkflowForm runId={id} action="RETRY" returnPath={`/workflows/${id}`} label="Retry after review (reason)" button="Retry from last checkpoint" />
       ) : null}
       {!uncertainAction && !terminal && r.status !== "OUTCOME_UNCERTAIN" ? (
         <form action={cancelRun} className="inline panel">
