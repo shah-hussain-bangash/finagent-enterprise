@@ -32,6 +32,8 @@ def test_report_edit_gateway_error_requires_reload(  # type: ignore[no-untyped-d
             page.get_by_role("button", name="Start investigation").click()
             page.get_by_text("Investigation queued.").first.wait_for(timeout=30_000)
             wait_text(page, f"{stack['web']}/cases/{case_id}/report", "version 1 of 1")
+            section = page.locator('textarea[name="section_text"]').first
+            section.fill(section.input_value() + "\nSynthetic analyst review note.")
             page.get_by_label("Edit note (required)").fill("Synthetic report review")
             page.get_by_role("button", name="Save as new version").click()
             expect(page.get_by_text("Check the recorded report before another action.")).to_be_visible(
@@ -40,6 +42,9 @@ def test_report_edit_gateway_error_requires_reload(  # type: ignore[no-untyped-d
             assert stack["proxy"].dropped_statuses == [201]
             report = client.get(f"/api/v1/cases/{case_id}/reports", headers=token(analyst))
             assert report.status_code == 200 and report.json()["report"]["current_version_no"] == 2
+            saved = client.get(f"/api/v1/cases/{case_id}/reports/versions/2", headers=token(analyst))
+            assert saved.status_code == 200
+            assert any("Synthetic analyst review note." in item["text"] for item in saved.json()["sections"])
             page.get_by_role("link", name="Reload report").click()
             expect(page.get_by_text("version 2 of 2", exact=False)).to_be_visible()
         finally:

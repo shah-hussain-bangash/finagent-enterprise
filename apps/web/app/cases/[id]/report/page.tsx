@@ -1,6 +1,7 @@
 import { randomUUID } from "node:crypto";
 import Link from "next/link";
-import { createExport, editReport, withdrawReport } from "@/app/actions";
+import { createExport, withdrawReport } from "@/app/actions";
+import { ReportEditForm } from "@/components/ReportEditForm";
 import { SubmitReportForm } from "@/components/SubmitReportForm";
 import { FindingTag, type FindingKind } from "@/components/StatusBadge";
 import { SubmitButton } from "@/components/SubmitButton";
@@ -56,21 +57,7 @@ export default async function ReportPage({ params, searchParams }: {
               <ul>{v.data.validation.problems?.map((p, i) => <li key={i}>{p.code}{p.section ? ` in ${p.section}` : ""}</li>)}</ul></div>
           ) : <p className="flash flash-ok">Deterministic validation passed.</p>}
           {!uncertainAction && isCurrent && report?.status === "DRAFT" ? (
-            <form action={editReport} className="stack">
-              <input type="hidden" name="case_id" value={id} />
-              <input type="hidden" name="base_version_no" value={v.data.version_no} />
-              {v.data.sections.map((s) => (
-                <div key={s.section_id} className="panel">
-                  <input type="hidden" name="section_id" value={s.section_id} />
-                  <label htmlFor={`s-${s.section_id}`}>{s.title}</label>
-                  <textarea id={`s-${s.section_id}`} name="section_text" defaultValue={s.text} />
-                  {s.claim_ids.length ? <p className="muted">Backed by claims: {s.claim_ids.join(", ")}</p> : null}
-                </div>
-              ))}
-              <label htmlFor="edit_note">Edit note (required)</label>
-              <input id="edit_note" name="edit_note" required minLength={3} maxLength={500} />
-              <SubmitButton>Save as new version</SubmitButton>
-            </form>
+            <ReportEditForm caseId={id} version={v.data.version_no} sections={v.data.sections} />
           ) : (
             v.data.sections.map((s) => (
               <div key={s.section_id} className="panel"><h2>{s.title}</h2><p style={{ whiteSpace: "pre-wrap" }}>{s.text}</p></div>

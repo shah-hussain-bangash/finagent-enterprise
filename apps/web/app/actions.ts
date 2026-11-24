@@ -195,16 +195,22 @@ export async function correctField(form: FormData): Promise<never> {
 }
 
 // ------------------------------------------------------------------ reports and review
-export async function editReport(form: FormData): Promise<never> {
+export async function editReport(form: FormData): Promise<{ok: boolean; message: string; uncertain?: boolean}> {
   const caseId = str(form, "case_id");
   const sections = form.getAll("section_id").map((id, i) => ({
     section_id: String(id),
     text: String(form.getAll("section_text")[i] ?? ""),
   })).filter((s) => s.text.trim().length > 0);
-  return run(`/cases/${caseId}/report`, "Saved as a new report version.", () =>
-    api(`/api/v1/cases/${caseId}/reports/edits`, {
+  try {
+    await api(`/api/v1/cases/${caseId}/reports/edits`, {
       json: { base_version_no: Number(str(form, "base_version_no")), edit_note: str(form, "edit_note"), sections },
-    }));
+      timeoutMs: 30_000,
+    });
+    return {ok: true, message: "Saved as a new report version."};
+  } catch (e) {
+    if (!(e instanceof ApiRequestError)) throw e;
+    return {ok: false, message: `${e.code}: ${e.message}`, uncertain: e.code === "CONNECTION_ERROR"};
+  }
 }
 
 export async function submitReport(form: FormData): Promise<{ok: boolean; message: string; uncertain?: boolean}> {

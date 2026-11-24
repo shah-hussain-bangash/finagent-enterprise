@@ -143,6 +143,8 @@ test("a server error after a write warns that the outcome may be unknown", async
 
 test("a timed-out write reports an uncertain outcome", async () => {
   const originalFetch = globalThis.fetch;
+  // AbortSignal.timeout uses an unreferenced timer in Node; keep the test alive until it fires.
+  const keepAlive = setTimeout(() => {}, 1000);
   globalThis.fetch = async (_url, init) => new Promise((_resolve, reject) => {
     init.signal.addEventListener("abort", () => reject(new Error("synthetic timeout")), { once: true });
   });
@@ -153,6 +155,7 @@ test("a timed-out write reports an uncertain outcome", async () => {
       return true;
     });
   } finally {
+    clearTimeout(keepAlive);
     globalThis.fetch = originalFetch;
   }
 });
@@ -195,7 +198,7 @@ test("interrupted mutations return an explicit uncertain outcome", async () => {
   form.set("case_id", "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa");
   form.set("record_version", "1");
   form.set("reason", "Synthetic reason");
-  for (const name of ["startInvestigation", "reopenCase", "updateCase", "resolveConflict", "submitReport", "decide"]) {
+  for (const name of ["startInvestigation", "reopenCase", "updateCase", "resolveConflict", "editReport", "submitReport", "decide"]) {
     const result = await actions[name](form);
     assert.equal(result.ok, false, name);
     assert.equal(result.uncertain, true, name);
