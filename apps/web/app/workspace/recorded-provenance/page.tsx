@@ -14,7 +14,9 @@ interface KycOutput { output_id: string; capability_id: string; status: string; 
 
 export default async function RecordedProvenance({ searchParams }: { searchParams: Promise<{ case?: string; document?: string; cursor?: string }> }) {
   const params = await searchParams;
-  const returnTo = `/workspace/recorded-provenance?case=${typeof params.case === "string" ? params.case : ""}`;
+  const value = typeof params.document === "string" ? params.document : "";
+  const returnSelection = UUID.test(value) ? `&document=${value}` : "";
+  const returnTo = `/workspace/recorded-provenance?case=${typeof params.case === "string" ? params.case : ""}${returnSelection}`;
   await requireSession(returnTo);
   const selected = typeof params.case === "string" ? params.case : "";
   const document = typeof params.document === "string" ? params.document : "";

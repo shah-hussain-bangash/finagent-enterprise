@@ -32,3 +32,17 @@ test("case return rejects external, encoded and non-case destinations", () => {
     assert.equal(safeCaseReturn(value), null);
   }
 });
+
+test("case return preserves only supported document, run, output and version selections", () => {
+  for (const [view, key, value] of [
+    ["snapshot-selection", "output", id], ["recorded-provenance", "document", id],
+    ["recorded-monitor", "run", id], ["recorded-review", "version", "12"],
+  ]) {
+    const path = `/workspace/${view}?case=${id}&${key}=${value}`;
+    assert.equal(safeCaseReturn(path), path);
+    assert.equal(safeCaseReturn(`${path}&next=//evil.example`), null);
+    assert.equal(safeCaseReturn(`/workspace/${view}?case=${id}&${key}=invalid`), null);
+  }
+  assert.equal(safeCaseReturn(`/workspace/recorded-review?case=${id}&version=0`), null);
+  assert.equal(safeCaseReturn(`/workspace/case-overview?case=${id}&run=${id}`), null);
+});

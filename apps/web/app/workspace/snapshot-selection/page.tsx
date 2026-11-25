@@ -13,7 +13,9 @@ interface Snapshot { snapshot_id: string; created_at: string; items: SnapshotIte
 
 export default async function SnapshotSelection({ searchParams }: { searchParams: Promise<{ case?: string; output?: string }> }) {
   const params = await searchParams;
-  const returnTo = `/workspace/snapshot-selection?case=${typeof params.case === "string" ? params.case : ""}`;
+  const value = typeof params.output === "string" ? params.output : "";
+  const returnSelection = UUID.test(value) ? `&output=${value}` : "";
+  const returnTo = `/workspace/snapshot-selection?case=${typeof params.case === "string" ? params.case : ""}${returnSelection}`;
   await requireSession(returnTo);
   const caseId = typeof params.case === "string" ? params.case : "";
   const outputId = typeof params.output === "string" ? params.output : "";
