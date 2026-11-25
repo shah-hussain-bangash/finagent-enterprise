@@ -35,8 +35,8 @@ export default async function EvidencePage({ params, searchParams }: {
   await requireSession(`/cases/${id}/evidence`);
   const sp = await searchParams;
   const uncertainAction = typeof sp.error === "string" && sp.error.startsWith("CONNECTION_ERROR:");
-  const { data, error } = await load<Evidence>(`/api/v1/cases/${id}/evidence`);
-  const snaps = await load<{ items: Snapshot[] }>(`/api/v1/cases/${id}/snapshots`);
+  const { data, error } = await load<Evidence>(`/api/v1/cases/${id}/evidence`, `/cases/${id}/evidence`);
+  const snaps = await load<{ items: Snapshot[] }>(`/api/v1/cases/${id}/snapshots`, `/cases/${id}/evidence`);
   return (
     <section aria-labelledby="h">
       <h1 id="h">Evidence</h1>

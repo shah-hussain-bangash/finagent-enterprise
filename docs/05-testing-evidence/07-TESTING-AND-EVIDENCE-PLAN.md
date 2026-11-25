@@ -29,7 +29,7 @@ For every check, retain: requirement or risk addressed; owner and reviewer; comm
 
 ## Current known gaps
 
-The UI is not fully accepted across roles, devices, screen readers or realistic production volumes. A candidate return-to-case flow has local and mocked identity-provider tests; browser and live-provider verification remain open, and it does not preserve context when the API rejects an existing session. Live providers, target-environment resilience, institutional policies, independent AI evaluation, security assessment and production deployment are not established. The GitHub pull request and its checks can change over time; inspect the latest run rather than relying on an old status in this document.
+The UI is not fully accepted across roles, devices, screen readers or realistic production volumes. A candidate return-to-case flow has local, synthetic-browser and mocked identity-provider checks. The follow-up for an API-rejected session during a case-page read has a local unit check but still needs browser verification; live-provider testing and action-submission context restoration also remain open. Live providers, target-environment resilience, institutional policies, independent AI evaluation, security assessment and production deployment are not established. The GitHub pull request and its checks can change over time; inspect the latest run rather than relying on an old status in this document.
 
 ## Existing evidence and traceability
 

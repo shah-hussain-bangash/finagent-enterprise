@@ -69,6 +69,18 @@ test("a malformed unauthorized response still redirects to sign-in", async () =>
   }
 });
 
+test("an unauthorized case read preserves only a validated case destination", async () => {
+  const originalFetch = globalThis.fetch;
+  globalThis.fetch = async () => new Response("{}", { status: 401 });
+  const path = "/cases/bf69eaa7-86f5-428f-8e1d-bfa2c57420fd/evidence";
+  try {
+    await assert.rejects(() => raw("/synthetic", { returnTo: path }),
+      (error) => error.message === `redirect:/signin?expired=1&returnTo=${encodeURIComponent(path)}`);
+    await assert.rejects(() => raw("/synthetic", { returnTo: "//evil.example" }),
+      (error) => error.message === "redirect:/signin?expired=1");
+  } finally { globalThis.fetch = originalFetch; }
+});
+
 test("a failed read shows an unavailable state without exposing network details", async () => {
   const originalFetch = globalThis.fetch;
   globalThis.fetch = async () => { throw new TypeError("sensitive internal address"); };

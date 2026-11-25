@@ -6,7 +6,7 @@ import { requireSession } from "@/lib/session";
 export default async function CaseAudit({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   await requireSession(`/cases/${id}/audit`);
-  const { data, error } = await load<{ items: AuditEvent[] }>(`/api/v1/cases/${id}/activity`);
+  const { data, error } = await load<{ items: AuditEvent[] }>(`/api/v1/cases/${id}/activity`, `/cases/${id}/audit`);
   return (
     <section aria-labelledby="h">
       <h1 id="h">Case audit history</h1>

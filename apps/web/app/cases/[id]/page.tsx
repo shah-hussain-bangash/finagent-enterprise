@@ -52,9 +52,9 @@ export default async function CaseOverview({ params, searchParams }: {
   await requireSession(`/cases/${id}`);
   const sp = await searchParams;
   const uncertainAction = typeof sp.error === "string" && sp.error.startsWith("CONNECTION_ERROR:");
-  const { data: c, error } = await load<CaseDetail>(`/api/v1/cases/${id}`);
+  const { data: c, error } = await load<CaseDetail>(`/api/v1/cases/${id}`, `/cases/${id}`);
   if (error) return <ErrorState error={error} what="Case" />;
-  const runs = await load<{ items: RunView[] }>(`/api/v1/cases/${id}/workflows`);
+  const runs = await load<{ items: RunView[] }>(`/api/v1/cases/${id}/workflows`, `/cases/${id}`);
   const active = runs.data?.items.find((r) => !["SUCCEEDED", "FAILED", "CANCELLED"].includes(r.status));
   return (
     <section aria-labelledby="h">

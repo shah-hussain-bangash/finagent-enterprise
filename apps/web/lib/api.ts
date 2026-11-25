@@ -3,6 +3,7 @@
 import "server-only";
 import { redirect } from "next/navigation";
 import { requireSession } from "@/lib/session";
+import { safeCaseReturn } from "@/lib/case-return";
 
 export type CaseStatus =
   | "RECEIVED" | "ASSIGNED" | "INVESTIGATING" | "BLOCKED" | "AWAITING_REVIEW"
@@ -44,6 +45,7 @@ export interface Init {
   idempotencyKey?: string;
   ifMatch?: number;
   timeoutMs?: number;
+  returnTo?: string;
 }
 
 export async function raw(path: string, init: Init = {}): Promise<Response> {
@@ -77,7 +79,10 @@ export async function raw(path: string, init: Init = {}): Promise<Response> {
   }
   if (res.status === 401) {
     const body = (await res.clone().json().catch(() => null)) as ApiError | null;
-    if (body?.error?.code !== "MFA_REQUIRED") redirect("/signin?expired=1"); // session expired
+    if (body?.error?.code !== "MFA_REQUIRED") {
+      const safe = safeCaseReturn(init.returnTo);
+      redirect(safe ? `/signin?expired=1&returnTo=${encodeURIComponent(safe)}` : "/signin?expired=1");
+    }
   }
   return res;
 }
@@ -101,9 +106,9 @@ export async function api<T>(path: string, init: Init = {}): Promise<T> {
 }
 
 /** For pages: returns the error instead of throwing so the page can render an error state. */
-export async function load<T>(path: string): Promise<{ data: T; error: null } | { data: null; error: ApiRequestError }> {
+export async function load<T>(path: string, returnTo?: string): Promise<{ data: T; error: null } | { data: null; error: ApiRequestError }> {
   try {
-    return { data: await api<T>(path), error: null };
+    return { data: await api<T>(path, { returnTo }), error: null };
   } catch (e) {
     if (e instanceof ApiRequestError) return { data: null, error: e };
     throw e;

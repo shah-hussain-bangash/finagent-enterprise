@@ -18,7 +18,7 @@ export default async function Documents({ params, searchParams }: {
   await requireSession(`/cases/${id}/documents`);
   const sp = await searchParams;
   const uncertainAction = typeof sp.error === "string" && sp.error.startsWith("CONNECTION_ERROR:");
-  const { data, error } = await load<{ items: Doc[] }>(`/api/v1/cases/${id}/documents`);
+  const { data, error } = await load<{ items: Doc[] }>(`/api/v1/cases/${id}/documents`, `/cases/${id}/documents`);
   return (
     <section aria-labelledby="h">
       <h1 id="h">Documents</h1>
