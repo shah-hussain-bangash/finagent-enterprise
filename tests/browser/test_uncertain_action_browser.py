@@ -40,6 +40,10 @@ def test_expired_report_edit_keeps_unsaved_text(stack, client, token):  # type: 
             expect(page.get_by_role("link", name="Sign in in a new tab")).to_have_attribute(
                 "target", "_blank"
             )
+            expect(page.get_by_role("button", name="Export this version")).to_be_disabled()
+            page.get_by_label("Edit note (required)").focus()
+            page.keyboard.press("Tab")
+            expect(page.get_by_role("link", name="Sign in in a new tab")).to_be_focused()
             assert stack["proxy"].rejected_auth == 1
             report = client.get(f"/api/v1/cases/{case_id}/reports", headers=token(analyst))
             assert report.status_code == 200 and report.json()["report"]["current_version_no"] == 1
