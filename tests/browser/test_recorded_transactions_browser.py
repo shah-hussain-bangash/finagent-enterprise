@@ -21,7 +21,7 @@ def test_case_transactions_are_visible_only_to_assigned_analyst(
     token,
     bank,
 ):
-    from playwright.sync_api import sync_playwright
+    from playwright.sync_api import expect, sync_playwright
 
     settings = make_settings(bank_base_url=bank.url)
     prep = prepared_case(make_client(bank_base_url=bank.url), token, settings)
@@ -47,16 +47,26 @@ def test_case_transactions_are_visible_only_to_assigned_analyst(
                 "no-such-synthetic-transaction"
             )
             page.get_by_role("button", name="Apply filters").click()
-            assert "No recorded transactions match this search" in main.inner_text()
+            expect(
+                main.get_by_text("No recorded transactions match the selected filters.").first
+            ).to_be_visible()
             page.goto(path)
             page.get_by_label("Direction", exact=True).select_option("DEBIT")
             page.get_by_role("button", name="Apply filters").click()
+            expect(main.get_by_text("Active filters:", exact=False)).to_contain_text("DEBIT")
+            expect(
+                page.get_by_role("table", name="Transactions from this evidence source").first
+            ).to_be_visible()
             for row in (
                 page.get_by_role("table", name="Transactions from this evidence source")
                 .locator("tbody tr")
                 .all()
             ):
                 assert row.locator("td").nth(3).inner_text() == "DEBIT"
+            page.goto(f"{path}&page_source=missing&page=2")
+            expect(
+                main.get_by_role("alert").filter(has_text="requested transaction page is invalid")
+            ).to_be_visible()
             other = (
                 "a.analyst2@synthetic" if prep.analyst == "a.analyst1@synthetic" else "a.analyst1@synthetic"
             )

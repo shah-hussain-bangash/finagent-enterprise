@@ -49,6 +49,12 @@ export default async function RecordedTransactionsPage({ searchParams }: {
     catch (error) { if (!(error instanceof ApiRequestError)) throw error; evidenceError = error; }
   }
   const sources = (evidence?.items ?? []).filter((item) => item.source_type === "TRANSACTIONS");
+  const requestedSource = typeof params.page_source === "string" ? params.page_source : "";
+  const requestedPageValue = typeof params.page === "string" ? params.page : "";
+  const invalidPagination = Boolean(params.page_source || params.page) && (
+    !requestedSource || !/^[1-9]\d{0,6}$/.test(requestedPageValue) ||
+    !sources.some((source) => source.evidence_item_id === requestedSource)
+  );
   const search = query.toLocaleLowerCase();
   return <section className="connected-workspace" aria-labelledby="recorded-transactions-title">
     <p><Link href="/workspace" prefetch={false}>← Back to workspace preview</Link></p>
@@ -79,6 +85,7 @@ export default async function RecordedTransactionsPage({ searchParams }: {
         </form>
         {(query || direction || status) && <p role="status">Active filters: {query ? `search “${query}”` : "all search terms"} · {direction || "all directions"} · {status || "all statuses"}.</p>}
         {invalidFilters && <p role="alert">An unrecognized filter was ignored. Choose a direction and status from the lists.</p>}
+        {invalidPagination && <p role="alert">The requested transaction page is invalid or its source is unavailable. Showing the first page for each source.</p>}
         {evidence.gaps.filter((gap) => gap.source_type === "TRANSACTIONS").map((gap, index) => <p role="status" key={index}>Evidence gap: {gap.detail}</p>)}
         {sources.length === 0 && <Empty>No current transaction evidence is available for this case. This does not establish that no transactions exist.</Empty>}
         {sources.map((source) => {
@@ -97,6 +104,7 @@ export default async function RecordedTransactionsPage({ searchParams }: {
           const requestedPage = params.page_source === source.evidence_item_id && typeof params.page === "string" && /^[1-9]\d{0,6}$/.test(params.page) ? Number(params.page) : 1;
           const pageCount = Math.max(1, Math.ceil(filtered.length / ROWS_PER_PAGE));
           const currentPage = Math.min(requestedPage, pageCount);
+          const pageOutOfRange = requestedPage > pageCount;
           const firstRow = (currentPage - 1) * ROWS_PER_PAGE;
           const visibleRows = filtered.slice(firstRow, firstRow + ROWS_PER_PAGE);
           const pageLink = (page: number) => `/workspace/recorded-transactions?${new URLSearchParams({ case: selected, ...(cursor ? { cursor } : {}), ...(query ? { q: query } : {}), ...(direction ? { direction } : {}), ...(status ? { status } : {}), page_source: source.evidence_item_id, page: String(page) })}`;
@@ -105,12 +113,13 @@ export default async function RecordedTransactionsPage({ searchParams }: {
             <p>{source.source_system} · Version {source.version_no} · {source.freshness} / {source.completeness} · As of <When iso={source.as_of} /></p>
             {!rowsAvailable ? <p role="alert">Transaction rows are unavailable or malformed for this evidence source. This does not establish that there are no transactions.</p> : <>
             {malformedRows > 0 && <p role="alert">{malformedRows} malformed transaction record(s) could not be displayed or included in summaries. Review the source evidence.</p>}
+            {pageOutOfRange && <p role="status">The requested transaction page is unavailable. Showing page {currentPage} of {pageCount} for this source.</p>}
             <p>Ordered by booking time, oldest first. Unavailable dates appear last. Each evidence source is shown separately.</p>
             <h4>Filtered posted amounts by currency and direction</h4>
             <p>Calculated from readable filtered rows in this evidence source, including rows on other pages; not a balance or a risk assessment. Evidence may be incomplete.</p>
             {summary.totals.length ? <ul>{summary.totals.map((total) => <li key={`${total.currency}-${total.direction}`}>{total.currency} · {total.direction}: {total.amount} ({total.count} posted transaction(s))</li>)}</ul> : <p>No summarizable posted amounts match the filters.</p>}
             <p>Pending or reversed rows excluded: {summary.excluded}. Rows not summarized due to unrecognized status, currency, direction or amount: {summary.unrecognized}.</p>
-            {filtered.length === 0 ? <Empty>{rows.length ? "No recorded transactions match this search." : malformedRows ? "No readable transaction records are available." : "This evidence source contains no transaction rows."}</Empty> :
+            {filtered.length === 0 ? <Empty>{rows.length ? "No recorded transactions match the selected filters." : malformedRows ? "No readable transaction records are available." : "This evidence source contains no transaction rows."}</Empty> :
               <div style={{ overflowX: "auto" }} role="region" aria-label={`Transactions for evidence source ${source.source_ref}`} tabIndex={0}><table><caption>Transactions from this evidence source</caption><thead><tr><th scope="col">Transaction</th><th scope="col">Booked</th><th scope="col">Counterparty</th><th scope="col">Direction</th><th scope="col">Amount</th><th scope="col">Status</th></tr></thead>
                 <tbody>{visibleRows.map((row, index) => <tr key={firstRow + index}><td>{displayValue(row.source_transaction_id)}</td><td>{displayValue(row.booking_time)}</td><td>{displayValue(row.counterparty_ref)}</td><td>{displayValue(row.direction)}</td><td>{displayValue(row.currency)} {displayValue(row.amount)}</td><td>{displayValue(row.status)}</td></tr>)}</tbody></table></div>}
             {filtered.length > 0 && <nav className="transaction-pagination" aria-label={`Transaction pages for ${source.source_ref}`}>

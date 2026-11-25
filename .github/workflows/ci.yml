@@ -145,6 +145,7 @@ jobs:
             tests/browser/test_policy_admin_table_keyboard.py \
             tests/browser/test_workspace_mobile_navigation.py \
             tests/browser/test_workspace_table_keyboard.py \
+            tests/browser/test_recorded_transactions_browser.py \
             tests/browser/test_uncertain_action_browser.py \
             --junitxml=reports/junit-browser.xml -q --tb=short
       - name: Verify browser evidence is complete and passing

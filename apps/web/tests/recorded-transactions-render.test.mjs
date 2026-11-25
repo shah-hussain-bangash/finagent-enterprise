@@ -102,6 +102,23 @@ test("reports invalid filters instead of silently treating them as valid", async
   assert.ok(html.includes("unrecognized filter was ignored"));
 });
 
+test("explains an empty result caused by direction or status filters", async () => {
+  const html = renderToStaticMarkup(await loadPage()({ searchParams: Promise.resolve({ case: caseId, direction: "DEBIT", status: "POSTED" }) }));
+  assert.ok(html.includes("No recorded transactions match the selected filters"));
+  assert.ok(!html.includes("No recorded transactions match this search"));
+});
+
+test("reports invalid and out-of-range transaction pages", async () => {
+  const page = loadPage();
+  for (const selection of [{ page_source: "e1", page: "0" }, { page_source: "missing", page: "2" }, { page: "2" }]) {
+    const html = renderToStaticMarkup(await page({ searchParams: Promise.resolve({ case: caseId, ...selection }) }));
+    assert.ok(html.includes("requested transaction page is invalid or its source is unavailable"));
+  }
+  const html = renderToStaticMarkup(await page({ searchParams: Promise.resolve({ case: caseId, page_source: "e1", page: "9" }) }));
+  assert.ok(html.includes("requested transaction page is unavailable"));
+  assert.ok(html.includes("Showing page 1 of 1 for this source"));
+});
+
 test("paginates each source while totals cover all filtered rows and filters are preserved", async () => {
   const many = structuredClone(evidence);
   many.items[0].content.items = Array.from({ length: 60 }, (_, index) => ({ source_transaction_id: `sample-${String(index + 1).padStart(3, "0")}`, booking_time: "2026-01-01", amount: "1.00", currency: "AED", direction: "CREDIT", status: "POSTED", counterparty_ref: "sample" }));

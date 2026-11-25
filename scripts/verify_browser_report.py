@@ -8,6 +8,10 @@ from pathlib import Path
 
 EXPECTED = {
     (
+        "tests.browser.test_recorded_transactions_browser",
+        "test_case_transactions_are_visible_only_to_assigned_analyst",
+    ),
+    (
         "tests.browser.test_uncertain_action_browser",
         "test_expired_report_edit_keeps_unsaved_text[report_edit_auth_expired]",
     ),
