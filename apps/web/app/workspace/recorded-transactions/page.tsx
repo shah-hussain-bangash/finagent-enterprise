@@ -77,7 +77,8 @@ export default async function RecordedTransactionsPage({ searchParams }: {
         {evidence.gaps.filter((gap) => gap.source_type === "TRANSACTIONS").map((gap, index) => <p role="status" key={index}>Evidence gap: {gap.detail}</p>)}
         {sources.length === 0 && <Empty>No current transaction evidence is available for this case. This does not establish that no transactions exist.</Empty>}
         {sources.map((source) => {
-          const rows = Array.isArray(source.content?.items) ? source.content.items : [];
+          const rowsAvailable = Array.isArray(source.content?.items);
+          const rows = rowsAvailable ? source.content!.items! : [];
           const filtered = rows.filter((row) => (!direction || row.direction === direction) && (!status || row.status === status) && [row.source_transaction_id, row.counterparty_ref, row.booking_time, row.direction, row.status].some((value) => typeof value === "string" && value.toLocaleLowerCase().includes(search))).slice().sort((a, b) => {
             const first = Date.parse(a.booking_time), second = Date.parse(b.booking_time);
             if (!Number.isFinite(first)) return Number.isFinite(second) ? 1 : 0;
@@ -94,6 +95,7 @@ export default async function RecordedTransactionsPage({ searchParams }: {
           return <article className="panel" key={source.evidence_item_id}>
             <h3>Evidence source: {source.source_ref}</h3>
             <p>{source.source_system} · Version {source.version_no} · {source.freshness} / {source.completeness} · As of <When iso={source.as_of} /></p>
+            {!rowsAvailable ? <p role="alert">Transaction rows are unavailable or malformed for this evidence source. This does not establish that there are no transactions.</p> : <>
             <p>Ordered by booking time, oldest first. Unavailable dates appear last. Each evidence source is shown separately.</p>
             <h4>Filtered posted amounts by currency and direction</h4>
             <p>Calculated from all filtered rows in this evidence source, including rows on other pages; not a balance or a risk assessment. Evidence may be incomplete.</p>
@@ -107,6 +109,7 @@ export default async function RecordedTransactionsPage({ searchParams }: {
               {currentPage > 1 && <Link prefetch={false} href={pageLink(currentPage - 1)}>← Previous page</Link>}
               {currentPage < pageCount && <Link prefetch={false} href={pageLink(currentPage + 1)}>Next page →</Link>}
             </nav>}
+            </>}
           </article>;
         })}
         <p><Link href={`/cases/${selected}/evidence`} prefetch={false}>Open complete case evidence →</Link></p>

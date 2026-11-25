@@ -43,6 +43,23 @@ test("explains absent evidence without claiming no transactions exist", async ()
   assert.ok(html.includes("does not establish that no transactions exist"));
 });
 
+test("distinguishes missing or malformed transaction rows from a valid empty list", async () => {
+  for (const content of [null, {}, { items: "invalid" }]) {
+    const sample = structuredClone(evidence);
+    sample.items[0].content = content;
+    const html = renderToStaticMarkup(await loadPage(sample)({ searchParams: Promise.resolve({ case: caseId }) }));
+    assert.ok(html.includes("Transaction rows are unavailable or malformed"));
+    assert.ok(html.includes("does not establish that there are no transactions"));
+    assert.ok(!html.includes("This evidence source contains no transaction rows"));
+    assert.ok(!html.includes("No summarizable posted amounts match the filters"));
+  }
+  const empty = structuredClone(evidence);
+  empty.items[0].content.items = [];
+  const html = renderToStaticMarkup(await loadPage(empty)({ searchParams: Promise.resolve({ case: caseId }) }));
+  assert.ok(html.includes("This evidence source contains no transaction rows"));
+  assert.ok(!html.includes("Transaction rows are unavailable or malformed"));
+});
+
 test("filters by direction and status without hiding other statuses by default", async () => {
   const page = loadPage();
   const html = renderToStaticMarkup(await page({ searchParams: Promise.resolve({ case: caseId, direction: "DEBIT", status: "PENDING" }) }));
