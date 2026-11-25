@@ -183,6 +183,30 @@ def test_case_page_is_restored_after_synthetic_sign_in(stack, client, token):  #
             browser.close()
 
 
+def test_case_return_does_not_grant_cross_tenant_access(stack, client, token):  # type: ignore[no-untyped-def]
+    from playwright.sync_api import expect, sync_playwright
+
+    case_id = ingest(client, token)["case_id"]
+    other_analyst = "b.analyst1@synthetic"
+    denied = client.get(f"/api/v1/cases/{case_id}/evidence", headers=token(other_analyst))
+    assert denied.status_code in (403, 404)
+    with sync_playwright() as playwright:
+        browser = playwright.chromium.launch()
+        try:
+            page = browser.new_page()
+            page.goto(f"{stack['web']}/cases/{case_id}/evidence")
+            expect(page).to_have_url(re.compile(r"/signin\?"))
+            page.get_by_label("Synthetic identity").select_option(other_analyst)
+            page.get_by_role("button", name="Sign in").click()
+            expect(page).to_have_url(f"{stack['web']}/cases/{case_id}/evidence")
+            expect(page.get_by_role("alert").first).to_contain_text(
+                re.compile(r"not found|not permitted", re.I)
+            )
+            expect(page.get_by_text("Contradictory records")).to_have_count(0)
+        finally:
+            browser.close()
+
+
 @pytest.mark.parametrize("stack", ["expired_case_evidence_read"], indirect=True)
 def test_api_expired_case_read_restores_page_after_sign_in(stack, client, token):  # type: ignore[no-untyped-def]
     from playwright.sync_api import expect, sync_playwright
