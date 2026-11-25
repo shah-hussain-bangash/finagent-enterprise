@@ -24,7 +24,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     if (!res.ok || (await res.json() as { mode?: string }).mode !== "entra") throw new Error("Authentication mode mismatch");
     const previous = request.cookies.get(flowCookieName(cfg.secure))?.value;
     if (previous && validHandle(previous)) await authStore.remove("flow", previous);
-    const login = await beginLogin(cfg, await entraConfiguration(cfg));
+    const login = await beginLogin(cfg, await entraConfiguration(cfg), authStore, new URL(request.url).searchParams.get("returnTo") ?? undefined);
     const response = NextResponse.redirect(login.location, 303);
     response.headers.set("Cache-Control", "no-store");
     response.headers.set("Referrer-Policy", "no-referrer");

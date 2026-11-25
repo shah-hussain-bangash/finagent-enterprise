@@ -7,6 +7,7 @@ import xml.etree.ElementTree as ET
 from pathlib import Path
 
 EXPECTED = {
+    ("tests.browser.test_ui_journey", "test_case_page_is_restored_after_synthetic_sign_in"),
     (
         "tests.browser.test_ui_journey",
         "test_analyst_and_reviewer_complete_a_case_in_the_browser[case_update_gateway_error]",

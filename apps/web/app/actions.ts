@@ -8,6 +8,7 @@ import { redirect } from "next/navigation";
 import { api, ApiRequestError, BASE, raw } from "@/lib/api";
 import { clearSession, setSession } from "@/lib/session";
 import { authMode } from "@/lib/auth-config";
+import { safeCaseReturn } from "@/lib/case-return";
 
 function str(f: FormData, k: string): string {
   const v = f.get(k);
@@ -60,7 +61,7 @@ export async function signIn(form: FormData): Promise<never> {
     return to("/signin", "error", "Sign-in is unavailable. Please try again.");
   }
   await setSession({ token: body.access_token, subject, exp: Math.floor(Date.now() / 1000) + body.expires_in });
-  redirect("/");
+  redirect(safeCaseReturn(str(form, "returnTo")) ?? "/");
 }
 
 export async function signOut(): Promise<never> {

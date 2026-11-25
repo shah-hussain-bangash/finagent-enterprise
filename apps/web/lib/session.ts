@@ -6,6 +6,7 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { authMode, externalSettings } from "./auth-config";
 import { authStore, isSession, SESSION_COOKIE, sessionCookieName, validHandle } from "./auth-store";
+import { safeCaseReturn } from "./case-return";
 
 import { revokeStoredSession } from "./password-auth";
 
@@ -61,9 +62,12 @@ export async function getSession(): Promise<Session | null> {
   return raw ? open(raw) : null;
 }
 
-export async function requireSession(): Promise<Session> {
+export async function requireSession(returnTo?: string): Promise<Session> {
   const s = await getSession();
-  if (!s) redirect("/signin?expired=1");
+  if (!s) {
+    const safe = safeCaseReturn(returnTo);
+    redirect(safe ? `/signin?expired=1&returnTo=${encodeURIComponent(safe)}` : "/signin?expired=1");
+  }
   return s;
 }
 

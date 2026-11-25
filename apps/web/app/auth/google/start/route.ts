@@ -29,7 +29,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     stage = "google_discovery";
     const config = await googleConfiguration(cfg);
     stage = "flow_creation";
-    const login = await beginLogin(cfg, config);
+    const login = await beginLogin(cfg, config, authStore, new URL(request.url).searchParams.get("returnTo") ?? undefined);
     stage = "redirect_response";
     const response = NextResponse.redirect(login.location, 303);
     response.headers.set("Cache-Control", "no-store");

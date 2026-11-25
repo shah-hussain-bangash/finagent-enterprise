@@ -13,8 +13,8 @@ interface Output {
 }
 
 export default async function Agents({ params }: { params: Promise<{ id: string }> }) {
-  await requireSession();
   const { id } = await params;
+  await requireSession(`/cases/${id}/agents`);
   const { data, error } = await load<{ items: Output[] }>(`/api/v1/cases/${id}/agent-outputs`);
   const seenCapabilities = new Set<string>();
   const outputs = (data?.items ?? []).slice().reverse().map((output) => {

@@ -3,6 +3,7 @@ import { logAuthDiagnostic } from "./auth-diagnostics";
 import * as oidc from "openid-client";
 import { timingSafeEqual } from "node:crypto";
 import type { GoogleSettings } from "./auth-config";
+import { safeCaseReturn } from "./case-return";
 import { authStore, newHandle, validHandle, type AuthStore, type LoginFlow, type StoredSession } from "./auth-store";
 
 let configuration: Promise<oidc.Configuration> | undefined;
@@ -43,7 +44,7 @@ export function requireOrigin(origin: string | null, cfg: GoogleSettings): void 
 }
 
 export async function beginLogin(
-  cfg: GoogleSettings, config: oidc.Configuration, store: AuthStore = authStore,
+  cfg: GoogleSettings, config: oidc.Configuration, store: AuthStore = authStore, returnTo?: string,
 ): Promise<{ location: string; handle: string }> {
   let stage = "random_values";
   try {
@@ -52,6 +53,8 @@ export async function beginLogin(
       state: oidc.randomState(), nonce: oidc.randomNonce(), verifier: oidc.randomPKCECodeVerifier(),
       exp: Math.floor(Date.now() / 1000) + 300,
     };
+    const safeReturn = safeCaseReturn(returnTo);
+    if (safeReturn) flow.returnTo = safeReturn;
     stage = "pkce_challenge";
     const challenge = await oidc.calculatePKCECodeChallenge(flow.verifier);
     stage = "authorization_url";
@@ -87,7 +90,7 @@ export async function checkApiIdentity(token: string): Promise<ApiIdentity> {
 export async function finishLogin(
   cfg: GoogleSettings, config: oidc.Configuration, requestUrl: URL, handle: string,
   checkApi: CheckApi = checkApiIdentity, store: AuthStore = authStore,
-): Promise<{ handle: string; session: StoredSession }> {
+): Promise<{ handle: string; session: StoredSession; returnTo?: string }> {
   if (!validHandle(handle) || requestUrl.pathname !== "/auth/google/callback" || requestUrl.search.length > 16384) {
     throw new Error("Invalid login transaction");
   }
@@ -130,5 +133,6 @@ export async function finishLogin(
   const sessionHandle = newHandle();
   await store.put("session", sessionHandle, session, ttl);
   // Only the ID credential is encrypted server-side. Access/refresh tokens are discarded.
-  return { handle: sessionHandle, session };
+  const safeReturn = safeCaseReturn(flow.returnTo);
+  return safeReturn ? { handle: sessionHandle, session, returnTo: safeReturn } : { handle: sessionHandle, session };
 }

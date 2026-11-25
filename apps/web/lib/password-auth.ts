@@ -80,7 +80,7 @@ export async function finishPasswordLogin(
   }
 }
 
-export async function readPasswordForm(request: Request): Promise<{ email: string; password: string }> {
+export async function readPasswordForm(request: Request): Promise<{ email: string; password: string; returnTo?: string }> {
   const contentType = (request.headers.get("content-type") ?? "").split(";")[0];
   if (contentType !== "application/x-www-form-urlencoded" || !request.body) throw new Error("Invalid form");
   const reader = request.body.getReader();
@@ -100,8 +100,10 @@ export async function readPasswordForm(request: Request): Promise<{ email: strin
   for (const chunk of chunks) { bytes.set(chunk, offset); offset += chunk.length; }
   const form = new URLSearchParams(new TextDecoder("utf-8", { fatal: true }).decode(bytes));
   if (form.getAll("email").length !== 1 || form.getAll("password").length !== 1
-      || [...form.keys()].some((key) => key !== "email" && key !== "password")) throw new Error("Invalid form");
+      || form.getAll("returnTo").length > 1
+      || [...form.keys()].some((key) => key !== "email" && key !== "password" && key !== "returnTo")) throw new Error("Invalid form");
   const email = form.get("email") ?? "", password = form.get("password") ?? "";
   if (email.length < 1 || email.length > 254 || password.length < 1 || password.length > 128) throw new Error("Invalid form");
-  return { email, password };
+  const returnTo = form.get("returnTo");
+  return returnTo === null ? { email, password } : { email, password, returnTo };
 }

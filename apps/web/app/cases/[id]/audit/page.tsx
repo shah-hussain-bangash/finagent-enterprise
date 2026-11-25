@@ -4,8 +4,8 @@ import { load } from "@/lib/api";
 import { requireSession } from "@/lib/session";
 
 export default async function CaseAudit({ params }: { params: Promise<{ id: string }> }) {
-  await requireSession();
   const { id } = await params;
+  await requireSession(`/cases/${id}/audit`);
   const { data, error } = await load<{ items: AuditEvent[] }>(`/api/v1/cases/${id}/activity`);
   return (
     <section aria-labelledby="h">

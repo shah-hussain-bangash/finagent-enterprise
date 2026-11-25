@@ -162,6 +162,25 @@ def sign_in(page: Any, web: str, who: str, *, mfa: str = "yes") -> None:
     page.wait_for_url(f"{web}/")
 
 
+def test_case_page_is_restored_after_synthetic_sign_in(stack, client, token):  # type: ignore[no-untyped-def]
+    from playwright.sync_api import expect, sync_playwright
+
+    case_id = ingest(client, token)["case_id"]
+    analyst = assigned_analyst(client, token, case_id)
+    with sync_playwright() as playwright:
+        browser = playwright.chromium.launch()
+        try:
+            page = browser.new_page()
+            page.goto(f"{stack['web']}/cases/{case_id}/evidence")
+            expect(page).to_have_url(re.compile(r"/signin\?"))
+            page.get_by_label("Synthetic identity").select_option(analyst)
+            page.get_by_role("button", name="Sign in").click()
+            expect(page).to_have_url(f"{stack['web']}/cases/{case_id}/evidence")
+            expect(page.locator("main")).to_contain_text("Evidence")
+        finally:
+            browser.close()
+
+
 def wait_text(page: Any, url: str, text: str, timeout: float = 120) -> None:
     from playwright.sync_api import TimeoutError as PlaywrightTimeoutError
 

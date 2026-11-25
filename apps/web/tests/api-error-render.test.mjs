@@ -11,7 +11,7 @@ function compile(relativePath, mocks) {
   const source = readFileSync(new URL(relativePath, import.meta.url), "utf8");
   const code = ts.transpileModule(source, { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022, jsx: ts.JsxEmit.ReactJSX, esModuleInterop: true } }).outputText;
   const exports = {};
-  new Function("require", "exports", "module", code)((id) => id in mocks ? mocks[id] : require(id), exports, { exports });
+  new Function("require", "exports", "module", code)((id) => id in mocks ? mocks[id] : id === "@/lib/case-return" ? compile("../lib/case-return.ts", {}) : require(id), exports, { exports });
   return exports;
 }
 const { ApiRequestError, api, raw } = compile("../lib/api.ts", {
@@ -307,6 +307,11 @@ test("local sign-in handles unavailable or malformed identity responses without 
     await assert.rejects(() => signIn(form), /redirect:\/$/);
     assert.equal(sessions.length, 1);
     assert.equal(sessions[0].subject, "synthetic-analyst");
+    const casePath = "/cases/bf69eaa7-86f5-428f-8e1d-bfa2c57420fd/evidence";
+    form.set("returnTo", casePath);
+    await assert.rejects(() => signIn(form), (error) => error.message === `redirect:${casePath}`);
+    form.set("returnTo", "//evil.example");
+    await assert.rejects(() => signIn(form), /redirect:\/$/);
   } finally {
     globalThis.fetch = originalFetch;
   }

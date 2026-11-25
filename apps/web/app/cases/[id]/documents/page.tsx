@@ -14,8 +14,8 @@ export default async function Documents({ params, searchParams }: {
   params: Promise<{ id: string }>;
   searchParams: Promise<Record<string, string | undefined>>;
 }) {
-  await requireSession();
   const { id } = await params;
+  await requireSession(`/cases/${id}/documents`);
   const sp = await searchParams;
   const uncertainAction = typeof sp.error === "string" && sp.error.startsWith("CONNECTION_ERROR:");
   const { data, error } = await load<{ items: Doc[] }>(`/api/v1/cases/${id}/documents`);

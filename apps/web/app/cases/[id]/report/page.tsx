@@ -24,8 +24,8 @@ export default async function ReportPage({ params, searchParams }: {
   params: Promise<{ id: string }>;
   searchParams: Promise<Record<string, string | undefined>>;
 }) {
-  await requireSession();
   const { id } = await params;
+  await requireSession(`/cases/${id}/report`);
   const sp = await searchParams;
   const uncertainAction = typeof sp.error === "string" && sp.error.startsWith("CONNECTION_ERROR:");
   const list = await load<Reports>(`/api/v1/cases/${id}/reports`);
