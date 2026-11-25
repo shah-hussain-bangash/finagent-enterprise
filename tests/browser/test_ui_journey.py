@@ -75,6 +75,7 @@ def stack(make_settings, make_worker, bank, request) -> Iterator[dict[str, Any]]
         "field_correction_gateway_error",
         "workflow_cancel_gateway_error",
         "report_withdrawal_gateway_error",
+        "expired_case_evidence_read",
     }:
         from tests.browser.lost_response_proxy import LostResponseProxy
 
@@ -88,6 +89,7 @@ def stack(make_settings, make_worker, bank, request) -> Iterator[dict[str, Any]]
             drop_field_correction=request.param == "field_correction_gateway_error",
             drop_workflow_cancel=request.param == "workflow_cancel_gateway_error",
             drop_report_withdrawal=request.param == "report_withdrawal_gateway_error",
+            expire_case_evidence_read=request.param == "expired_case_evidence_read",
             gateway_error=request.param
             in {
                 "case_update_gateway_error",
@@ -173,6 +175,28 @@ def test_case_page_is_restored_after_synthetic_sign_in(stack, client, token):  #
             page = browser.new_page()
             page.goto(f"{stack['web']}/cases/{case_id}/evidence")
             expect(page).to_have_url(re.compile(r"/signin\?"))
+            page.get_by_label("Synthetic identity").select_option(analyst)
+            page.get_by_role("button", name="Sign in").click()
+            expect(page).to_have_url(f"{stack['web']}/cases/{case_id}/evidence")
+            expect(page.locator("main")).to_contain_text("Evidence")
+        finally:
+            browser.close()
+
+
+@pytest.mark.parametrize("stack", ["expired_case_evidence_read"], indirect=True)
+def test_api_expired_case_read_restores_page_after_sign_in(stack, client, token):  # type: ignore[no-untyped-def]
+    from playwright.sync_api import expect, sync_playwright
+
+    case_id = ingest(client, token)["case_id"]
+    analyst = assigned_analyst(client, token, case_id)
+    with sync_playwright() as playwright:
+        browser = playwright.chromium.launch()
+        try:
+            page = browser.new_page()
+            sign_in(page, stack["web"], analyst)
+            page.goto(f"{stack['web']}/cases/{case_id}/evidence")
+            expect(page).to_have_url(re.compile(r"/signin\?"))
+            assert stack["proxy"].dropped_statuses == [200]
             page.get_by_label("Synthetic identity").select_option(analyst)
             page.get_by_role("button", name="Sign in").click()
             expect(page).to_have_url(f"{stack['web']}/cases/{case_id}/evidence")

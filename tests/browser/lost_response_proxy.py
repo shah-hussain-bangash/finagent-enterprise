@@ -21,6 +21,7 @@ class LostResponseProxy:
         drop_field_correction: bool = False,
         drop_workflow_cancel: bool = False,
         drop_report_withdrawal: bool = False,
+        expire_case_evidence_read: bool = False,
         gateway_error: bool = False,
     ) -> None:
         self.upstream = upstream
@@ -32,6 +33,7 @@ class LostResponseProxy:
         self.drop_field_correction = drop_field_correction
         self.drop_workflow_cancel = drop_workflow_cancel
         self.drop_report_withdrawal = drop_report_withdrawal
+        self.expire_case_evidence_read = expire_case_evidence_read
         self.gateway_error = gateway_error
         self.dropped_statuses: list[int] = []
         outer = self
@@ -53,6 +55,20 @@ class LostResponseProxy:
                     self.command, f"{outer.upstream}{self.path}", headers=headers, content=body, timeout=30
                 )
                 path = urlsplit(self.path).path
+                if (
+                    outer.expire_case_evidence_read
+                    and self.command == "GET"
+                    and path.startswith("/api/v1/cases/")
+                    and path.endswith("/evidence")
+                    and not outer.dropped_statuses
+                ):
+                    outer.dropped_statuses.append(response.status_code)
+                    self.send_response(401)
+                    self.send_header("Content-Type", "application/json")
+                    self.send_header("Content-Length", "2")
+                    self.end_headers()
+                    self.wfile.write(b"{}")
+                    return
                 drop_workflow = (
                     not outer.drop_case_update
                     and not outer.drop_report_edit
@@ -62,6 +78,7 @@ class LostResponseProxy:
                     and not outer.drop_field_correction
                     and not outer.drop_workflow_cancel
                     and not outer.drop_report_withdrawal
+                    and not outer.expire_case_evidence_read
                     and self.command == "POST"
                     and path == "/api/v1/workflows"
                 )
