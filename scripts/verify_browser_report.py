@@ -8,6 +8,7 @@ from pathlib import Path
 
 EXPECTED = {
     ("tests.browser.test_ui_journey", "test_case_page_is_restored_after_synthetic_sign_in"),
+    ("tests.browser.test_ui_journey", "test_workspace_case_is_restored_after_synthetic_sign_in"),
     ("tests.browser.test_ui_journey", "test_case_return_does_not_grant_cross_tenant_access"),
     (
         "tests.browser.test_ui_journey",

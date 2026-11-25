@@ -13,8 +13,8 @@ interface Conflict { conflict_id: string; field_key: string; status: string }
 interface Evidence { items: Item[]; gaps: Gap[]; conflicts: Conflict[]; latest_snapshot: { snapshot_id: string; created_at: string } | null }
 
 export default async function EvidenceBriefing({ searchParams }: { searchParams: Promise<{ case?: string; cursor?: string }> }) {
-  await requireSession();
   const params = await searchParams;
+  await requireSession(`/workspace/evidence-briefing?case=${typeof params.case === "string" ? params.case : ""}`);
   const selected = typeof params.case === "string" ? params.case : "";
   const cursor = typeof params.cursor === "string" ? params.cursor : undefined;
   const validCase = UUID.test(selected);

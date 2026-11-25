@@ -21,8 +21,8 @@ function recorded(value: unknown): string {
 }
 
 export default async function RecordedMonitor({ searchParams }: { searchParams: Promise<{ case?: string; run?: string; cursor?: string }> }) {
-  await requireSession();
   const params = await searchParams;
+  await requireSession(`/workspace/recorded-monitor?case=${typeof params.case === "string" ? params.case : ""}`);
   const selected = typeof params.case === "string" ? params.case : "";
   const runId = typeof params.run === "string" ? params.run : "";
   const cursor = typeof params.cursor === "string" ? params.cursor : undefined;

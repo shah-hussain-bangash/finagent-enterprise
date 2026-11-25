@@ -15,8 +15,8 @@ export default async function RecordedRiskPage({
 }: {
   searchParams: Promise<{ case?: string; cursor?: string }>;
 }) {
-  await requireSession();
   const params = await searchParams;
+  await requireSession(`/workspace/recorded-risk?case=${typeof params.case === "string" ? params.case : ""}`);
   const selected = typeof params.case === "string" ? params.case : "";
   const validCase = CASE_ID.test(selected);
   const cursor = typeof params.cursor === "string" ? params.cursor : undefined;

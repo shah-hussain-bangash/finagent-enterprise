@@ -183,6 +183,26 @@ def test_case_page_is_restored_after_synthetic_sign_in(stack, client, token):  #
             browser.close()
 
 
+def test_workspace_case_is_restored_after_synthetic_sign_in(stack, client, token):  # type: ignore[no-untyped-def]
+    from playwright.sync_api import expect, sync_playwright
+
+    case_id = ingest(client, token)["case_id"]
+    analyst = assigned_analyst(client, token, case_id)
+    with sync_playwright() as playwright:
+        browser = playwright.chromium.launch()
+        try:
+            page = browser.new_page()
+            page.goto(f"{stack['web']}/workspace/case-overview?case={case_id}")
+            expect(page).to_have_url(re.compile(r"/signin\?"))
+            page.get_by_label("Synthetic identity").select_option(analyst)
+            page.get_by_role("button", name="Sign in").click()
+            expect(page).to_have_url(f"{stack['web']}/workspace/case-overview?case={case_id}")
+            expect(page.get_by_role("heading", name="Case investigation overview")).to_be_visible()
+            expect(page.locator("main")).to_contain_text(case_id[:8])
+        finally:
+            browser.close()
+
+
 def test_case_return_does_not_grant_cross_tenant_access(stack, client, token):  # type: ignore[no-untyped-def]
     from playwright.sync_api import expect, sync_playwright
 

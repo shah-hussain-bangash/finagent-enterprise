@@ -11,8 +11,8 @@ interface CaseDetail { case_id: string; status: string; priority: string; alert_
 interface Evidence { items: { evidence_item_id: string; source_type: string; freshness: string; completeness: string }[]; gaps: { code: string; severity: string; detail: string; source_type: string; source_ref: string | null }[] }
 
 export default async function CaseOverview({ searchParams }: { searchParams: Promise<{ case?: string; cursor?: string }> }) {
-  await requireSession();
   const params = await searchParams;
+  await requireSession(`/workspace/case-overview?case=${typeof params.case === "string" ? params.case : ""}`);
   const selected = typeof params.case === "string" ? params.case : "";
   const cursor = typeof params.cursor === "string" ? params.cursor : undefined;
   const valid = UUID.test(selected);

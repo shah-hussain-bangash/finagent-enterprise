@@ -11,8 +11,8 @@ interface ReportList { report: { status: string; current_version_no: number } | 
 interface Version { version_no: number; snapshot_id: string; watermark: string | null; validation: { valid: boolean; problems?: { code: string; section?: string }[] }; diff_from_previous?: { section_id: string; change: string; diff: string[] }[] }
 
 export default async function RecordedReview({ searchParams }: { searchParams: Promise<{ case?: string; version?: string; cursor?: string }> }) {
-  await requireSession();
   const params = await searchParams;
+  await requireSession(`/workspace/recorded-review?case=${typeof params.case === "string" ? params.case : ""}`);
   const selected = typeof params.case === "string" ? params.case : "";
   const cursor = typeof params.cursor === "string" ? params.cursor : undefined;
   const validCase = UUID.test(selected);

@@ -16,6 +16,16 @@ test("case return accepts only canonical case screens", () => {
   }
 });
 
+test("case return accepts only known workspace views with a single case", () => {
+  for (const page of ["case-overview", "evidence-briefing", "recorded-transactions", "recorded-risk",
+    "recorded-review", "recorded-provenance", "recorded-monitor", "snapshot-selection"]) {
+    const path = `/workspace/${page}?case=${id}`;
+    assert.equal(safeCaseReturn(path), path);
+    assert.equal(safeCaseReturn(`${path}&next=//evil.example`), null);
+  }
+  assert.equal(safeCaseReturn(`/workspace/unknown?case=${id}`), null);
+});
+
 test("case return rejects external, encoded and non-case destinations", () => {
   for (const value of [null, {}, "", "//evil.example", "https://evil.example", `/cases/${id}?next=//evil.example`,
     `/cases/${id}/../admin`, `/cases/${id}%2f..`, `/cases/${id}\\evil`, `/cases/${id}/export`, "/cases/not-a-uuid"]) {

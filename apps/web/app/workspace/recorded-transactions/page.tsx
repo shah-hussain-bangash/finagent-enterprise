@@ -23,8 +23,8 @@ interface Evidence { items: EvidenceItem[]; gaps: { source_type: string; detail:
 export default async function RecordedTransactionsPage({ searchParams }: {
   searchParams: Promise<{ case?: string; cursor?: string; q?: string; direction?: string; status?: string; page_source?: string; page?: string }>;
 }) {
-  await requireSession();
   const params = await searchParams;
+  await requireSession(`/workspace/recorded-transactions?case=${typeof params.case === "string" ? params.case : ""}`);
   const selected = typeof params.case === "string" ? params.case : "";
   const valid = CASE_ID.test(selected);
   const cursor = typeof params.cursor === "string" ? params.cursor : undefined;

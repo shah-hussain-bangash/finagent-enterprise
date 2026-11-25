@@ -13,8 +13,8 @@ interface DocumentDetail { document_id: string; case_id: string; title: string; 
 interface KycOutput { output_id: string; capability_id: string; status: string; snapshot_id: string; created_at: string; lineage?: { document_selection?: { rule_version: string; review_date: string; basis: string; items: { document_type: string; selection: string; evidence_ref: string | null; source_ref: string | null; processing_status: string | null }[] } }; findings: { claim_id: string; claim: string; claim_type: string; support_status: string; evidence_refs: string[] }[] }
 
 export default async function RecordedProvenance({ searchParams }: { searchParams: Promise<{ case?: string; document?: string; cursor?: string }> }) {
-  await requireSession();
   const params = await searchParams;
+  await requireSession(`/workspace/recorded-provenance?case=${typeof params.case === "string" ? params.case : ""}`);
   const selected = typeof params.case === "string" ? params.case : "";
   const document = typeof params.document === "string" ? params.document : "";
   const cursor = typeof params.cursor === "string" ? params.cursor : undefined;

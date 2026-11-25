@@ -12,8 +12,8 @@ interface SnapshotItem { evidence_item_id: string; source_type: string; source_r
 interface Snapshot { snapshot_id: string; created_at: string; items: SnapshotItem[] }
 
 export default async function SnapshotSelection({ searchParams }: { searchParams: Promise<{ case?: string; output?: string }> }) {
-  await requireSession();
   const params = await searchParams;
+  await requireSession(`/workspace/snapshot-selection?case=${typeof params.case === "string" ? params.case : ""}`);
   const caseId = typeof params.case === "string" ? params.case : "";
   const outputId = typeof params.output === "string" ? params.output : "";
   const valid = UUID.test(caseId) && UUID.test(outputId);
