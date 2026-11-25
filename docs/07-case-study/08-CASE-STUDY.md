@@ -239,7 +239,7 @@ Inputs must come from measured workloads. No monthly cloud bill, availability pe
 
 ## 8. Results and verification
 
-The current inspected source is [`f0a32b7908d766a2e4c9fb7b9c97906c27ab3c9a`][baseline]. Its [20 November 2026 hosted run][ci] completed all five jobs successfully. The integration log was inspected directly for the counts below.
+The original source baseline for the detailed results below is [`f0a32b7908d766a2e4c9fb7b9c97906c27ab3c9a`][baseline]. Its [20 November 2026 hosted run][ci] completed all five jobs successfully. The integration log was inspected directly for the counts below; later browser evidence is identified separately.
 
 | Evidence | Recorded result | Interpretation |
 |---|---|---|
@@ -265,7 +265,7 @@ This demonstrates sensitivity of selected tests to selected defects. It does not
 
 ### Browser evidence has a separate boundary
 
-The [synthetic acceptance record][acceptance] reports a local browser journey passing after a dependency patch on 20 November 2026: one test passed in 42.10 seconds, with specified source files matched by hash. This is a recorded local observation, separate from hosted CI. The current workflow's full-suite invocation deselects browser tests; a successful hosted build cannot be presented as a hosted browser acceptance pass.
+The [earlier acceptance record][acceptance] reports a local browser journey passing after a dependency patch on 20 November 2026: one test passed in 42.10 seconds, with specified source files matched by hash. The original baseline's full-suite invocation deselected browser tests. A later, separate hosted browser job passed 17 synthetic scenarios in [run #77](https://github.com/shah-hussain-bangash/finagent-enterprise/actions/runs/45394113664) at `a6c157b`; see the [current acceptance record](../05-testing-evidence/14-SYNTHETIC-ACCEPTANCE-RECORD.md) for its scope and limitations.
 
 The practical outcome is a reviewable application and a substantial regression/evidence base. Commercial impact and production acceptance remain to be measured.
 
@@ -323,7 +323,7 @@ FinAgent's strongest engineering evidence is the connection between architecture
 
 ---
 
-**Evidence date:** 21 November 2026. Source statements refer to the pinned baseline below. Later application changes require their own verification. Repository documents with historical local results retain their original scope.
+**Evidence dates:** The detailed source baseline below was inspected on 21 November 2026. The later hosted investigation result is explicitly identified by revision and run above. Repository documents with historical local results retain their original scope.
 
 [baseline]: https://github.com/shah-hussain-bangash/finagent-enterprise/commit/f0a32b7908d766a2e4c9fb7b9c97906c27ab3c9a
 [ci]: https://github.com/shah-hussain-bangash/finagent-enterprise/actions/runs/44723085210
