@@ -221,7 +221,7 @@ export async function correctField(form: FormData): Promise<{ok: boolean; messag
 }
 
 // ------------------------------------------------------------------ reports and review
-export async function editReport(form: FormData): Promise<{ok: boolean; message: string; uncertain?: boolean}> {
+export async function editReport(form: FormData): Promise<{ok: boolean; message: string; uncertain?: boolean; sessionExpired?: boolean}> {
   const caseId = str(form, "case_id");
   const sections = form.getAll("section_id").map((id, i) => ({
     section_id: String(id),
@@ -231,11 +231,12 @@ export async function editReport(form: FormData): Promise<{ok: boolean; message:
     await api(`/api/v1/cases/${caseId}/reports/edits`, {
       json: { base_version_no: Number(str(form, "base_version_no")), edit_note: str(form, "edit_note"), sections },
       timeoutMs: 30_000,
+      preserveAuthError: true,
     });
     return {ok: true, message: "Saved as a new report version."};
   } catch (e) {
     if (!(e instanceof ApiRequestError)) throw e;
-    return {ok: false, message: `${e.code}: ${e.message}`, uncertain: e.code === "CONNECTION_ERROR"};
+    return {ok: false, message: `${e.code}: ${e.message}`, uncertain: e.code === "CONNECTION_ERROR", sessionExpired: e.code === "SESSION_EXPIRED"};
   }
 }
 

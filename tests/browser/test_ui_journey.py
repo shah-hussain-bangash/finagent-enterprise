@@ -76,6 +76,7 @@ def stack(make_settings, make_worker, bank, request) -> Iterator[dict[str, Any]]
         "workflow_cancel_gateway_error",
         "report_withdrawal_gateway_error",
         "expired_case_evidence_read",
+        "report_edit_auth_expired",
     }:
         from tests.browser.lost_response_proxy import LostResponseProxy
 
@@ -90,6 +91,7 @@ def stack(make_settings, make_worker, bank, request) -> Iterator[dict[str, Any]]
             drop_workflow_cancel=request.param == "workflow_cancel_gateway_error",
             drop_report_withdrawal=request.param == "report_withdrawal_gateway_error",
             expire_case_evidence_read=request.param == "expired_case_evidence_read",
+            reject_report_edit_auth=request.param == "report_edit_auth_expired",
             gateway_error=request.param
             in {
                 "case_update_gateway_error",

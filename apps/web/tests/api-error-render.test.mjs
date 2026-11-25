@@ -16,7 +16,7 @@ function compile(relativePath, mocks) {
 }
 const { ApiRequestError, api, raw } = compile("../lib/api.ts", {
   "server-only": {}, "next/navigation": { redirect: (path) => { throw new Error(`redirect:${path}`); } },
-  "@/lib/session": { requireSession: async () => ({ token: "synthetic" }) },
+  "@/lib/session": { getSession: async () => ({ token: "synthetic" }), requireSession: async () => ({ token: "synthetic" }) },
 });
 const { ErrorState, Flash, Tabs } = compile("../components/ui.tsx", {
   "next/link": { __esModule: true, default: ({ href, children, ...props }) => React.createElement("a", { href, ...props }, children) },
@@ -78,6 +78,32 @@ test("an unauthorized case read preserves only a validated case destination", as
       (error) => error.message === `redirect:/signin?expired=1&returnTo=${encodeURIComponent(path)}`);
     await assert.rejects(() => raw("/synthetic", { returnTo: "//evil.example" }),
       (error) => error.message === "redirect:/signin?expired=1");
+  } finally { globalThis.fetch = originalFetch; }
+});
+
+test("a report edit can handle session expiry without redirecting or repeating the request", async () => {
+  const originalFetch = globalThis.fetch;
+  let calls = 0;
+  globalThis.fetch = async () => { calls++; return new Response("{}", { status: 401 }); };
+  try {
+    await assert.rejects(() => raw("/synthetic", { json: { text: "draft" }, preserveAuthError: true }),
+      (error) => error.code === "SESSION_EXPIRED");
+    assert.equal(calls, 1);
+  } finally { globalThis.fetch = originalFetch; }
+});
+
+test("a report edit with no session does not reach the API", async () => {
+  const { raw: noSessionRaw } = compile("../lib/api.ts", {
+    "server-only": {}, "next/navigation": { redirect: () => { throw new Error("Unexpected redirect"); } },
+    "@/lib/session": { getSession: async () => null },
+  });
+  const originalFetch = globalThis.fetch;
+  let calls = 0;
+  globalThis.fetch = async () => { calls++; throw new Error("Unexpected fetch"); };
+  try {
+    await assert.rejects(() => noSessionRaw("/synthetic", { json: {}, preserveAuthError: true }),
+      (error) => error.code === "SESSION_EXPIRED");
+    assert.equal(calls, 0);
   } finally { globalThis.fetch = originalFetch; }
 });
 

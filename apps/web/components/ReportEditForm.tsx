@@ -9,6 +9,9 @@ type Section = {section_id: string; title: string; text: string; claim_ids: stri
 export function ReportEditForm({caseId, version, sections}: {caseId: string; version: number; sections: Section[]}) {
   const [error, setError] = useState<string | null>(null);
   const [uncertain, setUncertain] = useState(false);
+  const [sessionExpired, setSessionExpired] = useState(false);
+  const [texts, setTexts] = useState<Record<string, string>>(() => Object.fromEntries(sections.map((s) => [s.section_id, s.text])));
+  const [note, setNote] = useState("");
   const path = `/cases/${caseId}/report`;
   function requireReload(message: string) {
     setUncertain(true);
@@ -21,6 +24,10 @@ export function ReportEditForm({caseId, version, sections}: {caseId: string; ver
       const result = await editReport(form);
       if (result.ok) window.location.assign(`${path}?ok=${encodeURIComponent(result.message)}`);
       else if (result.uncertain) requireReload(result.message);
+      else if (result.sessionExpired) {
+        setSessionExpired(true);
+        setError("Your session expired. Copy your edits before leaving this page. Sign in in a new tab, then reload the report and check it before saving again.");
+      }
       else setError(result.message);
     } catch {
       requireReload("Could not confirm the request.");
@@ -34,12 +41,12 @@ export function ReportEditForm({caseId, version, sections}: {caseId: string; ver
       {sections.map((s) => <div key={s.section_id} className="panel">
         <input type="hidden" name="section_id" value={s.section_id} />
         <label htmlFor={`s-${s.section_id}`}>{s.title}</label>
-        <textarea id={`s-${s.section_id}`} name="section_text" defaultValue={s.text} />
+        <textarea id={`s-${s.section_id}`} name="section_text" value={texts[s.section_id] ?? ""} onChange={(event) => setTexts({ ...texts, [s.section_id]: event.target.value })} />
         {s.claim_ids.length ? <p className="muted">Backed by claims: {s.claim_ids.join(", ")}</p> : null}
       </div>)}
       <label htmlFor="edit_note">Edit note (required)</label>
-      <input id="edit_note" name="edit_note" required minLength={3} maxLength={500} />
-      <SubmitButton>Save as new version</SubmitButton>
+      <input id="edit_note" name="edit_note" required minLength={3} maxLength={500} value={note} onChange={(event) => setNote(event.target.value)} />
+      {sessionExpired ? <a href={`/signin?expired=1&returnTo=${encodeURIComponent(path)}`} target="_blank" rel="noopener noreferrer">Sign in in a new tab</a> : <SubmitButton>Save as new version</SubmitButton>}
     </>}
   </form>;
 }

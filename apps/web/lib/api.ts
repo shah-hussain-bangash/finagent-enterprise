@@ -2,7 +2,7 @@
 // Authorization is enforced by the API; the UI only hides what it cannot use (prompt §23).
 import "server-only";
 import { redirect } from "next/navigation";
-import { requireSession } from "@/lib/session";
+import { getSession, requireSession } from "@/lib/session";
 import { safeCaseReturn } from "@/lib/case-return";
 
 export type CaseStatus =
@@ -46,10 +46,12 @@ export interface Init {
   ifMatch?: number;
   timeoutMs?: number;
   returnTo?: string;
+  preserveAuthError?: boolean;
 }
 
 export async function raw(path: string, init: Init = {}): Promise<Response> {
-  const session = await requireSession();
+  const session = init.preserveAuthError ? await getSession() : await requireSession();
+  if (!session) throw new ApiRequestError(401, { error: { code: "SESSION_EXPIRED", message: "Your session has expired.", correlation_id: "", details: {} } });
   const headers: Record<string, string> = { Authorization: `Bearer ${session.token}`, ...init.headers };
   if (init.json !== undefined) headers["Content-Type"] = "application/json";
   if (init.idempotencyKey) headers["Idempotency-Key"] = init.idempotencyKey;
@@ -80,6 +82,7 @@ export async function raw(path: string, init: Init = {}): Promise<Response> {
   if (res.status === 401) {
     const body = (await res.clone().json().catch(() => null)) as ApiError | null;
     if (body?.error?.code !== "MFA_REQUIRED") {
+      if (init.preserveAuthError) throw new ApiRequestError(401, { error: { code: "SESSION_EXPIRED", message: "Your session has expired.", correlation_id: "", details: {} } });
       const safe = safeCaseReturn(init.returnTo);
       redirect(safe ? `/signin?expired=1&returnTo=${encodeURIComponent(safe)}` : "/signin?expired=1");
     }

@@ -7,6 +7,10 @@ import xml.etree.ElementTree as ET
 from pathlib import Path
 
 EXPECTED = {
+    (
+        "tests.browser.test_uncertain_action_browser",
+        "test_expired_report_edit_keeps_unsaved_text[report_edit_auth_expired]",
+    ),
     ("tests.browser.test_ui_journey", "test_case_page_is_restored_after_synthetic_sign_in"),
     ("tests.browser.test_ui_journey", "test_workspace_case_is_restored_after_synthetic_sign_in"),
     ("tests.browser.test_ui_journey", "test_workspace_snapshot_selection_is_restored_after_sign_in"),
