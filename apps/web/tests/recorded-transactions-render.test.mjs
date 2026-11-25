@@ -60,6 +60,30 @@ test("distinguishes missing or malformed transaction rows from a valid empty lis
   assert.ok(!html.includes("Transaction rows are unavailable or malformed"));
 });
 
+test("discloses malformed records and renders invalid fields without losing valid rows", async () => {
+  const sample = structuredClone(evidence);
+  sample.items[0].content.items = [
+    null, "bad row", {},
+    { source_transaction_id: "tx-invalid", booking_time: null, amount: 12.5, currency: { unexpected: true }, direction: "CREDIT", status: "POSTED" },
+    evidence.items[0].content.items[0],
+  ];
+  const html = renderToStaticMarkup(await loadPage(sample)({ searchParams: Promise.resolve({ case: caseId }) }));
+  assert.ok(html.includes("2 malformed transaction record(s) could not be displayed"));
+  assert.ok(html.includes("tx-invalid") && html.includes("tx-one"));
+  assert.ok(html.includes("Invalid value") && html.includes("12.5 (unverified format)"));
+  assert.ok(html.includes("Rows not summarized due to unrecognized status, currency, direction or amount: 2"));
+  assert.ok(html.includes("42.00"));
+});
+
+test("does not call a source empty when all its records are malformed", async () => {
+  const sample = structuredClone(evidence);
+  sample.items[0].content.items = [null, "bad row"];
+  const html = renderToStaticMarkup(await loadPage(sample)({ searchParams: Promise.resolve({ case: caseId }) }));
+  assert.ok(html.includes("2 malformed transaction record(s)"));
+  assert.ok(html.includes("No readable transaction records are available"));
+  assert.ok(!html.includes("This evidence source contains no transaction rows"));
+});
+
 test("filters by direction and status without hiding other statuses by default", async () => {
   const page = loadPage();
   const html = renderToStaticMarkup(await page({ searchParams: Promise.resolve({ case: caseId, direction: "DEBIT", status: "PENDING" }) }));
