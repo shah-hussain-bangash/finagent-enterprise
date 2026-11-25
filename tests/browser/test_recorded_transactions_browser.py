@@ -1,5 +1,7 @@
 """Exercise recorded transaction evidence with the disposable synthetic stack."""
 
+import re
+
 import pytest
 
 from tests.agent_helpers import prepared_case
@@ -32,7 +34,7 @@ def test_case_transactions_are_visible_only_to_assigned_analyst(
         try:
             page = browser.new_page()
             page.goto(path)
-            assert "/signin" in page.url
+            expect(page).to_have_url(re.compile(r"/signin\?"))
             sign_in(page, web, prep.analyst)
             page.goto(path)
             main = page.locator("main")

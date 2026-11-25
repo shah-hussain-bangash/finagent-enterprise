@@ -502,6 +502,7 @@ def test_analyst_and_reviewer_complete_a_case_in_the_browser(stack, client, toke
         page.goto(f"{web}/cases/{case_id}")
         page.get_by_label("Re-analyse with fresh evidence (reason)").fill("conflict resolved")
         page.get_by_role("button", name="Re-run evidence and analysis").click()
+        page.wait_for_url(re.compile(rf"^{re.escape(web)}/cases/{re.escape(case_id)}\?ok="), timeout=30_000)
         wait_text(page, f"{web}/cases/{case_id}/report", "version 2 of 2")
         page.goto(f"{web}/cases/{case_id}/agents")
         page.get_by_text("Deterministic result", exact=False).first.wait_for(timeout=30_000)

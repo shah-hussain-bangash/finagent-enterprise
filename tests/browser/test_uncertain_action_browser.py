@@ -1,5 +1,6 @@
 """Exercise an interrupted synthetic investigation request through the real web UI."""
 
+import re
 import socket
 import time
 from urllib.parse import urlparse
@@ -109,6 +110,9 @@ def test_report_withdrawal_gateway_error_requires_reload(stack, client, token): 
             page.goto(f"{stack['web']}/cases/{case_id}")
             page.get_by_label("Re-analyse with fresh evidence (reason)").fill("Synthetic conflict resolved")
             page.get_by_role("button", name="Re-run evidence and analysis").click()
+            page.wait_for_url(
+                re.compile(rf"^{re.escape(stack['web'])}/cases/{re.escape(case_id)}\?ok="), timeout=30_000
+            )
             wait_text(page, f"{stack['web']}/cases/{case_id}/report", "version 2 of 2")
             page.get_by_role("button", name="Submit version 2 for independent review").click()
             page.get_by_text("Submitted for independent review.").first.wait_for(timeout=30_000)
