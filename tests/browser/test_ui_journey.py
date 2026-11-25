@@ -246,6 +246,7 @@ def test_historical_report_version_is_restored_after_sign_in(stack, client, toke
             page.get_by_role("button", name="Save as new version").click()
             wait_text(page, f"{stack['web']}/cases/{case_id}/report", "version 2 of 2")
             page.get_by_role("button", name="Sign out").click()
+            page.wait_for_url(f"{stack['web']}/signin", timeout=30_000)
             path = f"{stack['web']}/cases/{case_id}/report?v=1"
             page.goto(path)
             expect(page).to_have_url(re.compile(r"/signin\?"))
