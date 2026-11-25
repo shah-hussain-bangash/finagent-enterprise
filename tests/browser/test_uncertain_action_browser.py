@@ -334,12 +334,7 @@ def test_report_edit_gateway_error_requires_reload(  # type: ignore[no-untyped-d
             expect(page.get_by_role("link", name="Open recorded report in a new tab")).to_have_attribute(
                 "target", "_blank"
             )
-            submitted = []
-            page.on(
-                "request", lambda request: submitted.append(request.url) if request.method == "POST" else None
-            )
-            page.get_by_role("button", name="Export this version").click()
-            assert submitted == []
+            expect(page.get_by_role("button", name="Export this version")).to_be_disabled()
             assert stack["proxy"].dropped_statuses == [201]
             report = client.get(f"/api/v1/cases/{case_id}/reports", headers=token(analyst))
             assert report.status_code == 200 and report.json()["report"]["current_version_no"] == 2

@@ -2,7 +2,7 @@ import { randomUUID } from "node:crypto";
 import Link from "next/link";
 import { createExport } from "@/app/actions";
 import { RecoveryReasonForm } from "@/components/RecoveryReasonForm";
-import { ReportActionGuard } from "@/components/ReportActionGuard";
+import { ReportActionArea, ReportActionGuard } from "@/components/ReportActionGuard";
 import { ReportEditForm } from "@/components/ReportEditForm";
 import { SubmitReportForm } from "@/components/SubmitReportForm";
 import { FindingTag, type FindingKind } from "@/components/StatusBadge";
@@ -83,6 +83,7 @@ export default async function ReportPage({ params, searchParams }: {
               ))}
             </details>
           ) : null}
+          <ReportActionArea>
           {!uncertainAction && isCurrent && report?.status === "DRAFT" && v.data.validation.valid ? (
             <SubmitReportForm caseId={id} version={v.data.version_no} requestKey={randomUUID()} />
           ) : null}
@@ -96,6 +97,7 @@ export default async function ReportPage({ params, searchParams }: {
             <SubmitButton>Export this version</SubmitButton>
             <span className="muted">Reviewers and supervisors only. Unapproved versions carry a DRAFT watermark.</span>
           </form>}
+          </ReportActionArea>
         </>
       ) : null}
       {list.data.versions.length ? (
