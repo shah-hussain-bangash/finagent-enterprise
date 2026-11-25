@@ -34,6 +34,9 @@ test("case return rejects external, encoded and non-case destinations", () => {
 });
 
 test("case return preserves only supported document, run, output and version selections", () => {
+  assert.equal(safeCaseReturn(`/cases/${id}/report?v=1`), `/cases/${id}/report?v=1`);
+  assert.equal(safeCaseReturn(`/cases/${id}/report?v=0`), null);
+  assert.equal(safeCaseReturn(`/cases/${id}/report?v=1&next=//evil.example`), null);
   for (const [view, key, value] of [
     ["snapshot-selection", "output", id], ["recorded-provenance", "document", id],
     ["recorded-monitor", "run", id], ["recorded-review", "version", "12"],

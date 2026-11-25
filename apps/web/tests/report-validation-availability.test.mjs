@@ -8,7 +8,7 @@ import ts from "typescript";
 import { loadComponent } from "./load-component.mjs";
 
 const require = createRequire(import.meta.url);
-function pageWithValidation(valid, calls = [], history = false) {
+function pageWithValidation(valid, calls = [], history = false, destinations = []) {
   const mocks = {
     "next/link": { __esModule: true, default: ({ href, children }) => React.createElement("a", { href }, children) },
     "@/app/actions": { createExport() {}, editReport() {}, submitReport() {}, withdrawReport() {} },
@@ -16,8 +16,8 @@ function pageWithValidation(valid, calls = [], history = false) {
     "@/components/SubmitButton": { SubmitButton: ({ children }) => React.createElement("button", null, children) },
     "@/components/ReportActionGuard": { ReportActionLock: React.createContext(() => {}), ReportActionGuard: ({ children }) => children },
     "@/components/ui": { Empty: ({ children }) => React.createElement("p", null, children), ErrorState: () => null, Flash: () => null, Tabs: () => null, When: () => null },
-    "@/lib/session": { requireSession: async () => {} },
-    "@/lib/api": { load: async (path) => { calls.push(path); return path.includes("/versions/") ? { data: { version_no: 1, current_version_no: history ? 2 : 1, sections: [], claims: [], validation: { valid, problems: [{ code: "MISSING_EVIDENCE" }] } }, error: null } : { data: { report: { status: history ? "SUBMITTED" : "DRAFT", current_version_no: history ? 2 : 1 }, versions: history ? [{ version_no: 1 }] : [] }, error: null }; } },
+    "@/lib/session": { requireSession: async (destination) => { destinations.push(destination); } },
+    "@/lib/api": { load: async (path, destination) => { calls.push(path); destinations.push(destination); return path.includes("/versions/") ? { data: { version_no: 1, current_version_no: history ? 2 : 1, sections: [], claims: [], validation: { valid, problems: [{ code: "MISSING_EVIDENCE" }] } }, error: null } : { data: { report: { status: history ? "SUBMITTED" : "DRAFT", current_version_no: history ? 2 : 1 }, versions: history ? [{ version_no: 1 }] : [] }, error: null }; } },
   };
   mocks["@/components/SubmitReportForm"] = loadComponent("SubmitReportForm", mocks);
   mocks["@/components/ReportEditForm"] = loadComponent("ReportEditForm", mocks);
@@ -38,10 +38,12 @@ test("does not offer submission while the displayed report has blocking validati
   assert.ok(!html.includes("Submit version 1 for independent review"));
 });
 test("does not offer to withdraw the current submission while viewing an older version", async () => {
-  const html = renderToStaticMarkup(await pageWithValidation(true, [], true)({ params: Promise.resolve({ id: "case-1" }), searchParams: Promise.resolve({ v: "1" }) }));
+  const destinations = [];
+  const html = renderToStaticMarkup(await pageWithValidation(true, [], true, destinations)({ params: Promise.resolve({ id: "case-1" }), searchParams: Promise.resolve({ v: "1" }) }));
   assert.ok(html.includes("You are viewing an earlier version"));
   assert.ok(html.includes('href="/cases/case-1/report"'));
   assert.ok(!html.includes("Withdraw current submission"));
+  assert.deepEqual(destinations, Array(3).fill("/cases/case-1/report?v=1"));
 });
 test("offers submission for a valid current draft", async () => {
   const html = await render(true);

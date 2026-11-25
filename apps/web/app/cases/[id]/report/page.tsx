@@ -26,16 +26,18 @@ export default async function ReportPage({ params, searchParams }: {
   searchParams: Promise<Record<string, string | undefined>>;
 }) {
   const { id } = await params;
-  await requireSession(`/cases/${id}/report`);
   const sp = await searchParams;
+  const requestedVersion = typeof sp.v === "string" && /^[1-9]\d{0,8}$/.test(sp.v) ? sp.v : "";
+  const returnTo = `/cases/${id}/report${requestedVersion ? `?v=${requestedVersion}` : ""}`;
+  await requireSession(returnTo);
   const uncertainAction = typeof sp.error === "string" && sp.error.startsWith("CONNECTION_ERROR:");
-  const list = await load<Reports>(`/api/v1/cases/${id}/reports`, `/cases/${id}/report`);
+  const list = await load<Reports>(`/api/v1/cases/${id}/reports`, returnTo);
   if (list.error) return <ErrorState error={list.error} what="Report" />;
   const report = list.data.report;
   const requested = sp.v === undefined ? null : /^[1-9]\d{0,8}$/.test(sp.v) ? Number(sp.v) : null;
   const invalidVersion = sp.v !== undefined && (requested === null || !list.data.versions.some((item) => item.version_no === requested));
   const shown = sp.v === undefined ? report?.current_version_no ?? 0 : requested ?? 0;
-  const v = report && !invalidVersion ? await load<Version>(`/api/v1/cases/${id}/reports/versions/${shown}`, `/cases/${id}/report`) : null;
+  const v = report && !invalidVersion ? await load<Version>(`/api/v1/cases/${id}/reports/versions/${shown}`, returnTo) : null;
   const isCurrent = report && shown === report.current_version_no;
   return (
     <ReportActionGuard>

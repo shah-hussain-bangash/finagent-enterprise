@@ -226,6 +226,38 @@ def test_workspace_snapshot_selection_is_restored_after_sign_in(stack, client, t
             browser.close()
 
 
+def test_historical_report_version_is_restored_after_sign_in(stack, client, token):  # type: ignore[no-untyped-def]
+    from playwright.sync_api import expect, sync_playwright
+
+    case_id = ingest(client, token)["case_id"]
+    analyst = assigned_analyst(client, token, case_id)
+    with sync_playwright() as playwright:
+        browser = playwright.chromium.launch()
+        try:
+            page = browser.new_page()
+            sign_in(page, stack["web"], analyst)
+            page.goto(f"{stack['web']}/cases/{case_id}")
+            page.get_by_role("button", name="Start investigation").click()
+            page.get_by_text("Investigation queued.").first.wait_for(timeout=30_000)
+            wait_text(page, f"{stack['web']}/cases/{case_id}/report", "version 1 of 1")
+            section = page.locator('textarea[name="section_text"]').first
+            section.fill(section.input_value() + "\nSynthetic historical version test.")
+            page.get_by_label("Edit note (required)").fill("Create synthetic version two")
+            page.get_by_role("button", name="Save as new version").click()
+            wait_text(page, f"{stack['web']}/cases/{case_id}/report", "version 2 of 2")
+            page.get_by_role("button", name="Sign out").click()
+            path = f"{stack['web']}/cases/{case_id}/report?v=1"
+            page.goto(path)
+            expect(page).to_have_url(re.compile(r"/signin\?"))
+            page.get_by_label("Synthetic identity").select_option(analyst)
+            page.get_by_role("button", name="Sign in").click()
+            expect(page).to_have_url(path)
+            expect(page.get_by_text("version 1 of 2", exact=False)).to_be_visible()
+            expect(page.get_by_text("You are viewing an earlier version.", exact=False)).to_be_visible()
+        finally:
+            browser.close()
+
+
 def test_case_return_does_not_grant_cross_tenant_access(stack, client, token):  # type: ignore[no-untyped-def]
     from playwright.sync_api import expect, sync_playwright
 
