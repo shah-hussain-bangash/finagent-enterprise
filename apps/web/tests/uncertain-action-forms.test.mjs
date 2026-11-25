@@ -13,7 +13,7 @@ for (const [component, action, props, button, refresh] of [
   ["ResolveConflictForm", "resolveConflict", { caseId: "case-1", conflictId: "conflict-1" }, "Record resolution", "Refresh evidence"],
   ["ReopenCaseForm", "reopenCase", { caseId: "case-1", recordVersion: 1 }, "Reopen case", "Reload case"],
   ["CaseStatusForm", "updateCase", { caseId: "case-1", recordVersion: 1, blocked: false }, "Mark blocked", "Reload case"],
-  ["ReportEditForm", "editReport", { caseId: "case-1", version: 1, sections: [] }, "Save as new version", "Reload report"],
+  ["ReportEditForm", "editReport", { caseId: "case-1", version: 1, sections: [] }, "Save as new version", "Open recorded report in a new tab"],
   ["UploadDocumentForm", "uploadDocument", { caseId: "case-1", requestKey: "key" }, "Upload", "Reload documents"],
   ["ResumeWorkflowForm", "resumeRun", { runId: "run-1", action: "RETRY", returnPath: "/workflows/run-1", label: "Reason", button: "Retry" }, "Retry", "Reload status"],
   ["FreezeSnapshotForm", "freezeSnapshot", { caseId: "case-1" }, "Freeze current evidence", "Reload evidence"],
@@ -24,7 +24,7 @@ for (const [component, action, props, button, refresh] of [
   test(`${component} requires a refresh after an uncertain response`, async () => {
     const state = [];
     let index = 0;
-    const hooks = { ...React, useState: (initial) => {
+    const hooks = { ...React, useContext: () => () => {}, useState: (initial) => {
       const current = index++;
       if (!(current in state)) state[current] = initial;
       return [state[current], (value) => { state[current] = value; }];
@@ -33,6 +33,7 @@ for (const [component, action, props, button, refresh] of [
       react: hooks,
       "@/app/actions": { [action]: async () => ({ ok: false, uncertain: true, message: "Outcome unknown", back: props.returnPath }) },
       "@/components/SubmitButton": { SubmitButton: ({ children }) => React.createElement("button", null, children) },
+      "@/components/ReportActionGuard": { ReportActionLock: {} },
     };
     const source = readFileSync(new URL(`../components/${component}.tsx`, import.meta.url), "utf8");
     const code = ts.transpileModule(source, { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022, jsx: ts.JsxEmit.ReactJSX, esModuleInterop: true } }).outputText;
@@ -52,7 +53,7 @@ for (const [component, action, props, button, refresh] of [
     assert.ok(html.includes(refresh));
     assert.ok(!html.includes(`>${button}</button>`));
     if (component === "CaseStatusForm") assert.match(navigation, /\/cases\/case-1\?error=CONNECTION_ERROR/);
-    if (component === "ReportEditForm") assert.match(navigation, /\/cases\/case-1\/report\?error=CONNECTION_ERROR/);
+    if (component === "ReportEditForm") assert.equal(navigation, "");
     if (component === "UploadDocumentForm") assert.match(navigation, /\/cases\/case-1\/documents\?error=CONNECTION_ERROR/);
     if (component === "ResumeWorkflowForm") assert.match(navigation, /\/workflows\/run-1\?error=CONNECTION_ERROR/);
     if (component === "FreezeSnapshotForm") assert.match(navigation, /\/cases\/case-1\/evidence\?error=CONNECTION_ERROR/);

@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useContext, useState } from "react";
 import { editReport } from "@/app/actions";
+import { ReportActionLock } from "@/components/ReportActionGuard";
 import { SubmitButton } from "@/components/SubmitButton";
 
 type Section = {section_id: string; title: string; text: string; claim_ids: string[]};
@@ -12,12 +13,12 @@ export function ReportEditForm({caseId, version, sections}: {caseId: string; ver
   const [sessionExpired, setSessionExpired] = useState(false);
   const [texts, setTexts] = useState<Record<string, string>>(() => Object.fromEntries(sections.map((s) => [s.section_id, s.text])));
   const [note, setNote] = useState("");
+  const lockActions = useContext(ReportActionLock);
   const path = `/cases/${caseId}/report`;
   function requireReload(message: string) {
     setUncertain(true);
     setError(message);
-    const warning = "CONNECTION_ERROR: The outcome may be unknown; check the record before trying again.";
-    window.location.assign(`${path}?error=${encodeURIComponent(warning)}`);
+    lockActions();
   }
   async function submit(form: FormData) {
     try {
@@ -26,6 +27,7 @@ export function ReportEditForm({caseId, version, sections}: {caseId: string; ver
       else if (result.uncertain) requireReload(result.message);
       else if (result.sessionExpired) {
         setSessionExpired(true);
+        lockActions();
         setError("Your session expired. Copy your edits before leaving this page. Sign in in a new tab, then reload the report and check it before saving again.");
       }
       else setError(result.message);
@@ -36,8 +38,8 @@ export function ReportEditForm({caseId, version, sections}: {caseId: string; ver
   return <form action={submit} className="stack">
     <input type="hidden" name="case_id" value={caseId} />
     <input type="hidden" name="base_version_no" value={version} />
-    {error && <p role="alert">{error} {uncertain && <>Check the recorded report before another action. <a href={path}>Reload report</a></>}</p>}
-    {!uncertain && <>
+    {error && <p role="alert">{error} {uncertain && <>Your edits remain on this page. Check the recorded report before another action. <a href={path} target="_blank" rel="noopener noreferrer">Open recorded report in a new tab</a></>}</p>}
+    <>
       {sections.map((s) => <div key={s.section_id} className="panel">
         <input type="hidden" name="section_id" value={s.section_id} />
         <label htmlFor={`s-${s.section_id}`}>{s.title}</label>
@@ -46,7 +48,7 @@ export function ReportEditForm({caseId, version, sections}: {caseId: string; ver
       </div>)}
       <label htmlFor="edit_note">Edit note (required)</label>
       <input id="edit_note" name="edit_note" required minLength={3} maxLength={500} value={note} onChange={(event) => setNote(event.target.value)} />
-      {sessionExpired ? <a href={`/signin?expired=1&returnTo=${encodeURIComponent(path)}`} target="_blank" rel="noopener noreferrer">Sign in in a new tab</a> : <SubmitButton>Save as new version</SubmitButton>}
-    </>}
+      {sessionExpired ? <a href={`/signin?expired=1&returnTo=${encodeURIComponent(path)}`} target="_blank" rel="noopener noreferrer">Sign in in a new tab</a> : !uncertain && <SubmitButton>Save as new version</SubmitButton>}
+    </>
   </form>;
 }

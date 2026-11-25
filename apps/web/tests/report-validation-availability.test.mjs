@@ -14,6 +14,7 @@ function pageWithValidation(valid, calls = [], history = false) {
     "@/app/actions": { createExport() {}, editReport() {}, submitReport() {}, withdrawReport() {} },
     "@/components/StatusBadge": { FindingTag: () => null },
     "@/components/SubmitButton": { SubmitButton: ({ children }) => React.createElement("button", null, children) },
+    "@/components/ReportActionGuard": { ReportActionLock: React.createContext(() => {}), ReportActionGuard: ({ children }) => children },
     "@/components/ui": { Empty: ({ children }) => React.createElement("p", null, children), ErrorState: () => null, Flash: () => null, Tabs: () => null, When: () => null },
     "@/lib/session": { requireSession: async () => {} },
     "@/lib/api": { load: async (path) => { calls.push(path); return path.includes("/versions/") ? { data: { version_no: 1, current_version_no: history ? 2 : 1, sections: [], claims: [], validation: { valid, problems: [{ code: "MISSING_EVIDENCE" }] } }, error: null } : { data: { report: { status: history ? "SUBMITTED" : "DRAFT", current_version_no: history ? 2 : 1 }, versions: history ? [{ version_no: 1 }] : [] }, error: null }; } },

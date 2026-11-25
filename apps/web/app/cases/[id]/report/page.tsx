@@ -2,6 +2,7 @@ import { randomUUID } from "node:crypto";
 import Link from "next/link";
 import { createExport } from "@/app/actions";
 import { RecoveryReasonForm } from "@/components/RecoveryReasonForm";
+import { ReportActionGuard } from "@/components/ReportActionGuard";
 import { ReportEditForm } from "@/components/ReportEditForm";
 import { SubmitReportForm } from "@/components/SubmitReportForm";
 import { FindingTag, type FindingKind } from "@/components/StatusBadge";
@@ -37,6 +38,7 @@ export default async function ReportPage({ params, searchParams }: {
   const v = report && !invalidVersion ? await load<Version>(`/api/v1/cases/${id}/reports/versions/${shown}`, `/cases/${id}/report`) : null;
   const isCurrent = report && shown === report.current_version_no;
   return (
+    <ReportActionGuard>
     <section aria-labelledby="h">
       <h1 id="h">Investigation report</h1>
       <Tabs caseId={id} active="/report" />
@@ -113,5 +115,6 @@ export default async function ReportPage({ params, searchParams }: {
         </>
       ) : null}
     </section>
+    </ReportActionGuard>
   );
 }
