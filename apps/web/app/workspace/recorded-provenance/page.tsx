@@ -14,7 +14,8 @@ interface KycOutput { output_id: string; capability_id: string; status: string; 
 
 export default async function RecordedProvenance({ searchParams }: { searchParams: Promise<{ case?: string; document?: string; cursor?: string }> }) {
   const params = await searchParams;
-  await requireSession(`/workspace/recorded-provenance?case=${typeof params.case === "string" ? params.case : ""}`);
+  const returnTo = `/workspace/recorded-provenance?case=${typeof params.case === "string" ? params.case : ""}`;
+  await requireSession(returnTo);
   const selected = typeof params.case === "string" ? params.case : "";
   const document = typeof params.document === "string" ? params.document : "";
   const cursor = typeof params.cursor === "string" ? params.cursor : undefined;
@@ -27,19 +28,19 @@ export default async function RecordedProvenance({ searchParams }: { searchParam
   let kycError: ApiRequestError | null = null;
   let detail: DocumentDetail | null = null;
   let detailError: ApiRequestError | null = null;
-  try { cases = await listCases(undefined, cursor); }
+  try { cases = await listCases(undefined, cursor, returnTo); }
   catch (error) { if (!(error instanceof ApiRequestError)) throw error; caseError = error; }
   if (valid) {
-    try { documents = (await api<{ items: DocumentSummary[] }>(`/api/v1/cases/${selected}/documents`)).items; }
+    try { documents = (await api<{ items: DocumentSummary[] }>(`/api/v1/cases/${selected}/documents`, { returnTo })).items; }
     catch (error) { if (!(error instanceof ApiRequestError)) throw error; documentsError = error; }
     if (documents) {
-      try { kycOutputs = (await api<{ items: KycOutput[] }>(`/api/v1/cases/${selected}/agent-outputs`)).items.filter((item) => item.capability_id === "AG-KYC"); }
+      try { kycOutputs = (await api<{ items: KycOutput[] }>(`/api/v1/cases/${selected}/agent-outputs`, { returnTo })).items.filter((item) => item.capability_id === "AG-KYC"); }
       catch (error) { if (!(error instanceof ApiRequestError)) throw error; kycError = error; }
     }
   }
   // Fetch only a document returned by the authorized case list.
   if (UUID.test(document) && documents?.some((item) => item.document_id === document)) {
-    try { detail = await api<DocumentDetail>(`/api/v1/documents/${document}`); }
+    try { detail = await api<DocumentDetail>(`/api/v1/documents/${document}`, { returnTo }); }
     catch (error) { if (!(error instanceof ApiRequestError)) throw error; detailError = error; }
   }
   const link = (value: Record<string, string>) => `/workspace/recorded-provenance?${new URLSearchParams(value)}`;

@@ -24,7 +24,8 @@ export default async function RecordedTransactionsPage({ searchParams }: {
   searchParams: Promise<{ case?: string; cursor?: string; q?: string; direction?: string; status?: string; page_source?: string; page?: string }>;
 }) {
   const params = await searchParams;
-  await requireSession(`/workspace/recorded-transactions?case=${typeof params.case === "string" ? params.case : ""}`);
+  const returnTo = `/workspace/recorded-transactions?case=${typeof params.case === "string" ? params.case : ""}`;
+  await requireSession(returnTo);
   const selected = typeof params.case === "string" ? params.case : "";
   const valid = CASE_ID.test(selected);
   const cursor = typeof params.cursor === "string" ? params.cursor : undefined;
@@ -36,10 +37,10 @@ export default async function RecordedTransactionsPage({ searchParams }: {
   let caseError: ApiRequestError | null = null;
   let evidence: Evidence | null = null;
   let evidenceError: ApiRequestError | null = null;
-  try { cases = await listCases(undefined, cursor); }
+  try { cases = await listCases(undefined, cursor, returnTo); }
   catch (error) { if (!(error instanceof ApiRequestError)) throw error; caseError = error; }
   if (valid) {
-    try { evidence = await api<Evidence>(`/api/v1/cases/${selected}/evidence`); }
+    try { evidence = await api<Evidence>(`/api/v1/cases/${selected}/evidence`, { returnTo }); }
     catch (error) { if (!(error instanceof ApiRequestError)) throw error; evidenceError = error; }
   }
   const sources = (evidence?.items ?? []).filter((item) => item.source_type === "TRANSACTIONS");

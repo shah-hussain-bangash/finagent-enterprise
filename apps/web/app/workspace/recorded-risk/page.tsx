@@ -16,7 +16,8 @@ export default async function RecordedRiskPage({
   searchParams: Promise<{ case?: string; cursor?: string }>;
 }) {
   const params = await searchParams;
-  await requireSession(`/workspace/recorded-risk?case=${typeof params.case === "string" ? params.case : ""}`);
+  const returnTo = `/workspace/recorded-risk?case=${typeof params.case === "string" ? params.case : ""}`;
+  await requireSession(returnTo);
   const selected = typeof params.case === "string" ? params.case : "";
   const validCase = CASE_ID.test(selected);
   const cursor = typeof params.cursor === "string" ? params.cursor : undefined;
@@ -24,7 +25,7 @@ export default async function RecordedRiskPage({
   let page: Awaited<ReturnType<typeof listCases>> | null = null;
   let pageError: ApiRequestError | null = null;
   try {
-    page = await listCases(undefined, cursor);
+    page = await listCases(undefined, cursor, returnTo);
   } catch (error) {
     if (!(error instanceof ApiRequestError)) throw error;
     pageError = error;
@@ -34,7 +35,7 @@ export default async function RecordedRiskPage({
   let outputError: ApiRequestError | null = null;
   if (validCase) {
     try {
-      const response = await api<{ items: RecordedOutput[] }>(`/api/v1/cases/${selected}/agent-outputs`);
+      const response = await api<{ items: RecordedOutput[] }>(`/api/v1/cases/${selected}/agent-outputs`, { returnTo });
       outputs = response.items;
     } catch (error) {
       if (!(error instanceof ApiRequestError)) throw error;

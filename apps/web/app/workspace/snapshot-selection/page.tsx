@@ -13,7 +13,8 @@ interface Snapshot { snapshot_id: string; created_at: string; items: SnapshotIte
 
 export default async function SnapshotSelection({ searchParams }: { searchParams: Promise<{ case?: string; output?: string }> }) {
   const params = await searchParams;
-  await requireSession(`/workspace/snapshot-selection?case=${typeof params.case === "string" ? params.case : ""}`);
+  const returnTo = `/workspace/snapshot-selection?case=${typeof params.case === "string" ? params.case : ""}`;
+  await requireSession(returnTo);
   const caseId = typeof params.case === "string" ? params.case : "";
   const outputId = typeof params.output === "string" ? params.output : "";
   const valid = UUID.test(caseId) && UUID.test(outputId);
@@ -23,12 +24,12 @@ export default async function SnapshotSelection({ searchParams }: { searchParams
   let snapshotError: ApiRequestError | null = null;
   if (valid) {
     try {
-      const data = await api<{ items: Output[] }>(`/api/v1/cases/${caseId}/agent-outputs`);
+      const data = await api<{ items: Output[] }>(`/api/v1/cases/${caseId}/agent-outputs`, { returnTo });
       output = data.items.find((item) => item.output_id === outputId && item.capability_id === "AG-KYC") ?? null;
     } catch (error) { if (!(error instanceof ApiRequestError)) throw error; outputError = error; }
   }
   if (output?.lineage?.document_selection && UUID.test(output.snapshot_id)) {
-    try { snapshot = await api<Snapshot>(`/api/v1/cases/${caseId}/snapshots/${output.snapshot_id}`); }
+    try { snapshot = await api<Snapshot>(`/api/v1/cases/${caseId}/snapshots/${output.snapshot_id}`, { returnTo }); }
     catch (error) { if (!(error instanceof ApiRequestError)) throw error; snapshotError = error; }
   }
   const selection = output?.lineage?.document_selection;

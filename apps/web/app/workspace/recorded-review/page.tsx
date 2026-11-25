@@ -12,7 +12,8 @@ interface Version { version_no: number; snapshot_id: string; watermark: string |
 
 export default async function RecordedReview({ searchParams }: { searchParams: Promise<{ case?: string; version?: string; cursor?: string }> }) {
   const params = await searchParams;
-  await requireSession(`/workspace/recorded-review?case=${typeof params.case === "string" ? params.case : ""}`);
+  const returnTo = `/workspace/recorded-review?case=${typeof params.case === "string" ? params.case : ""}`;
+  await requireSession(returnTo);
   const selected = typeof params.case === "string" ? params.case : "";
   const cursor = typeof params.cursor === "string" ? params.cursor : undefined;
   const validCase = UUID.test(selected);
@@ -22,16 +23,16 @@ export default async function RecordedReview({ searchParams }: { searchParams: P
   let reportsError: ApiRequestError | null = null;
   let version: Version | null = null;
   let versionError: ApiRequestError | null = null;
-  try { cases = await listCases(undefined, cursor); }
+  try { cases = await listCases(undefined, cursor, returnTo); }
   catch (error) { if (!(error instanceof ApiRequestError)) throw error; caseError = error; }
   if (validCase) {
-    try { reports = await api<ReportList>(`/api/v1/cases/${selected}/reports`); }
+    try { reports = await api<ReportList>(`/api/v1/cases/${selected}/reports`, { returnTo }); }
     catch (error) { if (!(error instanceof ApiRequestError)) throw error; reportsError = error; }
   }
   const requested = typeof params.version === "string" && /^[1-9]\d{0,8}$/.test(params.version) ? Number(params.version) : null;
   const chosen = params.version ? requested : reports?.report?.current_version_no ?? null;
   if (chosen && reports?.versions.some((item) => item.version_no === chosen)) {
-    try { version = await api<Version>(`/api/v1/cases/${selected}/reports/versions/${chosen}`); }
+    try { version = await api<Version>(`/api/v1/cases/${selected}/reports/versions/${chosen}`, { returnTo }); }
     catch (error) { if (!(error instanceof ApiRequestError)) throw error; versionError = error; }
   }
   const link = (value: Record<string, string>) => `/workspace/recorded-review?${new URLSearchParams(value)}`;

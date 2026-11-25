@@ -22,7 +22,8 @@ function recorded(value: unknown): string {
 
 export default async function RecordedMonitor({ searchParams }: { searchParams: Promise<{ case?: string; run?: string; cursor?: string }> }) {
   const params = await searchParams;
-  await requireSession(`/workspace/recorded-monitor?case=${typeof params.case === "string" ? params.case : ""}`);
+  const returnTo = `/workspace/recorded-monitor?case=${typeof params.case === "string" ? params.case : ""}`;
+  await requireSession(returnTo);
   const selected = typeof params.case === "string" ? params.case : "";
   const runId = typeof params.run === "string" ? params.run : "";
   const cursor = typeof params.cursor === "string" ? params.cursor : undefined;
@@ -35,18 +36,18 @@ export default async function RecordedMonitor({ searchParams }: { searchParams: 
   let runError: ApiRequestError | null = null;
   let outputs: Output[] | null = null;
   let outputError: ApiRequestError | null = null;
-  try { cases = await listCases(undefined, cursor); }
+  try { cases = await listCases(undefined, cursor, returnTo); }
   catch (error) { if (!(error instanceof ApiRequestError)) throw error; caseError = error; }
   if (validCase) {
-    try { runs = (await api<{ items: RunSummary[] }>(`/api/v1/cases/${selected}/workflows`)).items; }
+    try { runs = (await api<{ items: RunSummary[] }>(`/api/v1/cases/${selected}/workflows`, { returnTo })).items; }
     catch (error) { if (!(error instanceof ApiRequestError)) throw error; runsError = error; }
   }
   if (UUID.test(runId) && runs?.some((item) => item.run_id === runId)) {
-    try { run = await api<Run>(`/api/v1/workflows/${runId}`); }
+    try { run = await api<Run>(`/api/v1/workflows/${runId}`, { returnTo }); }
     catch (error) { if (!(error instanceof ApiRequestError)) throw error; runError = error; }
   }
   if (run && run.case_id === selected) {
-    try { outputs = (await api<{ items: Output[] }>(`/api/v1/cases/${selected}/agent-outputs`)).items.filter((item) => item.run_id === runId); }
+    try { outputs = (await api<{ items: Output[] }>(`/api/v1/cases/${selected}/agent-outputs`, { returnTo })).items.filter((item) => item.run_id === runId); }
     catch (error) { if (!(error instanceof ApiRequestError)) throw error; outputError = error; }
   }
   const link = (value: Record<string, string>) => `/workspace/recorded-monitor?${new URLSearchParams(value)}`;

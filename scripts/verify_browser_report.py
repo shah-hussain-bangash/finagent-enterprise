@@ -16,6 +16,10 @@ EXPECTED = {
     ),
     (
         "tests.browser.test_ui_journey",
+        "test_api_expired_workspace_read_restores_case_after_sign_in[expired_case_evidence_read]",
+    ),
+    (
+        "tests.browser.test_ui_journey",
         "test_analyst_and_reviewer_complete_a_case_in_the_browser[case_update_gateway_error]",
     ),
     ("tests.browser.test_case_checklist_keyboard", "test_case_checklist_can_be_collapsed_with_keyboard"),

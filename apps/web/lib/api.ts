@@ -115,10 +115,10 @@ export async function load<T>(path: string, returnTo?: string): Promise<{ data: 
   }
 }
 
-export function listCases(status?: CaseStatus, cursor?: string) {
+export function listCases(status?: CaseStatus, cursor?: string, returnTo?: string) {
   const q = new URLSearchParams();
   if (status) q.set("status", status);
   if (cursor) q.set("cursor", cursor);
   const qs = q.toString();
-  return api<{ items: CaseSummary[]; next_cursor: string | null }>(`/api/v1/cases${qs ? "?" + qs : ""}`);
+  return api<{ items: CaseSummary[]; next_cursor: string | null }>(`/api/v1/cases${qs ? "?" + qs : ""}`, { returnTo });
 }
