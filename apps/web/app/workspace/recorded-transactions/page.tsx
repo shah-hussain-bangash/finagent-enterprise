@@ -18,7 +18,15 @@ interface EvidenceItem {
   version_no: number; freshness: string; completeness: string; as_of: string | null;
   content: { items?: Transaction[] } | null;
 }
-interface Evidence { items: EvidenceItem[]; gaps: { source_type: string; detail: string }[] }
+interface EvidenceGap { source_type: string; detail: string }
+const isRecord = (value: unknown): value is Record<string, unknown> => value !== null && typeof value === "object" && !Array.isArray(value);
+const hasText = (value: unknown): value is string => typeof value === "string" && value.trim().length > 0;
+const isTransactionSource = (value: unknown): value is EvidenceItem => isRecord(value) && value.source_type === "TRANSACTIONS" &&
+  hasText(value.evidence_item_id) && hasText(value.source_ref) &&
+  hasText(value.source_system) && typeof value.version_no === "number" && Number.isFinite(value.version_no) &&
+  hasText(value.freshness) && hasText(value.completeness) &&
+  (value.as_of === null || typeof value.as_of === "string");
+const isEvidenceGap = (value: unknown): value is EvidenceGap => isRecord(value) && hasText(value.source_type) && hasText(value.detail);
 const displayValue = (value: unknown): string => {
   if (typeof value === "string" && value.trim()) return value;
   if (typeof value === "number" && Number.isFinite(value)) return `${value} (unverified format)`;
@@ -40,15 +48,23 @@ export default async function RecordedTransactionsPage({ searchParams }: {
   const invalidFilters = Boolean((params.direction && !direction) || (params.status && !status));
   let cases: Awaited<ReturnType<typeof listCases>> | null = null;
   let caseError: ApiRequestError | null = null;
-  let evidence: Evidence | null = null;
+  let evidence: unknown = null;
   let evidenceError: ApiRequestError | null = null;
   try { cases = await listCases(undefined, cursor, returnTo); }
   catch (error) { if (!(error instanceof ApiRequestError)) throw error; caseError = error; }
   if (valid) {
-    try { evidence = await api<Evidence>(`/api/v1/cases/${selected}/evidence`, { returnTo }); }
+    try { evidence = await api<unknown>(`/api/v1/cases/${selected}/evidence`, { returnTo }); }
     catch (error) { if (!(error instanceof ApiRequestError)) throw error; evidenceError = error; }
   }
-  const sources = (evidence?.items ?? []).filter((item) => item.source_type === "TRANSACTIONS");
+  const evidenceRecord = isRecord(evidence) ? evidence : null;
+  const sourceListAvailable = Array.isArray(evidenceRecord?.items);
+  const gapListAvailable = Array.isArray(evidenceRecord?.gaps);
+  const sourceItems: unknown[] = sourceListAvailable ? evidenceRecord!.items as unknown[] : [];
+  const gapItems: unknown[] = gapListAvailable ? evidenceRecord!.gaps as unknown[] : [];
+  const sources = sourceItems.filter(isTransactionSource);
+  const malformedSources = sourceItems.filter((item) => !isRecord(item) || !hasText(item.source_type) || (item.source_type === "TRANSACTIONS" && !isTransactionSource(item))).length;
+  const gaps = gapItems.filter(isEvidenceGap);
+  const malformedGaps = gapItems.length - gaps.length;
   const requestedSource = typeof params.page_source === "string" ? params.page_source : "";
   const requestedPageValue = typeof params.page === "string" ? params.page : "";
   const invalidPagination = Boolean(params.page_source || params.page) && (
@@ -74,7 +90,8 @@ export default async function RecordedTransactionsPage({ searchParams }: {
     {selected && !valid && <p role="alert">The selected case identifier is invalid.</p>}
     {valid && <section><h2>Transactions for case {selected.slice(0, 8)}</h2>
       {evidenceError && <ErrorState error={evidenceError} what="Transaction evidence" />}
-      {evidence && <>
+      {!evidenceError && !evidenceRecord && <p role="alert">The transaction evidence response is unavailable or malformed. Review the original case evidence before drawing conclusions.</p>}
+      {evidenceRecord && <>
         <form className="panel transaction-filters" method="get"><input type="hidden" name="case" value={selected} />
           {cursor && <input type="hidden" name="cursor" value={cursor} />}
           <label htmlFor="transaction-search">Search transaction ID, counterparty, date, direction or status</label>{" "}
@@ -86,8 +103,12 @@ export default async function RecordedTransactionsPage({ searchParams }: {
         {(query || direction || status) && <p role="status">Active filters: {query ? `search “${query}”` : "all search terms"} · {direction || "all directions"} · {status || "all statuses"}.</p>}
         {invalidFilters && <p role="alert">An unrecognized filter was ignored. Choose a direction and status from the lists.</p>}
         {invalidPagination && <p role="alert">The requested transaction page is invalid or its source is unavailable. Showing the first page for each source.</p>}
-        {evidence.gaps.filter((gap) => gap.source_type === "TRANSACTIONS").map((gap, index) => <p role="status" key={index}>Evidence gap: {gap.detail}</p>)}
-        {sources.length === 0 && <Empty>No current transaction evidence is available for this case. This does not establish that no transactions exist.</Empty>}
+        {!sourceListAvailable && <p role="alert">The evidence source list is unavailable or malformed. This does not establish that transaction evidence is absent.</p>}
+        {malformedSources > 0 && <p role="alert">{malformedSources} evidence source record(s) could not be read. Review the original case evidence.</p>}
+        {!gapListAvailable && <p role="alert">Evidence gap information is unavailable or malformed. Review the original case evidence.</p>}
+        {malformedGaps > 0 && <p role="alert">{malformedGaps} evidence gap record(s) could not be read. Review the original case evidence.</p>}
+        {gaps.filter((gap) => gap.source_type === "TRANSACTIONS").map((gap, index) => <p role="status" key={index}>Evidence gap: {gap.detail}</p>)}
+        {sourceListAvailable && malformedSources === 0 && sources.length === 0 && <Empty>No current transaction evidence is available for this case. This does not establish that no transactions exist.</Empty>}
         {sources.map((source) => {
           const rowsAvailable = Array.isArray(source.content?.items);
           const rawRows: unknown[] = rowsAvailable ? source.content!.items! : [];

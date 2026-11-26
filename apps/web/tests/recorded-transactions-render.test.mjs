@@ -43,6 +43,32 @@ test("explains absent evidence without claiming no transactions exist", async ()
   assert.ok(html.includes("does not establish that no transactions exist"));
 });
 
+test("reports an unavailable evidence response instead of rendering an empty result", async () => {
+  for (const response of [null, [], "invalid"]) {
+    const html = renderToStaticMarkup(await loadPage(response)({ searchParams: Promise.resolve({ case: caseId }) }));
+    assert.ok(html.includes("transaction evidence response is unavailable or malformed"));
+    assert.ok(!html.includes("No current transaction evidence is available"));
+  }
+});
+
+test("discloses missing source and gap lists without claiming evidence is absent", async () => {
+  const html = renderToStaticMarkup(await loadPage({ items: null, gaps: null })({ searchParams: Promise.resolve({ case: caseId }) }));
+  assert.ok(html.includes("evidence source list is unavailable or malformed"));
+  assert.ok(html.includes("Evidence gap information is unavailable or malformed"));
+  assert.ok(!html.includes("No current transaction evidence is available"));
+});
+
+test("retains readable sources and gaps while disclosing malformed records", async () => {
+  const sample = structuredClone(evidence);
+  sample.items.push(null, { source_type: "TRANSACTIONS", evidence_item_id: "broken" });
+  sample.gaps.push(null, { source_type: "TRANSACTIONS", detail: "Synthetic stale source" });
+  const html = renderToStaticMarkup(await loadPage(sample)({ searchParams: Promise.resolve({ case: caseId }) }));
+  assert.ok(html.includes("2 evidence source record(s) could not be read"));
+  assert.ok(html.includes("1 evidence gap record(s) could not be read"));
+  assert.ok(html.includes("Synthetic stale source") && html.includes("tx-one"));
+  assert.ok(!html.includes("No current transaction evidence is available"));
+});
+
 test("distinguishes missing or malformed transaction rows from a valid empty list", async () => {
   for (const content of [null, {}, { items: "invalid" }]) {
     const sample = structuredClone(evidence);
