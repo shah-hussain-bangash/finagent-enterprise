@@ -2,9 +2,21 @@
 
 **Human-reviewed AML investigations · Evidence provenance · Governed AI · Enterprise architecture**
 
-![Current FinAgent development portal dashboard with investigation navigation and capability planning](docs/07-case-study/images/portal-dashboard-synthetic.jpg)
+### FinAgent interface
 
-*Local development screenshot, 26 November 2026, using a synthetic analyst account. Some dashboard content reflects local work not yet included in this branch; capability and improvement cards describe planned work rather than completed functionality.*
+**Portal overview** — the synthetic analyst dashboard and current development priorities.
+
+![FinAgent portal overview showing investigation navigation and development priorities](docs/07-case-study/images/portal-overview-2026-11-26.png)
+
+**Capability map** — a structured view of the planned end-to-end product scope.
+
+![FinAgent capability map showing financial investigation capability areas and remaining work](docs/07-case-study/images/capability-map-2026-11-26.png)
+
+**Analyst workspace preview** — illustrative investigation and oversight interfaces.
+
+![FinAgent analyst workspace preview with investigation and oversight navigation](docs/07-case-study/images/analyst-workspace-2026-11-26.png)
+
+*Local development screenshots captured on 26 November 2026 using synthetic data. Some screens reflect local work not yet included in this branch. Capability and improvement cards describe planned work; workspace previews do not perform production actions.*
 
 ![FinAgent illustration: an investigation network, evidence documents and a security shield](apps/web/public/investigation-hero.png)
 
