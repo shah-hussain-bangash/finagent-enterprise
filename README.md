@@ -24,19 +24,19 @@ FinAgent is an enterprise AI engineering portfolio project exploring how analyst
 
 ## FinAgent portal screenshots
 
-Captured from the running local FinAgent app using a disposable synthetic dataset.
+Local design screenshots captured on 26 November 2026 with synthetic data. They show development work from the update branch, including planned capabilities and preview controls.
 
 ### Enterprise portal
 
-![FinAgent Enterprise operational overview after analyst sign-in](docs/07-case-study/assets/finagent-enterprise-portal.webp)
+![Updated FinAgent Enterprise portal with investigation navigation and development priorities](docs/07-case-study/images/portal-overview-2026-11-26.png)
 
-The signed-in overview shows the analyst’s accessible workload and links to their cases.
+The updated portal shows the investigation entry points and current development priorities.
 
-### Investigation workspace
+### Analyst workspace
 
-![FinAgent case investigation workspace showing current evidence, gaps and recorded risk indicators](docs/07-case-study/assets/finagent-investigation-workspace.webp)
+![Updated FinAgent analyst workspace with investigation and oversight navigation](docs/07-case-study/images/analyst-workspace-2026-11-26.png)
 
-The case view brings together the synthetic case status, evidence gaps and recorded risk indicators.
+The workspace preview shows sample investigation and oversight tools.
 
 ## Business problem
 
