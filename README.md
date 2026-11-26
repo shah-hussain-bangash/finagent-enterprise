@@ -22,6 +22,20 @@ FinAgent is an enterprise AI engineering portfolio project exploring how analyst
 
 **Start here:** [Synthetic investigation walkthrough](docs/workspace-demo-walkthrough.md) · [Architecture-to-code map](docs/02-system-architecture/06-ARCHITECTURE-TO-CODE-MAP.md) · [Current status and release evidence](docs/05-testing-evidence/13-CURRENT-STATUS-AND-RELEASE-EVIDENCE.md) · [Verified main-branch CI · `6c0bb87` · 21 November 2026](https://github.com/shah-hussain-bangash/finagent-enterprise/actions/runs/44917079385) · [Earlier CI baseline](https://github.com/shah-hussain-bangash/finagent-enterprise/actions/runs/44532646751)
 
+## Visual walkthroughs
+
+![FinAgent investigation workflow from assigned case to independent review](docs/07-case-study/assets/finagent-interview-flow.webp)
+
+*How the analyst gathers evidence, drafts findings, and submits a report for review.*
+
+![FinAgent workspace illustration with evidence, report draft, and reviewer decision](docs/07-case-study/assets/finagent-workspace-walkthrough.webp)
+
+*An illustrated workspace showing a missing invoice, the draft report, and the reviewer’s decision.*
+
+![Four illustrated FinAgent scenes from a transaction alert to human review](docs/07-case-study/assets/finagent-alert-to-human-review.webp)
+
+*A four-panel storyboard of a synthetic AML case.*
+
 ## Business problem
 
 An investigation can require analysts to reconcile an alert with customer information, transactions, document versions, policy and prior decisions. Missing information, stale records, inconsistent sources, and unclear AI claims can make review slower and harder to explain. A useful system must help the analyst find and assess evidence while preserving access boundaries, source context and human accountability.
