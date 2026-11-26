@@ -2,6 +2,10 @@
 
 **Human-reviewed AML investigations · Evidence provenance · Governed AI · Enterprise architecture**
 
+![FinAgent illustration: an investigation network, evidence documents and a security shield](apps/web/public/investigation-hero.png)
+
+*Investigation portal artwork. The illustration is not a screenshot or a depiction of live banking data.*
+
 **Featured case study:** [Architecting evidence-linked AI investigations with independent human review](docs/07-case-study/08-CASE-STUDY.md) — architecture decisions, governed AI, security, recovery, current engineering evidence and the cloud delivery roadmap.
 
 FinAgent is an enterprise AI engineering portfolio project exploring how analysts can investigate financial-crime alerts with evidence-linked workflows, controlled AI assistance, and independent human review.
@@ -36,6 +40,12 @@ FinAgent addresses this problem through a synthetic investigation workflow: a ca
 | Enterprise integration | Mock sources and provider adapters; reference deployment templates | Live banking, cloud, identity and model-provider integrations are not verified |
 
 Some workspace screens contain illustrative or unavailable features. Labels in the application and the [workspace preview documentation](docs/workspace-interface-preview.md) identify the intended scope.
+
+### Workspace preview
+
+![FinAgent workspace preview showing a synthetic risk-detection example and investigation navigation](docs/07-case-study/images/workspace-preview-synthetic.png)
+
+*Synthetic workspace preview captured on 26 November 2026. The risk-detection example is illustrative: its assessment is not saved, submitted or linked to a case. Connected case views are identified separately in the application.*
 
 ## Architecture overview
 
