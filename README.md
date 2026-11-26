@@ -22,19 +22,21 @@ FinAgent is an enterprise AI engineering portfolio project exploring how analyst
 
 **Start here:** [Synthetic investigation walkthrough](docs/workspace-demo-walkthrough.md) · [Architecture-to-code map](docs/02-system-architecture/06-ARCHITECTURE-TO-CODE-MAP.md) · [Current status and release evidence](docs/05-testing-evidence/13-CURRENT-STATUS-AND-RELEASE-EVIDENCE.md) · [Verified main-branch CI · `6c0bb87` · 21 November 2026](https://github.com/shah-hussain-bangash/finagent-enterprise/actions/runs/44917079385) · [Earlier CI baseline](https://github.com/shah-hussain-bangash/finagent-enterprise/actions/runs/44532646751)
 
-## Visual walkthroughs
+## FinAgent portal screenshots
 
-![FinAgent investigation workflow from assigned case to independent review](docs/07-case-study/assets/finagent-interview-flow.webp)
+Captured from the running local FinAgent app using a disposable synthetic dataset.
 
-*How the analyst gathers evidence, drafts findings, and submits a report for review.*
+### Enterprise portal
 
-![FinAgent workspace illustration with evidence, report draft, and reviewer decision](docs/07-case-study/assets/finagent-workspace-walkthrough.webp)
+![FinAgent Enterprise operational overview after analyst sign-in](docs/07-case-study/assets/finagent-enterprise-portal.webp)
 
-*An illustrated workspace showing a missing invoice, the draft report, and the reviewer’s decision.*
+The signed-in overview shows the analyst’s accessible workload and links to their cases.
 
-![Four illustrated FinAgent scenes from a transaction alert to human review](docs/07-case-study/assets/finagent-alert-to-human-review.webp)
+### Investigation workspace
 
-*A four-panel storyboard of a synthetic AML case.*
+![FinAgent case investigation workspace showing current evidence, gaps and recorded risk indicators](docs/07-case-study/assets/finagent-investigation-workspace.webp)
+
+The case view brings together the synthetic case status, evidence gaps and recorded risk indicators.
 
 ## Business problem
 
