@@ -132,7 +132,7 @@ export default async function RootLayout({
 
   return (
     <html lang="en">
-      <body>
+      <body className={session ? "portal-authenticated" : undefined}>
         <a
           href="#main"
           className="skip-link"

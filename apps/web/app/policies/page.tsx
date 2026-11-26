@@ -28,8 +28,11 @@ export default async function PolicySearch({ searchParams }: { searchParams: Pro
     }
   }
   return (
-    <section aria-labelledby="h">
-      <h1 id="h">Policy search</h1>
+    <section className="portal-section" aria-labelledby="h">
+      <div className="portal-page-heading">
+        <p className="portal-eyebrow">KNOWLEDGE / GUIDANCE</p>
+        <h1 id="h">Policy search</h1>
+      </div>
       <p className="muted">Only approved policy versions you are permitted to see, effective on the chosen date, are searched.
         No answer is invented: without an applicable source the search abstains. <Link href="/policies/admin">Policy administration</Link></p>
       <form method="get" className="stack panel">

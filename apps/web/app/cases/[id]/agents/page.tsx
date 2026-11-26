@@ -1,3 +1,4 @@
+import { CasePageHeading } from "@/components/CasePageHeading";
 import Link from "next/link";
 import { FindingTag, type FindingKind } from "@/components/StatusBadge";
 import { Empty, ErrorState, Json, Tabs, When } from "@/components/ui";
@@ -23,8 +24,8 @@ export default async function Agents({ params }: { params: Promise<{ id: string 
     return { output, latest };
   });
   return (
-    <section aria-labelledby="h">
-      <h1 id="h">Agent findings</h1>
+    <section className="case-journey" aria-labelledby="h">
+      <CasePageHeading caseId={id} title="Agent findings" description="Review recorded findings and their supporting context." />
       <Tabs caseId={id} active="/agents" />
       <p><Link href={`/workspace/recorded-risk?${new URLSearchParams({ case: id })}`}>Review recorded risk indicators →</Link></p>
       <p><Link href={`/workspace/evidence-briefing?${new URLSearchParams({ case: id })}`}>Review current case evidence →</Link></p>

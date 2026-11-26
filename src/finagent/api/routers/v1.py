@@ -57,12 +57,16 @@ def get_cases(
     factory: Factory,
     settings: AppSettings,
     status: str | None = None,
+    priority: str | None = None,
     cursor: str | None = None,
     limit: Annotated[int | None, Query(ge=1)] = None,
 ) -> dict[str, Any]:
     page = min(limit or settings.page_size_default, settings.page_size_max)
     with transaction(factory) as session:
-        return case_queries.list_cases(session, ctx, limit=page, status=status, cursor=cursor)
+        result = case_queries.list_cases(session, ctx, limit=page, status=status, priority=priority, cursor=cursor)
+    if priority is not None:
+        result["applied_filters"] = {"priority": priority}
+    return result
 
 
 @api.get("/cases/{case_id}", tags=["cases"])

@@ -687,7 +687,6 @@ export default function Workspace() {
                   <button className="ws-primary" onClick={() => open("Risk detection")}>Explore risk detection <Icon name="arrow" /></button>
                   <p><a href="/workspace/case-overview">Open connected case overview →</a></p>
                 </div>
-                <div className="ws-hero-visual"><div><span>Human oversight</span><strong>Review remains essential</strong><small>Investigate → Explain → Review</small></div></div>
               </div>
               <Card title={`${role} preview focus`} subtitle="Illustrative shortcuts · role selection does not change access">
                 <div className="ws-prompt-list">

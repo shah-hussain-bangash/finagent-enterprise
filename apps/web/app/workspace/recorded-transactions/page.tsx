@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { ConnectedCaseNav } from "@/components/ConnectedCaseNav";
 import { Empty, ErrorState, When } from "@/components/ui";
 import { api, ApiRequestError, listCases } from "@/lib/api";
 import { requireSession } from "@/lib/session";
@@ -76,6 +77,7 @@ export default async function RecordedTransactionsPage({ searchParams }: {
     <p><Link href="/workspace" prefetch={false}>← Back to workspace preview</Link></p>
     {valid && <p><Link href={`/workspace/case-overview?${new URLSearchParams({ case: selected })}`} prefetch={false}>← Back to case overview</Link></p>}
     <h1 id="recorded-transactions-title">Recorded case transactions</h1>
+    {valid && evidence != null && <ConnectedCaseNav caseId={selected} active="transactions" />}
     <div className="panel"><strong>Connected, read-only view</strong>
       <p>Shows current transaction evidence for an accessible case. Records may be incomplete or stale; this is not a live ledger or a risk determination.</p></div>
     <section className="panel"><h2>Choose an accessible case</h2>

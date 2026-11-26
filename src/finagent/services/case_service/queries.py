@@ -212,6 +212,7 @@ def list_cases(
     *,
     limit: int,
     status: str | None = None,
+    priority: str | None = None,
     cursor: str | None = None,
 ) -> dict[str, Any]:
     require(ctx, Permission.CASE_READ)
@@ -220,6 +221,10 @@ def list_cases(
         if status not in CaseStatus.__members__:
             raise AppError(ErrorCode.SCHEMA_VALIDATION_FAILED, "Unknown status filter.", {"field": "status"})
         stmt = stmt.where(Case.status == status)
+    if priority is not None:
+        if priority not in {"LOW", "NORMAL", "HIGH", "URGENT"}:
+            raise AppError(ErrorCode.SCHEMA_VALIDATION_FAILED, "Unknown priority filter.", {"field": "priority"})
+        stmt = stmt.where(Case.priority == priority)
     if cursor:
         ts, cid = _decode_cursor(cursor)
         stmt = stmt.where(tuple_(Case.created_at, Case.id) < tuple_(literal(ts), literal(cid)))

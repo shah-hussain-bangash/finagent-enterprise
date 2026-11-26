@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { ConnectedCaseNav } from "@/components/ConnectedCaseNav";
 import { Empty, ErrorState, When } from "@/components/ui";
 import { api, ApiRequestError, listCases } from "@/lib/api";
 import { requireSession } from "@/lib/session";
@@ -34,6 +35,7 @@ export default async function EvidenceBriefing({ searchParams }: { searchParams:
     <p><Link href="/workspace" prefetch={false}>← Back to workspace preview</Link></p>
     {validCase && <p><Link href={`/workspace/case-overview?${new URLSearchParams({ case: selected })}`} prefetch={false}>← Back to case overview</Link></p>}
     <h1 id="briefing-title">Case evidence briefing</h1>
+    {evidence && <ConnectedCaseNav caseId={selected} active="evidence" />}
     <div className="panel"><strong>Connected, read-only evidence overview</strong><p>This structured briefing lists recorded case sources and gaps. It does not use an AI model, answer free-text questions, or make decisions. Current evidence may differ from older snapshots.</p></div>
     <section className="panel"><h2>Choose an accessible case</h2>
       {caseError && <ErrorState error={caseError} what="Cases" />}

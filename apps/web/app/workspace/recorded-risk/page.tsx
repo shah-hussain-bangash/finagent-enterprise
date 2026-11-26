@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { ConnectedCaseNav } from "@/components/ConnectedCaseNav";
 
 import { Empty, ErrorState, When } from "@/components/ui";
 import { api, ApiRequestError, listCases } from "@/lib/api";
@@ -54,6 +55,7 @@ export default async function RecordedRiskPage({
       <p><Link href="/workspace" prefetch={false}>← Back to workspace preview</Link></p>
       {validCase && <p><Link href={`/workspace/case-overview?${new URLSearchParams({ case: selected })}`} prefetch={false}>← Back to case overview</Link></p>}
       <h1 id="recorded-risk-title">Recorded case risk indicators</h1>
+      {outputs && <ConnectedCaseNav caseId={selected} active="risk" />}
       <div className="panel">
         <strong>Connected, read-only view</strong>
         <p>This page reads selected recorded AML indicator claims and calculations from the existing API under your account’s case permissions. It does not run detection, change a case, or submit a decision. The workspace also contains illustrative sample screens.</p>

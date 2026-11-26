@@ -15,8 +15,11 @@ export default async function Admin({ searchParams }: { searchParams: Promise<Re
   const uncertainAction = typeof sp.error === "string" && sp.error.startsWith("CONNECTION_ERROR:");
   const dels = await load<{ items: Delegation[] }>("/api/v1/admin/delegations");
   return (
-    <section aria-labelledby="h">
-      <h1 id="h">Tenant administration</h1>
+    <section className="portal-section" aria-labelledby="h">
+      <div className="portal-page-heading">
+        <p className="portal-eyebrow">GOVERNANCE / ADMINISTRATION</p>
+        <h1 id="h">Tenant administration</h1>
+      </div>
       <p className="muted">Tenant administrators only (MFA). Administration grants no access to case content.</p>
       <Flash ok={sp.ok} error={sp.error} />
       {uncertainAction && <p className="warn" role="status">Check the recorded administration state before another action. <a href="/admin">Reload administration</a></p>}

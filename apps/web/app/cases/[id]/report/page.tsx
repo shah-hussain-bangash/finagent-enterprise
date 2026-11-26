@@ -1,3 +1,4 @@
+import { CasePageHeading } from "@/components/CasePageHeading";
 import { randomUUID } from "node:crypto";
 import Link from "next/link";
 import { createExport } from "@/app/actions";
@@ -41,8 +42,8 @@ export default async function ReportPage({ params, searchParams }: {
   const isCurrent = report && shown === report.current_version_no;
   return (
     <ReportActionGuard>
-    <section aria-labelledby="h">
-      <h1 id="h">Investigation report</h1>
+    <section className="case-journey" aria-labelledby="h">
+      <CasePageHeading caseId={id} title="Investigation report" description="Review the report, supporting evidence and recorded revisions." />
       <Tabs caseId={id} active="/report" />
       <p><Link href={`/workspace/recorded-review?${new URLSearchParams({ case: id })}`}>Compare recorded report versions →</Link></p>
       <Flash ok={sp.ok} error={sp.error} />

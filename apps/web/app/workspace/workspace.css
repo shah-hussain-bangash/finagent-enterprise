@@ -76,7 +76,7 @@ body:has(.fa-workspace) > main {
   position: fixed;
   inset: 0 auto 0 0;
   width: 238px;
-  background: #0b4f8a;
+  background: linear-gradient(180deg, #092f50 0%, #0b466f 100%);
   color: #d2deeb;
   padding: 27px 16px 20px;
   display: flex;
@@ -1468,6 +1468,21 @@ button.ws-metric:hover {
   background: #e6f3fc url('/finagent-evidence-assistant.png') center / cover no-repeat;
 }
 .fa-workspace .ws-assistant-welcome .ws-assistant-icon { display: none; }
+/* Approved navy, teal and gold investigation concept. */
+.fa-workspace { --ws-navy: #071a36; --ws-blue: #086c77; --ws-text: #10233b; --ws-border: #d5e0ea; background: #eaf0f7; }
+.ws-sidebar { background: #071a36; }
+.fa-workspace .ws-hero { display: block; min-height: 260px; background: #03192d url('/investigation-hero.png') center / cover no-repeat; border: 0; border-radius: 13px; }
+.fa-workspace .ws-hero > div:first-child { max-width: 50%; }
+.fa-workspace .ws-hero h2 { color: #fff; }
+.fa-workspace .ws-hero p { color: #dcebf6; }
+.fa-workspace .ws-hero a { color: #b2eff1; font-weight: 600; }
+.fa-workspace .ws-hero .ws-primary { background: #087c83; border-color: #087c83; }
+.fa-workspace .ws-hero .ws-primary:hover { background: #09676f; }
+.fa-workspace .ws-card { border-color: #d5e0ea; border-radius: 11px; box-shadow: 0 5px 18px rgba(18, 54, 82, .06); }
+@media (max-width: 760px) {
+  .fa-workspace .ws-hero { background-position: 62% center; }
+  .fa-workspace .ws-hero > div:first-child { max-width: none; padding: 12px; border-radius: 8px; background: rgba(3, 25, 45, .85); }
+}
 @media (max-width: 760px) {
   .fa-workspace .ws-assistant-welcome::before { width: 120px; height: 120px; }
 }

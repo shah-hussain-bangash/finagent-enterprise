@@ -21,8 +21,11 @@ export default async function Operations({ searchParams }: { searchParams: Promi
     load<DashboardData>(`/api/v1/reporting/dashboard?days=${days}`),
   ]);
   return (
-    <section aria-labelledby="h">
-      <h1 id="h">Operations</h1>
+    <section className="portal-section" aria-labelledby="h">
+      <div className="portal-page-heading">
+        <p className="portal-eyebrow">OVERSIGHT / OPERATIONS</p>
+        <h1 id="h">Operations</h1>
+      </div>
       {dashboard.error ? <ErrorState error={dashboard.error} what="Operational dashboard" /> : null}
       {dashboard.data ? <OperationsDashboard data={dashboard.data} /> : null}
       <section aria-labelledby="uncertain-heading">

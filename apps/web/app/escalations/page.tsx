@@ -12,8 +12,11 @@ export default async function Escalations() {
   await requireSession();
   const { data, error } = await load<{ items: Esc[] }>("/api/v1/escalations");
   return (
-    <section aria-labelledby="h">
-      <h1 id="h">Escalation queue</h1>
+    <section className="portal-section" aria-labelledby="h">
+      <div className="portal-page-heading">
+        <p className="portal-eyebrow">INVESTIGATION / ESCALATIONS</p>
+        <h1 id="h">Escalation queue</h1>
+      </div>
       <p className="muted">Due times are PROPOSED defaults (DEC-16); notification delivery state is shown, including failures.</p>
       {error ? <ErrorState error={error} what="Escalations" /> : null}
       {data && data.items.length === 0 ? <Empty>No open escalations were returned for your account.</Empty> : null}

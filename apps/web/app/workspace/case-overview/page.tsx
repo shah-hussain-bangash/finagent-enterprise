@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { ConnectedCaseNav } from "@/components/ConnectedCaseNav";
 import { Empty, ErrorState, When } from "@/components/ui";
 import { ApiRequestError, listCases, load } from "@/lib/api";
 import { recordedIndicators, type RecordedOutput } from "@/lib/connected-risk";
@@ -32,6 +33,7 @@ export default async function CaseOverview({ searchParams }: { searchParams: Pro
   return <section className="connected-workspace investigation-overview" aria-labelledby="case-overview-title">
     <p><Link href="/workspace" prefetch={false}>← Back to workspace preview</Link></p>
     <h1 id="case-overview-title">Case investigation overview</h1>
+    {detail?.data && <ConnectedCaseNav caseId={selected} active="overview" />}
     <div className="panel investigation-notice"><strong>Connected, read-only view</strong><p>Case details, current evidence and previously recorded indicators may refer to different points in time. Review the original records before making a decision.</p></div>
     <section className="panel"><h2>Choose an accessible case</h2>
       {caseError && <ErrorState error={caseError} what="Cases" />}
@@ -64,13 +66,19 @@ export default async function CaseOverview({ searchParams }: { searchParams: Pro
         {outputs?.data && <>{indicators.length === 0 ? <Empty>No recognized recorded indicators were returned. This does not establish that the case has no risk or that detection ran.</Empty> : <ul>{indicators.map(({ output, finding }, index) => <li key={`${output.output_id}-${finding.claim_id}-${index}`}>{finding.claim} · {finding.support_status} · snapshot {output.snapshot_id}</li>)}</ul>}
           <p><Link prefetch={false} href={link("/workspace/recorded-risk")}>Review recorded indicators and calculations →</Link></p></>}
       </section>
-      <section className="panel"><h2>Continue the investigation</h2><ul className="investigation-links">
-        <li><Link prefetch={false} href={link("/workspace/recorded-transactions")}>Review recorded transactions →</Link></li>
-        <li><Link prefetch={false} href={link("/workspace/recorded-provenance")}>Review document provenance →</Link></li>
-        <li><Link prefetch={false} href={link("/workspace/recorded-review")}>Compare recorded report changes →</Link></li>
-        <li><Link prefetch={false} href={link("/workspace/recorded-monitor")}>Inspect recorded investigation runs →</Link></li>
-        <li><Link prefetch={false} href={`/cases/${selected}`}>Open the existing case workflow →</Link></li>
-      </ul></section>
+      <section className="panel"><h2>Continue the investigation</h2>
+        <p>Follow the case through its evidence, documents and report. Connected summaries are read-only; case actions remain in the existing workflow and depend on your permissions.</p>
+        <ol className="investigation-journey">
+          <li><Link prefetch={false} href={link("/workspace/evidence-briefing")}><strong>Inspect evidence</strong><span>Review sources, gaps and conflicts.</span></Link></li>
+          <li><Link prefetch={false} href={link("/workspace/recorded-transactions")}><strong>Review transactions</strong><span>Filter recorded transaction evidence.</span></Link></li>
+          <li><Link prefetch={false} href={link("/workspace/recorded-provenance")}><strong>Review document provenance</strong><span>Inspect versions and extracted fields.</span></Link></li>
+          <li><Link prefetch={false} href={`/cases/${selected}/documents`}><strong>Open case documents</strong><span>Review documents and available case actions.</span></Link></li>
+          <li><Link prefetch={false} href={`/cases/${selected}/report`}><strong>Open the investigation report</strong><span>Review the current report and available actions.</span></Link></li>
+          <li><Link prefetch={false} href={link("/workspace/recorded-review")}><strong>Compare report history</strong><span>Inspect recorded report changes.</span></Link></li>
+          <li><Link prefetch={false} href={link("/workspace/recorded-monitor")}><strong>Inspect investigation runs</strong><span>Review recorded workflow activity.</span></Link></li>
+          <li><Link prefetch={false} href={`/cases/${selected}`}><strong>Open the case workflow</strong><span>Return to case actions and the activity timeline.</span></Link></li>
+        </ol>
+      </section>
     </>}
   </section>;
 }

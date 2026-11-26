@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { ConnectedCaseNav } from "@/components/ConnectedCaseNav";
 import { Empty, ErrorState, When } from "@/components/ui";
 import { api, ApiRequestError, listCases } from "@/lib/api";
 import { requireSession } from "@/lib/session";
@@ -42,6 +43,7 @@ export default async function RecordedReview({ searchParams }: { searchParams: P
     <p><Link href="/workspace" prefetch={false}>← Back to workspace preview</Link></p>
     {validCase && <p><Link href={`/workspace/case-overview?${new URLSearchParams({ case: selected })}`} prefetch={false}>← Back to case overview</Link></p>}
     <h1 id="recorded-review-title">Recorded report changes</h1>
+    {reports && <ConnectedCaseNav caseId={selected} active="report" />}
     <div className="panel"><strong>Connected, read-only view</strong><p>Review recorded report versions and changes from each previous version. This view does not submit a decision or verify approval readiness.</p></div>
     <section className="panel"><h2>Choose an accessible case</h2>
       {caseError && <ErrorState error={caseError} what="Cases" />}

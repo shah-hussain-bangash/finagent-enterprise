@@ -57,10 +57,13 @@ export default async function CaseOverview({ params, searchParams }: {
   const runs = await load<{ items: RunView[] }>(`/api/v1/cases/${id}/workflows`, `/cases/${id}`);
   const active = runs.data?.items.find((r) => !["SUCCEEDED", "FAILED", "CANCELLED"].includes(r.status));
   return (
-    <section aria-labelledby="h">
-      <p><Link href="/cases">← Back to case queue</Link></p>
-      <h1 id="h">Case {c.case_id.slice(0, 8)} <StatusBadge status={c.status} /></h1>
-      <p><Link href={`/workspace/case-overview?${new URLSearchParams({ case: c.case_id })}`}>Open connected investigation overview →</Link></p>
+    <section className="case-journey" aria-labelledby="h">
+      <header className="case-page-heading">
+        <p className="portal-eyebrow">INVESTIGATION / CASE OVERVIEW</p>
+        <h1 id="h">Case {c.case_id.slice(0, 8)} <StatusBadge status={c.status} /></h1>
+        <p>Review the case details, investigation runs and recorded activity.</p>
+        <div className="case-heading-links"><Link href="/cases">← Back to case queue</Link><Link href={`/workspace/case-overview?${new URLSearchParams({ case: c.case_id })}`}>Open connected investigation overview →</Link></div>
+      </header>
       <Tabs caseId={id} active="" />
       <Flash ok={sp.ok} error={sp.error} />
       {uncertainAction && <p className="warn" role="status">Check the recorded case before another action. <a href={`/cases/${id}`}>Reload case</a></p>}

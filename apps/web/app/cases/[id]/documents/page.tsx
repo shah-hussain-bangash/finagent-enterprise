@@ -1,3 +1,4 @@
+import { CasePageHeading } from "@/components/CasePageHeading";
 import { randomUUID } from "node:crypto";
 import Link from "next/link";
 import { UploadDocumentForm } from "@/components/UploadDocumentForm";
@@ -20,8 +21,8 @@ export default async function Documents({ params, searchParams }: {
   const uncertainAction = typeof sp.error === "string" && sp.error.startsWith("CONNECTION_ERROR:");
   const { data, error } = await load<{ items: Doc[] }>(`/api/v1/cases/${id}/documents`, `/cases/${id}/documents`);
   return (
-    <section aria-labelledby="h">
-      <h1 id="h">Documents</h1>
+    <section className="case-journey" aria-labelledby="h">
+      <CasePageHeading caseId={id} title="Documents" description="Review documents and their processing status for this case." />
       <Tabs caseId={id} active="/documents" />
       <p><Link href={`/workspace/recorded-provenance?${new URLSearchParams({ case: id })}`}>View recorded document provenance →</Link></p>
       <Flash ok={sp.ok} error={sp.error} />

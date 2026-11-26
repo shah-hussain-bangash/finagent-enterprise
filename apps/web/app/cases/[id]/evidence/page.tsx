@@ -1,3 +1,4 @@
+import { CasePageHeading } from "@/components/CasePageHeading";
 import { FreezeSnapshotForm } from "@/components/FreezeSnapshotForm";
 import { ResolveConflictForm } from "@/components/ResolveConflictForm";
 import { Empty, ErrorState, Flash, Json, Tabs, When } from "@/components/ui";
@@ -38,8 +39,8 @@ export default async function EvidencePage({ params, searchParams }: {
   const { data, error } = await load<Evidence>(`/api/v1/cases/${id}/evidence`, `/cases/${id}/evidence`);
   const snaps = await load<{ items: Snapshot[] }>(`/api/v1/cases/${id}/snapshots`, `/cases/${id}/evidence`);
   return (
-    <section aria-labelledby="h">
-      <h1 id="h">Evidence</h1>
+    <section className="case-journey" aria-labelledby="h">
+      <CasePageHeading caseId={id} title="Evidence" description="Inspect the sources and snapshots recorded for this investigation." />
       <Tabs caseId={id} active="/evidence" />
       <Flash ok={sp.ok} error={sp.error} />
       {uncertainAction && <p className="warn" role="status">Check the recorded evidence before another action. <a href={`/cases/${id}/evidence`}>Reload evidence</a></p>}

@@ -17,8 +17,11 @@ export default async function Evaluations({ searchParams }: { searchParams: Prom
   const uncertainAction = typeof sp.error === "string" && sp.error.startsWith("CONNECTION_ERROR:");
   const { data, error } = await load<{ items: Run[]; datasets: string[] }>("/api/v1/evaluations");
   return (
-    <section aria-labelledby="h">
-      <h1 id="h">Evaluation dashboard</h1>
+    <section className="portal-section" aria-labelledby="h">
+      <div className="portal-page-heading">
+        <p className="portal-eyebrow">OVERSIGHT / EVALUATIONS</p>
+        <h1 id="h">Evaluation dashboard</h1>
+      </div>
       <p className="muted">SYNTHETIC evaluation sets. Thresholds are PROPOSED and unapproved (AI-D04): a "pass" here is not an
         acceptance decision.</p>
       <p><Link href="/workspace/evaluation-comparison">Compare recorded evaluation runs →</Link></p>
