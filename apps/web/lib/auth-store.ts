@@ -5,7 +5,7 @@ import { createClient } from "@redis/client";
 import { externalSettings } from "./auth-config";
 
 export interface StoredSession { token: string; subject: string; exp: number }
-export interface LoginFlow { state: string; nonce: string; verifier: string; exp: number }
+export interface LoginFlow { state: string; nonce: string; verifier: string; exp: number; returnTo?: string }
 export interface AuthStore {
   put(kind: "flow" | "session", id: string, value: LoginFlow | StoredSession, ttl: number): Promise<void>;
   read(kind: "flow" | "session", id: string, consume?: boolean): Promise<unknown>;

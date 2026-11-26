@@ -12,12 +12,12 @@ try {
   await writeFile(join(output, "package.json"), '{"type":"module"}');
   // Junctions work without Windows developer mode; dependencies remain in the project.
   await symlink(join(root, "node_modules"), join(output, "node_modules"), process.platform === "win32" ? "junction" : "dir");
-  for (const name of ["auth-config", "auth-diagnostics", "auth-store", "entra", "google", "password-auth"]) {
+  for (const name of ["auth-config", "auth-diagnostics", "auth-store", "case-return", "entra", "google", "password-auth"]) {
     const source = await readFile(join(root, "lib", `${name}.ts`), "utf8");
     const result = ts.transpileModule(source, {
       compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.ES2022 },
     });
-    const code = result.outputText.replace('import "server-only";', '').replace(/from "\.\/(auth-config|auth-diagnostics|auth-store|password-auth)"/g, 'from "./$1.js"');
+    const code = result.outputText.replace('import "server-only";', '').replace(/from "\.\/(auth-config|auth-diagnostics|auth-store|password-auth|case-return)"/g, 'from "./$1.js"');
     await writeFile(join(output, `${name}.js`), code);
   }
   for (const provider of ["entra", "google"]) {
@@ -29,7 +29,7 @@ try {
     const code = result.outputText
       .replace('import "server-only";', '')
       .replace('from "next/server"', 'from "next/server.js"')
-      .replace(/from "@\/lib\/(auth-config|auth-store|entra|google|password-auth)"/g, 'from "./$1.js"');
+      .replace(/from "@\/lib\/(auth-config|auth-store|entra|google|password-auth|case-return)"/g, 'from "./$1.js"');
     await writeFile(join(output, `${provider === "google" ? "google-" : ""}${name}-route.js`), code);
   }
   }
@@ -40,7 +40,7 @@ try {
     });
     const code = result.outputText.replace('import "server-only";', '')
       .replace('from "next/server"', 'from "next/server.js"')
-      .replace(/from "@\/lib\/(auth-config|auth-store|password-auth)"/g, 'from "./$1.js"');
+      .replace(/from "@\/lib\/(auth-config|auth-store|password-auth|case-return)"/g, 'from "./$1.js"');
     await writeFile(join(output, "password-route.js"), code);
   }
   if (process.argv.includes("--redis")) {

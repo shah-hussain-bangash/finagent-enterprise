@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { ConnectedCaseNav } from "@/components/ConnectedCaseNav";
 import { Empty, ErrorState, When } from "@/components/ui";
 import { api, ApiRequestError, listCases } from "@/lib/api";
 import { requireSession } from "@/lib/session";
@@ -11,8 +12,11 @@ interface ReportList { report: { status: string; current_version_no: number } | 
 interface Version { version_no: number; snapshot_id: string; watermark: string | null; validation: { valid: boolean; problems?: { code: string; section?: string }[] }; diff_from_previous?: { section_id: string; change: string; diff: string[] }[] }
 
 export default async function RecordedReview({ searchParams }: { searchParams: Promise<{ case?: string; version?: string; cursor?: string }> }) {
-  await requireSession();
   const params = await searchParams;
+  const value = typeof params.version === "string" ? params.version : "";
+  const returnSelection = /^[1-9]\d{0,8}$/.test(value) ? `&version=${value}` : "";
+  const returnTo = `/workspace/recorded-review?case=${typeof params.case === "string" ? params.case : ""}${returnSelection}`;
+  await requireSession(returnTo);
   const selected = typeof params.case === "string" ? params.case : "";
   const cursor = typeof params.cursor === "string" ? params.cursor : undefined;
   const validCase = UUID.test(selected);
@@ -22,16 +26,16 @@ export default async function RecordedReview({ searchParams }: { searchParams: P
   let reportsError: ApiRequestError | null = null;
   let version: Version | null = null;
   let versionError: ApiRequestError | null = null;
-  try { cases = await listCases(undefined, cursor); }
+  try { cases = await listCases(undefined, cursor, returnTo); }
   catch (error) { if (!(error instanceof ApiRequestError)) throw error; caseError = error; }
   if (validCase) {
-    try { reports = await api<ReportList>(`/api/v1/cases/${selected}/reports`); }
+    try { reports = await api<ReportList>(`/api/v1/cases/${selected}/reports`, { returnTo }); }
     catch (error) { if (!(error instanceof ApiRequestError)) throw error; reportsError = error; }
   }
   const requested = typeof params.version === "string" && /^[1-9]\d{0,8}$/.test(params.version) ? Number(params.version) : null;
   const chosen = params.version ? requested : reports?.report?.current_version_no ?? null;
   if (chosen && reports?.versions.some((item) => item.version_no === chosen)) {
-    try { version = await api<Version>(`/api/v1/cases/${selected}/reports/versions/${chosen}`); }
+    try { version = await api<Version>(`/api/v1/cases/${selected}/reports/versions/${chosen}`, { returnTo }); }
     catch (error) { if (!(error instanceof ApiRequestError)) throw error; versionError = error; }
   }
   const link = (value: Record<string, string>) => `/workspace/recorded-review?${new URLSearchParams(value)}`;
@@ -39,6 +43,7 @@ export default async function RecordedReview({ searchParams }: { searchParams: P
     <p><Link href="/workspace" prefetch={false}>← Back to workspace preview</Link></p>
     {validCase && <p><Link href={`/workspace/case-overview?${new URLSearchParams({ case: selected })}`} prefetch={false}>← Back to case overview</Link></p>}
     <h1 id="recorded-review-title">Recorded report changes</h1>
+    {reports && <ConnectedCaseNav caseId={selected} active="report" />}
     <div className="panel"><strong>Connected, read-only view</strong><p>Review recorded report versions and changes from each previous version. This view does not submit a decision or verify approval readiness.</p></div>
     <section className="panel"><h2>Choose an accessible case</h2>
       {caseError && <ErrorState error={caseError} what="Cases" />}

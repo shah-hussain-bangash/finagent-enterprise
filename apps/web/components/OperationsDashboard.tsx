@@ -65,9 +65,11 @@ export function OperationsDashboard({ data }: { data: DashboardData }) {
       <dt>Estimated model cost</dt><dd>{money(data.estimated_model_cost_by_currency)}</dd>
       <dt>Recovery/requeue transitions</dt><dd>{data.run_recovery_transitions}</dd>
     </dl><p>Costs are configured estimates, not invoices. Execution gateways continue to enforce existing budgets.</p></div>
-    <DurationCard title="Time to first completion" value={data.time_to_first_completion} />
-    <DurationCard title="Review turnaround" value={data.review_turnaround} />
-    <DurationCard title="Recorded model-attempt latency" value={data.model_latency} />
+    <div className="operations-card-grid">
+      <DurationCard title="Time to first completion" value={data.time_to_first_completion} />
+      <DurationCard title="Review turnaround" value={data.review_turnaround} />
+      <DurationCard title="Recorded model-attempt latency" value={data.model_latency} />
+    </div>
     <p>Case and review durations are calendar elapsed time, including waiting. They do not measure active human work.</p>
     {data.connector_health === null ? <p>Connector observations require platform-operator permission.</p> :
       <section aria-labelledby="connector-heading"><h3 id="connector-heading">Observed connector status</h3>
@@ -87,6 +89,7 @@ export function OperationsDashboard({ data }: { data: DashboardData }) {
       <dt>Versions with analyst-edit origin</dt><dd>{data.analyst_edit_origin_versions}</dd>
     </dl><p>These are output-level monitoring proxies, not accuracy or claim-support precision.
       Analyst-edit origin includes reopening copies and does not prove a reviewer correction.</p></section>
+    <div className="operations-card-grid">
     <CountsTable title="Current case backlog" values={data.cases_by_status} />
     <CountsTable title="Current workflow states" values={data.runs_by_status} />
     <CountsTable title="Review decisions in window" values={data.review_decisions} />
@@ -96,6 +99,7 @@ export function OperationsDashboard({ data }: { data: DashboardData }) {
     <CountsTable title="Model attempts, retries and repairs" values={data.model_requests_by_purpose} />
     <CountsTable title="Current evidence freshness" values={data.current_evidence_freshness} />
     <CountsTable title="External-operation states updated in window" values={data.external_operations} />
+    </div>
     <section aria-labelledby="slices-heading"><h3 id="slices-heading">Model usage by case type and configuration</h3>
       <p>Configuration identifies the recorded gateway configuration version, not a full deployment fingerprint.
         UNLINKED requests have no case association, including evaluations.</p>

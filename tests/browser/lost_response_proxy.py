@@ -1,0 +1,189 @@
+"""Local synthetic API proxy that drops a completed workflow response."""
+
+import socket
+from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+from threading import Thread
+from urllib.parse import urlsplit
+
+import httpx
+
+
+class LostResponseProxy:
+    def __init__(
+        self,
+        upstream: str,
+        *,
+        drop_case_update: bool = False,
+        drop_report_edit: bool = False,
+        drop_document_upload: bool = False,
+        drop_workflow_resume: bool = False,
+        drop_snapshot: bool = False,
+        drop_field_correction: bool = False,
+        drop_workflow_cancel: bool = False,
+        drop_report_withdrawal: bool = False,
+        expire_case_evidence_read: bool = False,
+        reject_report_edit_auth: bool = False,
+        gateway_error: bool = False,
+    ) -> None:
+        self.upstream = upstream
+        self.drop_case_update = drop_case_update
+        self.drop_report_edit = drop_report_edit
+        self.drop_document_upload = drop_document_upload
+        self.drop_workflow_resume = drop_workflow_resume
+        self.drop_snapshot = drop_snapshot
+        self.drop_field_correction = drop_field_correction
+        self.drop_workflow_cancel = drop_workflow_cancel
+        self.drop_report_withdrawal = drop_report_withdrawal
+        self.expire_case_evidence_read = expire_case_evidence_read
+        self.reject_report_edit_auth = reject_report_edit_auth
+        self.rejected_auth = 0
+        self.gateway_error = gateway_error
+        self.dropped_statuses: list[int] = []
+        outer = self
+
+        class Handler(BaseHTTPRequestHandler):
+            def log_message(self, format, *args):  # type: ignore[no-untyped-def]
+                pass  # Do not print synthetic request headers or tokens.
+
+            def forward(self) -> None:
+                length = int(self.headers.get("Content-Length", "0"))
+                body = self.rfile.read(length) if length else b""
+                headers = {
+                    key: value
+                    for key, value in self.headers.items()
+                    if key.lower() not in {"host", "connection", "content-length", "accept-encoding"}
+                }
+                headers["Accept-Encoding"] = "identity"
+                path = urlsplit(self.path).path
+                if (
+                    outer.reject_report_edit_auth
+                    and self.command == "POST"
+                    and path.startswith("/api/v1/cases/")
+                    and path.endswith("/reports/edits")
+                ):
+                    outer.rejected_auth += 1
+                    self.send_response(401)
+                    self.send_header("Content-Type", "application/json")
+                    self.send_header("Content-Length", "2")
+                    self.end_headers()
+                    self.wfile.write(b"{}")
+                    return
+                response = httpx.request(
+                    self.command, f"{outer.upstream}{self.path}", headers=headers, content=body, timeout=30
+                )
+                if (
+                    outer.expire_case_evidence_read
+                    and self.command == "GET"
+                    and path.startswith("/api/v1/cases/")
+                    and path.endswith("/evidence")
+                    and not outer.dropped_statuses
+                ):
+                    outer.dropped_statuses.append(response.status_code)
+                    self.send_response(401)
+                    self.send_header("Content-Type", "application/json")
+                    self.send_header("Content-Length", "2")
+                    self.end_headers()
+                    self.wfile.write(b"{}")
+                    return
+                drop_workflow = (
+                    not outer.drop_case_update
+                    and not outer.drop_report_edit
+                    and not outer.drop_document_upload
+                    and not outer.drop_workflow_resume
+                    and not outer.drop_snapshot
+                    and not outer.drop_field_correction
+                    and not outer.drop_workflow_cancel
+                    and not outer.drop_report_withdrawal
+                    and not outer.expire_case_evidence_read
+                    and not outer.reject_report_edit_auth
+                    and self.command == "POST"
+                    and path == "/api/v1/workflows"
+                )
+                drop_case = (
+                    outer.drop_case_update and self.command == "PATCH" and path.startswith("/api/v1/cases/")
+                )
+                drop_report = (
+                    outer.drop_report_edit
+                    and self.command == "POST"
+                    and path.startswith("/api/v1/cases/")
+                    and path.endswith("/reports/edits")
+                )
+                drop_upload = (
+                    outer.drop_document_upload and self.command == "POST" and path == "/api/v1/documents"
+                )
+                drop_resume = (
+                    outer.drop_workflow_resume
+                    and self.command == "POST"
+                    and path.startswith("/api/v1/workflows/")
+                    and path.endswith("/resume")
+                )
+                drop_snapshot = (
+                    outer.drop_snapshot
+                    and self.command == "POST"
+                    and path.startswith("/api/v1/cases/")
+                    and path.endswith("/snapshots")
+                )
+                drop_correction = (
+                    outer.drop_field_correction
+                    and self.command == "POST"
+                    and path.startswith("/api/v1/documents/")
+                    and "/fields/" in path
+                    and path.endswith("/correction")
+                )
+                drop_cancel = (
+                    outer.drop_workflow_cancel
+                    and self.command == "POST"
+                    and path.startswith("/api/v1/workflows/")
+                    and path.endswith("/cancel")
+                )
+                drop_withdrawal = (
+                    outer.drop_report_withdrawal
+                    and self.command == "POST"
+                    and path.startswith("/api/v1/cases/")
+                    and path.endswith("/reports/withdraw")
+                )
+                if (
+                    drop_workflow
+                    or drop_case
+                    or drop_report
+                    or drop_upload
+                    or drop_resume
+                    or drop_snapshot
+                    or drop_correction
+                    or drop_cancel
+                    or drop_withdrawal
+                ) and not outer.dropped_statuses:
+                    outer.dropped_statuses.append(response.status_code)
+                    if outer.gateway_error:
+                        self.send_response(502)
+                        self.send_header("Content-Length", "0")
+                        self.end_headers()
+                        return
+                    self.connection.shutdown(socket.SHUT_RDWR)
+                    self.connection.close()
+                    return
+                self.send_response(response.status_code)
+                content_type = response.headers.get("content-type", "application/octet-stream")
+                self.send_header("Content-Type", content_type)
+                self.send_header("Content-Length", str(len(response.content)))
+                self.end_headers()
+                self.wfile.write(response.content)
+
+            do_GET = forward  # noqa: N815 - required by BaseHTTPRequestHandler
+            do_POST = forward  # noqa: N815 - required by BaseHTTPRequestHandler
+            do_PATCH = forward  # noqa: N815 - required by BaseHTTPRequestHandler
+
+        self.server = ThreadingHTTPServer(("127.0.0.1", 0), Handler)
+        self.thread = Thread(target=self.server.serve_forever, daemon=True)
+
+    @property
+    def url(self) -> str:
+        return f"http://127.0.0.1:{self.server.server_port}"
+
+    def start(self) -> None:
+        self.thread.start()
+
+    def stop(self) -> None:
+        self.server.shutdown()
+        self.server.server_close()
+        self.thread.join(timeout=5)

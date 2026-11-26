@@ -1,5 +1,7 @@
 """Exercise recorded transaction evidence with the disposable synthetic stack."""
 
+import re
+
 import pytest
 
 from tests.agent_helpers import prepared_case
@@ -21,7 +23,7 @@ def test_case_transactions_are_visible_only_to_assigned_analyst(
     token,
     bank,
 ):
-    from playwright.sync_api import sync_playwright
+    from playwright.sync_api import expect, sync_playwright
 
     settings = make_settings(bank_base_url=bank.url)
     prep = prepared_case(make_client(bank_base_url=bank.url), token, settings)
@@ -32,42 +34,52 @@ def test_case_transactions_are_visible_only_to_assigned_analyst(
         try:
             page = browser.new_page()
             page.goto(path)
-            assert "/signin" in page.url
+            expect(page).to_have_url(re.compile(r"/signin\?"))
             sign_in(page, web, prep.analyst)
             page.goto(path)
             main = page.locator("main")
-            assert main.get_by_text("Connected, read-only view").count() == 1
-            assert main.get_by_role("table", name="Transactions from this evidence source").count() >= 1
-            assert (
-                main.get_by_role("heading", name="Filtered posted amounts by currency and direction").count()
-                >= 1
-            )
+            expect(main.get_by_text("Connected, read-only view")).to_be_visible(timeout=30_000)
+            expect(
+                main.get_by_role("table", name="Transactions from this evidence source").first
+            ).to_be_visible()
+            expect(
+                main.get_by_role("heading", name="Filtered posted amounts by currency and direction").first
+            ).to_be_visible()
             assert "COMPLETE" in main.inner_text()
             page.get_by_label("Search transaction ID, counterparty, date, direction or status").fill(
                 "no-such-synthetic-transaction"
             )
             page.get_by_role("button", name="Apply filters").click()
-            assert "No recorded transactions match this search" in main.inner_text()
+            expect(
+                main.get_by_text("No recorded transactions match the selected filters.").first
+            ).to_be_visible()
             page.goto(path)
             page.get_by_label("Direction", exact=True).select_option("DEBIT")
             page.get_by_role("button", name="Apply filters").click()
+            expect(main.get_by_text("Active filters:", exact=False)).to_contain_text("DEBIT")
+            expect(
+                page.get_by_role("table", name="Transactions from this evidence source").first
+            ).to_be_visible()
             for row in (
                 page.get_by_role("table", name="Transactions from this evidence source")
                 .locator("tbody tr")
                 .all()
             ):
                 assert row.locator("td").nth(3).inner_text() == "DEBIT"
+            page.goto(f"{path}&page_source=missing&page=2")
+            expect(
+                main.get_by_role("alert").filter(has_text="requested transaction page is invalid")
+            ).to_be_visible()
             other = (
                 "a.analyst2@synthetic" if prep.analyst == "a.analyst1@synthetic" else "a.analyst1@synthetic"
             )
             other_page = browser.new_page()
             sign_in(other_page, web, other)
             other_page.goto(path)
-            assert (
-                other_page.locator("main")
-                .get_by_role("table", name="Transactions from this evidence source")
-                .count()
-                == 0
-            )
+            other_main = other_page.locator("main")
+            expect(other_main.get_by_role("alert").first).to_be_visible(timeout=30_000)
+            expect(
+                other_main.get_by_role("table", name="Transactions from this evidence source")
+            ).to_have_count(0)
         finally:
             browser.close()

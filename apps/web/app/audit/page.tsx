@@ -12,8 +12,11 @@ export default async function Audit({ searchParams }: { searchParams: Promise<Re
   if (sp.case_id) q.set("case_id", sp.case_id);
   const { data, error } = await load<{ items: AuditEvent[]; next_after_seq: number | null }>(`/api/v1/audit-events?${q}`);
   return (
-    <section aria-labelledby="h">
-      <h1 id="h">Audit history</h1>
+    <section className="portal-section" aria-labelledby="h">
+      <div className="portal-page-heading">
+        <p className="portal-eyebrow">OVERSIGHT / AUDIT</p>
+        <h1 id="h">Audit history</h1>
+      </div>
       <p className="muted">Auditor view: tenant-wide, metadata only (DEC-15). People working a case see its activity on the case.</p>
       <form method="get" className="inline">
         <label htmlFor="case_id">Case</label>

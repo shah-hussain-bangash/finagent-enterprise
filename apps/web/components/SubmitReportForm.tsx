@@ -8,7 +8,7 @@ export function SubmitReportForm({caseId, version, requestKey}: {caseId: string;
   const [result, setResult] = useState<{ok: boolean; message: string} | null>(null);
   const [uncertain, setUncertain] = useState(false);
   async function submit(form: FormData) {
-    try { setResult(await submitReport(form)); }
+    try { const response = await submitReport(form); setUncertain(response.uncertain === true); setResult(response); }
     catch { setUncertain(true); setResult({ok: false, message: "Could not confirm the request. Reload the report before trying again."}); }
   }
   return <form action={submit} className="inline panel">

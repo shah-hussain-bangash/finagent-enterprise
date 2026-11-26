@@ -1,6 +1,6 @@
 import Link from "next/link";
-import { cancelRun, resumeRun } from "@/app/actions";
-import { SubmitButton } from "@/components/SubmitButton";
+import { RecoveryReasonForm } from "@/components/RecoveryReasonForm";
+import { ResumeWorkflowForm } from "@/components/ResumeWorkflowForm";
 import { ErrorState, Flash, When } from "@/components/ui";
 import { load } from "@/lib/api";
 import { requireSession } from "@/lib/session";
@@ -20,6 +20,7 @@ export default async function RunMonitor({ params, searchParams }: {
   await requireSession();
   const { id } = await params;
   const sp = await searchParams;
+  const uncertainAction = typeof sp.error === "string" && sp.error.startsWith("CONNECTION_ERROR:");
   const { data: r, error } = await load<Run>(`/api/v1/workflows/${id}`);
   if (error) return <ErrorState error={error} what="Workflow run" />;
   const terminal = ["SUCCEEDED", "FAILED", "CANCELLED"].includes(r.status);
@@ -32,6 +33,7 @@ export default async function RunMonitor({ params, searchParams }: {
       {r.attempt > r.max_attempts && <p className="warn">The recorded count is above the failure-handling threshold. Review the execution history for context; this does not by itself establish that a retry limit was breached.</p>}
       <p><Link href={`/workspace/recorded-monitor?${new URLSearchParams({ case: r.case_id, run: r.run_id })}`}>View recorded investigation run →</Link></p>
       <Flash ok={sp.ok} error={sp.error} />
+      {uncertainAction && <p className="warn" role="status">Check the recorded run before another action. <a href={`/workflows/${id}`}>Reload run</a></p>}
       <p>Status <span className={`badge badge-${r.status.toLowerCase()}`}>{r.status}</span> - {r.status_reason}
         {r.cancel_requested ? " (cancellation requested)" : ""}</p>
       {r.next_action ? <p className="warn">{r.next_action}</p> : null}
@@ -39,27 +41,16 @@ export default async function RunMonitor({ params, searchParams }: {
         <ul>{r.blockers.map((b, i) => <li key={i}>{b.code}{b.reason ? `: ${b.reason}` : ""}
           {b.operation_id ? <> - <Link href="/operations">reconcile operation {b.operation_id.slice(0, 8)}</Link></> : null}</li>)}</ul>
       ) : null}
-      {r.status === "HUMAN_REVIEW" ? (
-        <form action={resumeRun} className="stack panel">
-          <input type="hidden" name="run_id" value={id} />
-          <input type="hidden" name="action" value="RETRY" />
-          <label htmlFor="rr">Retry after review (reason)</label>
-          <input id="rr" name="reason" required minLength={5} maxLength={300} />
-          <SubmitButton>Retry from last checkpoint</SubmitButton>
-        </form>
+      {!uncertainAction && r.status === "HUMAN_REVIEW" ? (
+        <ResumeWorkflowForm runId={id} action="RETRY" returnPath={`/workflows/${id}`} label="Retry after review (reason)" button="Retry from last checkpoint" />
       ) : null}
-      {!terminal && r.status !== "OUTCOME_UNCERTAIN" ? (
-        <form action={cancelRun} className="inline panel">
-          <input type="hidden" name="run_id" value={id} />
-          <label htmlFor="cr">Cancel (committed effects are kept): reason</label>
-          <input id="cr" name="reason" required minLength={3} maxLength={300} />
-          <SubmitButton danger>Cancel run</SubmitButton>
-        </form>
+      {!uncertainAction && !terminal && r.status !== "OUTCOME_UNCERTAIN" ? (
+        <RecoveryReasonForm kind="cancel" recordId={id} />
       ) : null}
       <h2>Steps</h2>
       {r.steps.length === 0 ? <p>No steps were returned for this run.</p> : <div className="workflow-steps-table" role="region" aria-label="Workflow steps table" tabIndex={0}><table>
         <caption>Recorded workflow steps</caption>
-        <thead><tr><th>Node</th><th>Status</th><th>Attempt</th><th>Error</th><th>Started</th><th>Finished</th></tr></thead>
+        <thead><tr><th scope="col">Node</th><th scope="col">Status</th><th scope="col">Attempt</th><th scope="col">Error</th><th scope="col">Started</th><th scope="col">Finished</th></tr></thead>
         <tbody>{r.steps.map((s, i) => (
           <tr key={i}><td>{s.node}</td><td>{s.status}</td><td>{s.attempt}</td><td>{s.error_code ?? "-"}</td>
             <td><When iso={s.started_at} /></td><td><When iso={s.finished_at} /></td></tr>))}</tbody>

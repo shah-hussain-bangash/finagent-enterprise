@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { ConnectedCaseNav } from "@/components/ConnectedCaseNav";
 import { Empty, ErrorState, When } from "@/components/ui";
 import { api, ApiRequestError, listCases } from "@/lib/api";
 import { requireSession } from "@/lib/session";
@@ -13,8 +14,9 @@ interface Conflict { conflict_id: string; field_key: string; status: string }
 interface Evidence { items: Item[]; gaps: Gap[]; conflicts: Conflict[]; latest_snapshot: { snapshot_id: string; created_at: string } | null }
 
 export default async function EvidenceBriefing({ searchParams }: { searchParams: Promise<{ case?: string; cursor?: string }> }) {
-  await requireSession();
   const params = await searchParams;
+  const returnTo = `/workspace/evidence-briefing?case=${typeof params.case === "string" ? params.case : ""}`;
+  await requireSession(returnTo);
   const selected = typeof params.case === "string" ? params.case : "";
   const cursor = typeof params.cursor === "string" ? params.cursor : undefined;
   const validCase = UUID.test(selected);
@@ -22,10 +24,10 @@ export default async function EvidenceBriefing({ searchParams }: { searchParams:
   let caseError: ApiRequestError | null = null;
   let evidence: Evidence | null = null;
   let evidenceError: ApiRequestError | null = null;
-  try { cases = await listCases(undefined, cursor); }
+  try { cases = await listCases(undefined, cursor, returnTo); }
   catch (error) { if (!(error instanceof ApiRequestError)) throw error; caseError = error; }
   if (validCase) {
-    try { evidence = await api<Evidence>(`/api/v1/cases/${selected}/evidence`); }
+    try { evidence = await api<Evidence>(`/api/v1/cases/${selected}/evidence`, { returnTo }); }
     catch (error) { if (!(error instanceof ApiRequestError)) throw error; evidenceError = error; }
   }
   const link = (value: Record<string, string>) => `/workspace/evidence-briefing?${new URLSearchParams(value)}`;
@@ -33,6 +35,7 @@ export default async function EvidenceBriefing({ searchParams }: { searchParams:
     <p><Link href="/workspace" prefetch={false}>← Back to workspace preview</Link></p>
     {validCase && <p><Link href={`/workspace/case-overview?${new URLSearchParams({ case: selected })}`} prefetch={false}>← Back to case overview</Link></p>}
     <h1 id="briefing-title">Case evidence briefing</h1>
+    {evidence && <ConnectedCaseNav caseId={selected} active="evidence" />}
     <div className="panel"><strong>Connected, read-only evidence overview</strong><p>This structured briefing lists recorded case sources and gaps. It does not use an AI model, answer free-text questions, or make decisions. Current evidence may differ from older snapshots.</p></div>
     <section className="panel"><h2>Choose an accessible case</h2>
       {caseError && <ErrorState error={caseError} what="Cases" />}

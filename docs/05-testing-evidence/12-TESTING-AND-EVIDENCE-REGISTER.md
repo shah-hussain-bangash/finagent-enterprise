@@ -31,7 +31,7 @@ This characterizes current behavior, not an approved retry policy or evidence fo
 
 ## Representative control traces
 
-The [portfolio case study](../07-case-study/08-PORTFOLIO-CASE-STUDY.md) connects tenant filtering, AI authority boundaries and review separation to source, mutation definitions and the recorded run. In mutation testing, a test failure after deliberately weakening the code is the expected result; the mutation runner determines whether that change was caught.
+The [case study](../07-case-study/08-CASE-STUDY.md) connects tenant filtering, AI authority boundaries and review separation to source, mutation definitions and the recorded run. In mutation testing, a test failure after deliberately weakening the code is the expected result; the mutation runner determines whether that change was caught.
 
 ## Evidence still to collect
 

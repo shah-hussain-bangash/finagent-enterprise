@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { authMode, externalSettings } from "@/lib/auth-config";
 import { sessionCookieName } from "@/lib/auth-store";
 import { finishPasswordLogin, passwordLoginEnabled, readPasswordForm } from "@/lib/password-auth";
+import { safeCaseReturn } from "@/lib/case-return";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -21,7 +22,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     const form = await readPasswordForm(request);
     const name = sessionCookieName(cfg.secure, authMode());
     const login = await finishPasswordLogin(form.email, form.password, request.cookies.get(name)?.value);
-    response = NextResponse.redirect(new URL("/", cfg.origin), 303);
+    response = NextResponse.redirect(new URL(safeCaseReturn(form.returnTo) ?? "/", cfg.origin), 303);
     response.cookies.set(name, login.handle, {
       httpOnly: true, secure: cfg.secure, sameSite: "lax", path: "/",
       maxAge: login.exp - Math.floor(Date.now() / 1000),

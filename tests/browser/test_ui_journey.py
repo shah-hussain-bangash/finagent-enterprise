@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import contextlib
 import os
+import re
 import shutil
 import socket
 import subprocess
@@ -49,7 +50,7 @@ def wait_http(url: str, timeout: float = 60) -> None:
 
 
 @pytest.fixture
-def stack(make_settings, make_worker, bank) -> Iterator[dict[str, Any]]:  # type: ignore[no-untyped-def]
+def stack(make_settings, make_worker, bank, request) -> Iterator[dict[str, Any]]:  # type: ignore[no-untyped-def]
     import uvicorn
 
     from finagent.api.main import create_app
@@ -59,13 +60,56 @@ def stack(make_settings, make_worker, bank) -> Iterator[dict[str, Any]]:  # type
     server = uvicorn.Server(
         uvicorn.Config(create_app(settings), host="127.0.0.1", port=api_port, log_level="warning")
     )
-    threading.Thread(target=server.run, daemon=True).start()
+    api_thread = threading.Thread(target=server.run, daemon=True)
+    api_thread.start()
     wait_http(f"http://127.0.0.1:{api_port}/health/live")
+    proxy = None
+    if getattr(request, "param", None) in {
+        "drop_workflow_response",
+        "drop_case_update_response",
+        "case_update_gateway_error",
+        "report_edit_gateway_error",
+        "document_upload_gateway_error",
+        "workflow_resume_gateway_error",
+        "snapshot_gateway_error",
+        "field_correction_gateway_error",
+        "workflow_cancel_gateway_error",
+        "report_withdrawal_gateway_error",
+        "expired_case_evidence_read",
+        "report_edit_auth_expired",
+    }:
+        from tests.browser.lost_response_proxy import LostResponseProxy
+
+        proxy = LostResponseProxy(
+            f"http://127.0.0.1:{api_port}",
+            drop_case_update=request.param in {"drop_case_update_response", "case_update_gateway_error"},
+            drop_report_edit=request.param == "report_edit_gateway_error",
+            drop_document_upload=request.param == "document_upload_gateway_error",
+            drop_workflow_resume=request.param == "workflow_resume_gateway_error",
+            drop_snapshot=request.param == "snapshot_gateway_error",
+            drop_field_correction=request.param == "field_correction_gateway_error",
+            drop_workflow_cancel=request.param == "workflow_cancel_gateway_error",
+            drop_report_withdrawal=request.param == "report_withdrawal_gateway_error",
+            expire_case_evidence_read=request.param == "expired_case_evidence_read",
+            reject_report_edit_auth=request.param == "report_edit_auth_expired",
+            gateway_error=request.param
+            in {
+                "case_update_gateway_error",
+                "report_edit_gateway_error",
+                "document_upload_gateway_error",
+                "workflow_resume_gateway_error",
+                "snapshot_gateway_error",
+                "field_correction_gateway_error",
+                "workflow_cancel_gateway_error",
+                "report_withdrawal_gateway_error",
+            },
+        )
+        proxy.start()
     npx = shutil.which("npx") or shutil.which("npx.cmd")
     assert npx, "npx not found"
     env = {
         **os.environ,
-        "FINAGENT_API_URL": f"http://127.0.0.1:{api_port}",
+        "FINAGENT_API_URL": proxy.url if proxy else f"http://127.0.0.1:{api_port}",
         "FINAGENT_ENVIRONMENT": "test",
         "FINAGENT_WEB_AUTH_MODE": "local",
         "FINAGENT_WEB_SESSION_SECRET": "browser-test-only-session-secret-0123456789",
@@ -88,7 +132,8 @@ def stack(make_settings, make_worker, bank) -> Iterator[dict[str, Any]]:  # type
                 worker.tick()
             stop.wait(0.5)
 
-    threading.Thread(target=loop, daemon=True).start()
+    worker_thread = threading.Thread(target=loop, daemon=True)
+    worker_thread.start()
     try:
         wait_http(f"http://127.0.0.1:{web_port}/signin", timeout=90)
         yield {
@@ -96,13 +141,21 @@ def stack(make_settings, make_worker, bank) -> Iterator[dict[str, Any]]:  # type
             "api": f"http://127.0.0.1:{api_port}",
             "settings": settings,
             "web_log": web_log,
+            "stop_api": lambda: setattr(server, "should_exit", True),
+            "proxy": proxy,
         }
     finally:
         stop.set()
+        worker_thread.join(timeout=15)
         web.terminate()
         server.should_exit = True
         web.wait(timeout=10)
+        api_thread.join(timeout=15)
         web_log.close()
+        if proxy:
+            proxy.stop()
+        if worker_thread.is_alive() or api_thread.is_alive():
+            raise RuntimeError("Synthetic browser stack did not stop cleanly")
 
 
 def sign_in(page: Any, web: str, who: str, *, mfa: str = "yes") -> None:
@@ -111,6 +164,169 @@ def sign_in(page: Any, web: str, who: str, *, mfa: str = "yes") -> None:
     page.get_by_label("Multi-factor authentication satisfied").select_option(mfa)
     page.get_by_role("button", name="Sign in").click()
     page.wait_for_url(f"{web}/")
+
+
+def test_case_page_is_restored_after_synthetic_sign_in(stack, client, token):  # type: ignore[no-untyped-def]
+    from playwright.sync_api import expect, sync_playwright
+
+    case_id = ingest(client, token)["case_id"]
+    analyst = assigned_analyst(client, token, case_id)
+    with sync_playwright() as playwright:
+        browser = playwright.chromium.launch()
+        try:
+            page = browser.new_page()
+            page.goto(f"{stack['web']}/cases/{case_id}/evidence")
+            expect(page).to_have_url(re.compile(r"/signin\?"))
+            page.get_by_label("Synthetic identity").select_option(analyst)
+            page.get_by_role("button", name="Sign in").click()
+            expect(page).to_have_url(f"{stack['web']}/cases/{case_id}/evidence")
+            expect(page.locator("main")).to_contain_text("Evidence")
+        finally:
+            browser.close()
+
+
+def test_workspace_case_is_restored_after_synthetic_sign_in(stack, client, token):  # type: ignore[no-untyped-def]
+    from playwright.sync_api import expect, sync_playwright
+
+    case_id = ingest(client, token)["case_id"]
+    analyst = assigned_analyst(client, token, case_id)
+    with sync_playwright() as playwright:
+        browser = playwright.chromium.launch()
+        try:
+            page = browser.new_page()
+            page.goto(f"{stack['web']}/workspace/case-overview?case={case_id}")
+            expect(page).to_have_url(re.compile(r"/signin\?"))
+            page.get_by_label("Synthetic identity").select_option(analyst)
+            page.get_by_role("button", name="Sign in").click()
+            expect(page).to_have_url(f"{stack['web']}/workspace/case-overview?case={case_id}")
+            expect(page.get_by_role("heading", name="Case investigation overview")).to_be_visible()
+            expect(page.locator("main")).to_contain_text(case_id[:8])
+        finally:
+            browser.close()
+
+
+def test_workspace_snapshot_selection_is_restored_after_sign_in(stack, client, token):  # type: ignore[no-untyped-def]
+    from playwright.sync_api import expect, sync_playwright
+
+    case_id = ingest(client, token)["case_id"]
+    analyst = assigned_analyst(client, token, case_id)
+    output_id = "00000000-0000-4000-8000-000000000001"
+    path = f"{stack['web']}/workspace/snapshot-selection?case={case_id}&output={output_id}"
+    with sync_playwright() as playwright:
+        browser = playwright.chromium.launch()
+        try:
+            page = browser.new_page()
+            page.goto(path)
+            expect(page).to_have_url(re.compile(r"/signin\?"))
+            page.get_by_label("Synthetic identity").select_option(analyst)
+            page.get_by_role("button", name="Sign in").click()
+            expect(page).to_have_url(path)
+            expect(page.get_by_role("heading", name="Recorded snapshot document selection")).to_be_visible()
+        finally:
+            browser.close()
+
+
+def test_historical_report_version_is_restored_after_sign_in(stack, client, token):  # type: ignore[no-untyped-def]
+    from playwright.sync_api import expect, sync_playwright
+
+    case_id = ingest(client, token)["case_id"]
+    analyst = assigned_analyst(client, token, case_id)
+    with sync_playwright() as playwright:
+        browser = playwright.chromium.launch()
+        try:
+            page = browser.new_page()
+            sign_in(page, stack["web"], analyst)
+            page.goto(f"{stack['web']}/cases/{case_id}")
+            page.get_by_role("button", name="Start investigation").click()
+            page.get_by_text("Investigation queued.").first.wait_for(timeout=30_000)
+            wait_text(page, f"{stack['web']}/cases/{case_id}/report", "version 1 of 1")
+            section = page.locator('textarea[name="section_text"]').first
+            section.fill(section.input_value() + "\nSynthetic historical version test.")
+            page.get_by_label("Edit note (required)").fill("Create synthetic version two")
+            page.get_by_role("button", name="Save as new version").click()
+            wait_text(page, f"{stack['web']}/cases/{case_id}/report", "version 2 of 2")
+            page.get_by_role("button", name="Sign out").click()
+            page.wait_for_url(f"{stack['web']}/signin", timeout=30_000)
+            path = f"{stack['web']}/cases/{case_id}/report?v=1"
+            page.goto(path)
+            expect(page).to_have_url(re.compile(r"/signin\?"))
+            page.get_by_label("Synthetic identity").select_option(analyst)
+            page.get_by_role("button", name="Sign in").click()
+            expect(page).to_have_url(path)
+            expect(page.get_by_text("version 1 of 2", exact=False)).to_be_visible()
+            expect(page.get_by_text("You are viewing an earlier version.", exact=False)).to_be_visible()
+        finally:
+            browser.close()
+
+
+def test_case_return_does_not_grant_cross_tenant_access(stack, client, token):  # type: ignore[no-untyped-def]
+    from playwright.sync_api import expect, sync_playwright
+
+    case_id = ingest(client, token)["case_id"]
+    other_analyst = "b.analyst1@synthetic"
+    denied = client.get(f"/api/v1/cases/{case_id}/evidence", headers=token(other_analyst))
+    assert denied.status_code in (403, 404)
+    with sync_playwright() as playwright:
+        browser = playwright.chromium.launch()
+        try:
+            page = browser.new_page()
+            page.goto(f"{stack['web']}/cases/{case_id}/evidence")
+            expect(page).to_have_url(re.compile(r"/signin\?"))
+            page.get_by_label("Synthetic identity").select_option(other_analyst)
+            page.get_by_role("button", name="Sign in").click()
+            expect(page).to_have_url(f"{stack['web']}/cases/{case_id}/evidence")
+            expect(page.get_by_role("alert").first).to_contain_text(
+                re.compile(r"not found|not permitted", re.I)
+            )
+            expect(page.get_by_text("Contradictory records")).to_have_count(0)
+        finally:
+            browser.close()
+
+
+@pytest.mark.parametrize("stack", ["expired_case_evidence_read"], indirect=True)
+def test_api_expired_case_read_restores_page_after_sign_in(stack, client, token):  # type: ignore[no-untyped-def]
+    from playwright.sync_api import expect, sync_playwright
+
+    case_id = ingest(client, token)["case_id"]
+    analyst = assigned_analyst(client, token, case_id)
+    with sync_playwright() as playwright:
+        browser = playwright.chromium.launch()
+        try:
+            page = browser.new_page()
+            sign_in(page, stack["web"], analyst)
+            page.goto(f"{stack['web']}/cases/{case_id}/evidence")
+            expect(page).to_have_url(re.compile(r"/signin\?"))
+            assert stack["proxy"].dropped_statuses == [200]
+            page.get_by_label("Synthetic identity").select_option(analyst)
+            page.get_by_role("button", name="Sign in").click()
+            expect(page).to_have_url(f"{stack['web']}/cases/{case_id}/evidence")
+            expect(page.locator("main")).to_contain_text("Evidence")
+        finally:
+            browser.close()
+
+
+@pytest.mark.parametrize("stack", ["expired_case_evidence_read"], indirect=True)
+def test_api_expired_workspace_read_restores_case_after_sign_in(stack, client, token):  # type: ignore[no-untyped-def]
+    from playwright.sync_api import expect, sync_playwright
+
+    case_id = ingest(client, token)["case_id"]
+    analyst = assigned_analyst(client, token, case_id)
+    with sync_playwright() as playwright:
+        browser = playwright.chromium.launch()
+        try:
+            page = browser.new_page()
+            sign_in(page, stack["web"], analyst)
+            path = f"{stack['web']}/workspace/case-overview?case={case_id}"
+            page.goto(path)
+            expect(page).to_have_url(re.compile(r"/signin\?"))
+            assert stack["proxy"].dropped_statuses == [200]
+            page.get_by_label("Synthetic identity").select_option(analyst)
+            page.get_by_role("button", name="Sign in").click()
+            expect(page).to_have_url(path)
+            expect(page.get_by_role("heading", name="Case investigation overview")).to_be_visible()
+            expect(page.locator("main")).to_contain_text(case_id[:8])
+        finally:
+            browser.close()
 
 
 def wait_text(page: Any, url: str, text: str, timeout: float = 120) -> None:
@@ -140,6 +356,7 @@ def wait_text(page: Any, url: str, text: str, timeout: float = 120) -> None:
     "FR-010",
     "FR-006",
 )
+@pytest.mark.parametrize("stack", ["case_update_gateway_error"], indirect=True)
 def test_analyst_and_reviewer_complete_a_case_in_the_browser(stack, client, token) -> None:  # type: ignore[no-untyped-def]
     from playwright.sync_api import TimeoutError as PlaywrightTimeoutError
     from playwright.sync_api import sync_playwright
@@ -244,6 +461,36 @@ def test_analyst_and_reviewer_complete_a_case_in_the_browser(stack, client, toke
                 f"main: {main_text}"
             ) from exc
         wait_text(page, f"{web}/cases/{case_id}", "WAITING_REVIEW")
+        # The case update is saved, but the proxy substitutes a gateway error.
+        page.goto(f"{web}/cases/{case_id}")
+        page.wait_for_load_state("networkidle")
+        page.get_by_label("Block case: reason").fill("Synthetic evidence needs review")
+        page.get_by_role("button", name="Mark blocked").click()
+        try:
+            page.get_by_text("Check the recorded case before another action.").wait_for(timeout=30_000)
+        except PlaywrightTimeoutError as exc:
+            actual_case = client.get(f"/api/v1/cases/{case_id}", headers=token(analyst))
+            actual_status = (
+                actual_case.json().get("status")
+                if actual_case.status_code == 200
+                else actual_case.status_code
+            )
+            raise AssertionError(
+                f"Recovery warning missing; page: {page.url}; "
+                f"upstream statuses: {stack['proxy'].dropped_statuses}; "
+                f"case status: {actual_status}; "
+                f"main: {page.locator('main').inner_text()}"
+            ) from exc
+        assert stack["proxy"].dropped_statuses == [200]
+        saved = client.get(f"/api/v1/cases/{case_id}", headers=token(analyst))
+        assert saved.status_code == 200 and saved.json()["status"] == "BLOCKED"
+        page.get_by_role("link", name="Reload case").click()
+        page.get_by_label("Resolve block: reason").fill("Synthetic evidence review complete")
+        page.get_by_role("button", name="Resume investigation").click()
+        page.wait_for_url(re.compile(rf"^{re.escape(web)}/cases/{re.escape(case_id)}\?ok="), timeout=30_000)
+        wait_text(page, f"{web}/cases/{case_id}", "WAITING_REVIEW")
+        resumed = client.get(f"/api/v1/cases/{case_id}", headers=token(analyst))
+        assert resumed.status_code == 200 and resumed.json()["status"] == "INVESTIGATING"
         page.goto(f"{web}/cases/{case_id}/evidence")
         page.locator("main").get_by_text("date_of_birth", exact=False).first.wait_for(timeout=30_000)
         page.get_by_label("Resolution", exact=True).select_option("USE_A")
@@ -255,6 +502,7 @@ def test_analyst_and_reviewer_complete_a_case_in_the_browser(stack, client, toke
         page.goto(f"{web}/cases/{case_id}")
         page.get_by_label("Re-analyse with fresh evidence (reason)").fill("conflict resolved")
         page.get_by_role("button", name="Re-run evidence and analysis").click()
+        page.wait_for_url(re.compile(rf"^{re.escape(web)}/cases/{re.escape(case_id)}\?ok="), timeout=30_000)
         wait_text(page, f"{web}/cases/{case_id}/report", "version 2 of 2")
         page.goto(f"{web}/cases/{case_id}/agents")
         page.get_by_text("Deterministic result", exact=False).first.wait_for(timeout=30_000)
@@ -282,6 +530,21 @@ def test_analyst_and_reviewer_complete_a_case_in_the_browser(stack, client, toke
         page.locator("table a").first.click()
         page.wait_for_url("**/approvals/*")
         page.get_by_text("frozen for this review", exact=False).first.wait_for(timeout=30_000)
+        reviewer = "a.reviewer1@synthetic"
+        approval_id = page.url.rsplit("/", 1)[-1]
+        approval_response = client.get(f"/api/v1/approvals/{approval_id}", headers=token(reviewer))
+        assert approval_response.status_code == 200, approval_response.text
+        approval = approval_response.json()
+        report_response = client.get(f"/api/v1/cases/{case_id}/reports/versions/2", headers=token(analyst))
+        assert report_response.status_code == 200, report_response.text
+        reviewed_report = report_response.json()
+        assert approval["case_id"] == case_id and approval["status"] == "PENDING"
+        assert approval["report_version_id"] == reviewed_report["version_id"]
+        assert approval["snapshot_id"] == reviewed_report["snapshot_id"]
+        assert approval["reviewer_id"] and approval["requested_by"] != approval["reviewer_id"]
+        assert approval["report"]["version_no"] == reviewed_report["version_no"] == 2
+        assert any(claim["evidence_refs"] for claim in reviewed_report["claims"])
+        assert approval["report"]["claims"] == reviewed_report["claims"]
         page.get_by_label("Approve").check()
         page.get_by_label("Rationale (required, recorded with your identity and the reviewed versions)").fill(
             "Evidence, calculations and policy citations reviewed."
@@ -289,6 +552,12 @@ def test_analyst_and_reviewer_complete_a_case_in_the_browser(stack, client, toke
         page.get_by_role("button", name="Record decision").click()
         page.get_by_text("Decision recorded.").first.wait_for(timeout=30_000)
         wait_text(page, f"{web}/cases/{case_id}", "to COMPLETED")  # shown only after finalization
+        recorded = client.get(f"/api/v1/approvals/{approval_id}", headers=token(reviewer))
+        assert recorded.status_code == 200, recorded.text
+        assert recorded.json()["decision"]["decision"] == "APPROVE"
+        assert recorded.json()["decision"]["reviewer_id"] == approval["reviewer_id"]
+        assert recorded.json()["report_version_id"] == reviewed_report["version_id"]
+        assert recorded.json()["snapshot_id"] == reviewed_report["snapshot_id"]
         assert page.get_by_label("Case status: Completed").count() == 1  # text label, not colour only
         # Reopening UI: no supervisor controls for analyst/reviewer identities.
         supervisor = "a.supervisor1@synthetic"
@@ -297,6 +566,9 @@ def test_analyst_and_reviewer_complete_a_case_in_the_browser(stack, client, toke
         assert reopen_form.count() == 0  # still signed in as the reviewer
         old_version = client.get(f"/api/v1/cases/{case_id}/reports/versions/2", headers=token(supervisor))
         assert old_version.status_code == 200, old_version.text
+        assert old_version.json()["version_id"] == reviewed_report["version_id"]
+        assert old_version.json()["snapshot_id"] == reviewed_report["snapshot_id"]
+        assert old_version.json()["claims"] == reviewed_report["claims"]
         preserved_fields = ("version_id", "version_no", "content_hash", "snapshot_id", "sections", "claims")
         previous = {field: old_version.json()[field] for field in preserved_fields}
         before = client.get(f"/api/v1/cases/{case_id}", headers=token(supervisor)).json()

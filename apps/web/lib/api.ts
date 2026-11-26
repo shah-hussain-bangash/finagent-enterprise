@@ -2,7 +2,8 @@
 // Authorization is enforced by the API; the UI only hides what it cannot use (prompt §23).
 import "server-only";
 import { redirect } from "next/navigation";
-import { requireSession } from "@/lib/session";
+import { getSession, requireSession } from "@/lib/session";
+import { safeCaseReturn } from "@/lib/case-return";
 
 export type CaseStatus =
   | "RECEIVED" | "ASSIGNED" | "INVESTIGATING" | "BLOCKED" | "AWAITING_REVIEW"
@@ -27,10 +28,10 @@ export interface ApiError {
 
 export class ApiRequestError extends Error {
   constructor(public status: number, public body: ApiError | null) {
-    super(body?.error.message ?? `Request failed (${status})`);
+    super(typeof body?.error?.message === "string" ? body.error.message : `Request failed (${status})`);
   }
   get code(): string {
-    return this.body?.error.code ?? "HTTP_" + this.status;
+    return typeof this.body?.error?.code === "string" ? this.body.error.code : "HTTP_" + this.status;
   }
 }
 
@@ -43,23 +44,48 @@ export interface Init {
   headers?: Record<string, string>;
   idempotencyKey?: string;
   ifMatch?: number;
+  timeoutMs?: number;
+  returnTo?: string;
+  preserveAuthError?: boolean;
 }
 
 export async function raw(path: string, init: Init = {}): Promise<Response> {
-  const session = await requireSession();
+  const session = init.preserveAuthError ? await getSession() : await requireSession();
+  if (!session) throw new ApiRequestError(401, { error: { code: "SESSION_EXPIRED", message: "Your session has expired.", correlation_id: "", details: {} } });
   const headers: Record<string, string> = { Authorization: `Bearer ${session.token}`, ...init.headers };
   if (init.json !== undefined) headers["Content-Type"] = "application/json";
   if (init.idempotencyKey) headers["Idempotency-Key"] = init.idempotencyKey;
   if (init.ifMatch !== undefined) headers["If-Match"] = `"${init.ifMatch}"`;
-  const res = await fetch(`${BASE}${path}`, {
-    method: init.method ?? (init.json !== undefined || init.body ? "POST" : "GET"),
-    headers,
-    body: init.json !== undefined ? JSON.stringify(init.json) : init.body,
-    cache: "no-store",
-  });
+  const method = init.method ?? (init.json !== undefined || init.body ? "POST" : "GET");
+  const body = init.json !== undefined ? JSON.stringify(init.json) : init.body;
+  let res: Response;
+  try {
+    res = await fetch(`${BASE}${path}`, {
+      method,
+      headers,
+      body,
+      cache: "no-store",
+      signal: init.timeoutMs === undefined ? undefined : AbortSignal.timeout(init.timeoutMs),
+    });
+  } catch {
+    // A failed connection does not establish whether a write reached the service.
+    const message = ["GET", "HEAD"].includes(method.toUpperCase())
+      ? "The service could not be reached. Please try again."
+      : "The connection was interrupted. The outcome may be unknown; check the record before trying again.";
+    throw new ApiRequestError(503, { error: { code: "CONNECTION_ERROR", message, correlation_id: "", details: {} } });
+  }
+  if (!["GET", "HEAD"].includes(method.toUpperCase()) && res.status >= 500) {
+    // A server or gateway failure can occur after a write was accepted.
+    const message = "The service reported a problem. The outcome may be unknown; check the record before trying again.";
+    throw new ApiRequestError(res.status, { error: { code: "CONNECTION_ERROR", message, correlation_id: "", details: {} } });
+  }
   if (res.status === 401) {
     const body = (await res.clone().json().catch(() => null)) as ApiError | null;
-    if (body?.error.code !== "MFA_REQUIRED") redirect("/signin?expired=1"); // session expired
+    if (body?.error?.code !== "MFA_REQUIRED") {
+      if (init.preserveAuthError) throw new ApiRequestError(401, { error: { code: "SESSION_EXPIRED", message: "Your session has expired.", correlation_id: "", details: {} } });
+      const safe = safeCaseReturn(init.returnTo);
+      redirect(safe ? `/signin?expired=1&returnTo=${encodeURIComponent(safe)}` : "/signin?expired=1");
+    }
   }
   return res;
 }
@@ -70,23 +96,33 @@ export async function api<T>(path: string, init: Init = {}): Promise<T> {
     const body = (await res.json().catch(() => null)) as ApiError | null;
     throw new ApiRequestError(res.status, body);
   }
-  return (await res.json()) as T;
+  try {
+    return (await res.json()) as T;
+  } catch {
+    const method = init.method ?? (init.json !== undefined || init.body ? "POST" : "GET");
+    const isRead = ["GET", "HEAD"].includes(method.toUpperCase());
+    const message = isRead
+      ? "The service response could not be read. Please try again."
+      : "The response could not be read. The outcome may be unknown; check the record before trying again.";
+    throw new ApiRequestError(502, { error: { code: isRead ? "INVALID_RESPONSE" : "CONNECTION_ERROR", message, correlation_id: "", details: {} } });
+  }
 }
 
 /** For pages: returns the error instead of throwing so the page can render an error state. */
-export async function load<T>(path: string): Promise<{ data: T; error: null } | { data: null; error: ApiRequestError }> {
+export async function load<T>(path: string, returnTo?: string): Promise<{ data: T; error: null } | { data: null; error: ApiRequestError }> {
   try {
-    return { data: await api<T>(path), error: null };
+    return { data: await api<T>(path, { returnTo }), error: null };
   } catch (e) {
     if (e instanceof ApiRequestError) return { data: null, error: e };
     throw e;
   }
 }
 
-export function listCases(status?: CaseStatus, cursor?: string) {
+export function listCases(status?: CaseStatus, cursor?: string, returnTo?: string, priority?: string) {
   const q = new URLSearchParams();
   if (status) q.set("status", status);
+  if (priority) q.set("priority", priority);
   if (cursor) q.set("cursor", cursor);
   const qs = q.toString();
-  return api<{ items: CaseSummary[]; next_cursor: string | null }>(`/api/v1/cases${qs ? "?" + qs : ""}`);
+  return api<{ items: CaseSummary[]; next_cursor: string | null; applied_filters?: { priority?: string } }>(`/api/v1/cases${qs ? "?" + qs : ""}`, { returnTo });
 }

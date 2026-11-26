@@ -14,16 +14,21 @@ interface Run {
 export default async function Evaluations({ searchParams }: { searchParams: Promise<Record<string, string | undefined>> }) {
   await requireSession();
   const sp = await searchParams;
+  const uncertainAction = typeof sp.error === "string" && sp.error.startsWith("CONNECTION_ERROR:");
   const { data, error } = await load<{ items: Run[]; datasets: string[] }>("/api/v1/evaluations");
   return (
-    <section aria-labelledby="h">
-      <h1 id="h">Evaluation dashboard</h1>
+    <section className="portal-section" aria-labelledby="h">
+      <div className="portal-page-heading">
+        <p className="portal-eyebrow">OVERSIGHT / EVALUATIONS</p>
+        <h1 id="h">Evaluation dashboard</h1>
+      </div>
       <p className="muted">SYNTHETIC evaluation sets. Thresholds are PROPOSED and unapproved (AI-D04): a "pass" here is not an
         acceptance decision.</p>
       <p><Link href="/workspace/evaluation-comparison">Compare recorded evaluation runs →</Link></p>
       <Flash ok={sp.ok} error={sp.error} />
+      {uncertainAction && <p className="warn" role="status">Check the recorded evaluations before another action. <a href="/evaluations">Reload evaluations</a></p>}
       {error ? <ErrorState error={error} what="Evaluations" /> : null}
-      {data && data.datasets.length > 0 ? (
+      {!uncertainAction && data && data.datasets.length > 0 ? (
         <form action={startEvaluation} className="inline panel">
           <label htmlFor="dataset">Dataset</label>
           <select id="dataset" name="dataset">{data.datasets.map((d) => <option key={d}>{d}</option>)}</select>
@@ -40,7 +45,7 @@ export default async function Evaluations({ searchParams }: { searchParams: Prom
             Run {r.evaluation_id.slice(0, 8)}</p>
           <div className="evaluation-results-table" role="region" aria-label={`Evaluation metrics for run ${r.evaluation_id.slice(0, 8)}`} tabIndex={0}><table>
             <caption>Recorded metrics for run {r.evaluation_id.slice(0, 8)}</caption>
-            <thead><tr><th>Metric</th><th>Value</th><th>Threshold</th><th>Threshold status</th><th>Result</th></tr></thead>
+            <thead><tr><th scope="col">Metric</th><th scope="col">Value</th><th scope="col">Threshold</th><th scope="col">Threshold status</th><th scope="col">Result</th></tr></thead>
             <tbody>{Object.entries(r.metrics).map(([k, m]) => (
               <tr key={k}><td>{k}</td><td>{m.value ?? "Not available"}</td><td>{m.threshold ?? "Not recorded"}</td><td>{m.threshold_status}</td>
                 <td>{m.passed === null ? "not evaluated" : m.passed ? "meets recorded threshold" : "does not meet recorded threshold"}</td></tr>))}</tbody>

@@ -5,6 +5,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { entraSettings } from "@/lib/auth-config";
 import { authStore, flowCookieName, sessionCookieName, validHandle } from "@/lib/auth-store";
 import { entraConfiguration, finishLogin } from "@/lib/entra";
+import { safeCaseReturn } from "@/lib/case-return";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -26,7 +27,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
         throw new Error("Session rotation failed");
       }
     }
-    response = NextResponse.redirect(new URL("/", cfg.origin), 303);
+    response = NextResponse.redirect(new URL(safeCaseReturn(login.returnTo) ?? "/", cfg.origin), 303);
     response.cookies.set(sessionCookieName(cfg.secure), login.handle, {
       httpOnly: true, secure: cfg.secure, sameSite: "lax", path: "/",
       maxAge: login.session.exp - Math.floor(Date.now() / 1000),

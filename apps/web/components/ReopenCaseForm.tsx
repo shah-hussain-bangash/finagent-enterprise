@@ -11,7 +11,7 @@ export function ReopenCaseForm({caseId, recordVersion}: {caseId: string; recordV
     try {
       const result = await reopenCase(form);
       if (result.ok) window.location.assign(`/cases/${caseId}?ok=${encodeURIComponent(result.message)}`);
-      else setError(result.message);
+      else { setUncertain(result.uncertain === true); setError(result.message); }
     } catch { setUncertain(true); setError("Could not confirm the request. Reload the case before trying again."); }
   }
   return <form action={submit} className="stack" aria-label="Reopen completed case">

@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { NextRequest } from 'next/server.js';
 import { finishPasswordLogin, passwordLoginEnabled, passwordLoginAvailable, readPasswordForm, revokeStoredSession } from './password-auth.js';
 import { POST } from './password-route.js';
+import { authStore } from './auth-store.js';
 
 Object.assign(process.env, {
   FINAGENT_ENVIRONMENT: 'test', FINAGENT_WEB_AUTH_MODE: 'google',
@@ -53,6 +54,11 @@ test('form decoding preserves password spaces and equals signs', async () => {
   assert.deepEqual(await readPasswordForm(form('email=a%40example.com&password=%20a%3Db%20')),
                    {email:'a@example.com', password:' a=b '});
 });
+test('password form carries one optional case destination and rejects duplicates', async () => {
+  assert.deepEqual(await readPasswordForm(form('email=a&password=b&returnTo=%2Fcases%2Fabc')),
+                   {email:'a', password:'b', returnTo:'/cases/abc'});
+  await assert.rejects(() => readPasswordForm(form('email=a&password=b&returnTo=a&returnTo=b')));
+});
 for (const body of ['email=a&password=b&role=ANALYST', 'email=a&email=b&password=c',
                     'email=a', 'email=a&password=' + 'x'.repeat(4096)]) {
   test('invalid or oversized login form is rejected: ' + body.slice(0, 35), async () => {
@@ -85,6 +91,21 @@ function loginResponse(overrides={}) {
   return {access_token:token, token_type:'Bearer', expires_at:Math.floor(Date.now()/1000)+1700,
           subject:'synthetic-analyst', mfa_satisfied:false, ...overrides};
 }
+test('password route restores only a validated case destination', async () => {
+  const original = globalThis.fetch, methods = { ...authStore }, memory = store();
+  Object.assign(authStore, memory);
+  globalThis.fetch = async (url) => Response.json(url.endsWith('/login') ? loginResponse() : {roles:['ANALYST']});
+  try {
+    const path = '/cases/bf69eaa7-86f5-428f-8e1d-bfa2c57420fd/report';
+    for (const [returnTo, expected] of [[path, path], ['//evil.example', '/']]) {
+      const response = await POST(new NextRequest('http://127.0.0.1:3001/auth/password', {
+        method:'POST', headers:{origin:'http://127.0.0.1:3001', 'Content-Type':'application/x-www-form-urlencoded'},
+        body:new URLSearchParams({email, password, returnTo}),
+      }));
+      assert.equal(response.headers.get('location'), `http://127.0.0.1:3001${expected}`);
+    }
+  } finally { globalThis.fetch = original; Object.assign(authStore, methods); }
+});
 test('successful login returns only an opaque handle and keeps credentials server-side', async () => {
   const original = globalThis.fetch, memory = store();
   const calls = [];

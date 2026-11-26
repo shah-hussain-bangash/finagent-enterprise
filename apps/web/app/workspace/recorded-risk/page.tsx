@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { ConnectedCaseNav } from "@/components/ConnectedCaseNav";
 
 import { Empty, ErrorState, When } from "@/components/ui";
 import { api, ApiRequestError, listCases } from "@/lib/api";
@@ -15,8 +16,9 @@ export default async function RecordedRiskPage({
 }: {
   searchParams: Promise<{ case?: string; cursor?: string }>;
 }) {
-  await requireSession();
   const params = await searchParams;
+  const returnTo = `/workspace/recorded-risk?case=${typeof params.case === "string" ? params.case : ""}`;
+  await requireSession(returnTo);
   const selected = typeof params.case === "string" ? params.case : "";
   const validCase = CASE_ID.test(selected);
   const cursor = typeof params.cursor === "string" ? params.cursor : undefined;
@@ -24,7 +26,7 @@ export default async function RecordedRiskPage({
   let page: Awaited<ReturnType<typeof listCases>> | null = null;
   let pageError: ApiRequestError | null = null;
   try {
-    page = await listCases(undefined, cursor);
+    page = await listCases(undefined, cursor, returnTo);
   } catch (error) {
     if (!(error instanceof ApiRequestError)) throw error;
     pageError = error;
@@ -34,7 +36,7 @@ export default async function RecordedRiskPage({
   let outputError: ApiRequestError | null = null;
   if (validCase) {
     try {
-      const response = await api<{ items: RecordedOutput[] }>(`/api/v1/cases/${selected}/agent-outputs`);
+      const response = await api<{ items: RecordedOutput[] }>(`/api/v1/cases/${selected}/agent-outputs`, { returnTo });
       outputs = response.items;
     } catch (error) {
       if (!(error instanceof ApiRequestError)) throw error;
@@ -53,6 +55,7 @@ export default async function RecordedRiskPage({
       <p><Link href="/workspace" prefetch={false}>← Back to workspace preview</Link></p>
       {validCase && <p><Link href={`/workspace/case-overview?${new URLSearchParams({ case: selected })}`} prefetch={false}>← Back to case overview</Link></p>}
       <h1 id="recorded-risk-title">Recorded case risk indicators</h1>
+      {outputs && <ConnectedCaseNav caseId={selected} active="risk" />}
       <div className="panel">
         <strong>Connected, read-only view</strong>
         <p>This page reads selected recorded AML indicator claims and calculations from the existing API under your account’s case permissions. It does not run detection, change a case, or submit a decision. The workspace also contains illustrative sample screens.</p>
@@ -67,7 +70,7 @@ export default async function RecordedRiskPage({
           <div style={{ overflowX: "auto" }} role="region" aria-label="Case selection table" tabIndex={0}>
             <table>
               <caption>Cases returned for your signed-in account</caption>
-              <thead><tr><th>Case</th><th>Status</th><th>Priority</th><th>Alert type</th><th>Action</th></tr></thead>
+              <thead><tr><th scope="col">Case</th><th scope="col">Status</th><th scope="col">Priority</th><th scope="col">Alert type</th><th scope="col">Action</th></tr></thead>
               <tbody>{page.items.map((item) => (
                 <tr key={item.case_id}>
                   <td>{item.case_id.slice(0, 8)}</td><td>{item.status}</td><td>{item.priority}</td><td>{item.alert_type}</td>

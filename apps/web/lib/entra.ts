@@ -2,6 +2,7 @@ import "server-only";
 import * as oidc from "openid-client";
 import { timingSafeEqual } from "node:crypto";
 import type { EntraSettings } from "./auth-config";
+import { safeCaseReturn } from "./case-return";
 import { authStore, newHandle, validHandle, type AuthStore, type LoginFlow, type StoredSession } from "./auth-store";
 
 let configuration: Promise<oidc.Configuration> | undefined;
@@ -41,13 +42,15 @@ export function requireOrigin(origin: string | null, cfg: EntraSettings): void {
 }
 
 export async function beginLogin(
-  cfg: EntraSettings, config: oidc.Configuration, store: AuthStore = authStore,
+  cfg: EntraSettings, config: oidc.Configuration, store: AuthStore = authStore, returnTo?: string,
 ): Promise<{ location: string; handle: string }> {
   const handle = newHandle();
   const flow: LoginFlow = {
     state: oidc.randomState(), nonce: oidc.randomNonce(), verifier: oidc.randomPKCECodeVerifier(),
     exp: Math.floor(Date.now() / 1000) + 300,
   };
+  const safeReturn = safeCaseReturn(returnTo);
+  if (safeReturn) flow.returnTo = safeReturn;
   const location = oidc.buildAuthorizationUrl(config, {
     redirect_uri: cfg.redirectUri,
     scope: `openid profile ${cfg.scope}`,
@@ -75,7 +78,7 @@ export async function checkApiIdentity(token: string): Promise<ApiIdentity> {
 export async function finishLogin(
   cfg: EntraSettings, config: oidc.Configuration, requestUrl: URL, handle: string,
   checkApi: CheckApi = checkApiIdentity, store: AuthStore = authStore,
-): Promise<{ handle: string; session: StoredSession }> {
+): Promise<{ handle: string; session: StoredSession; returnTo?: string }> {
   if (!validHandle(handle) || requestUrl.pathname !== "/auth/entra/callback" || requestUrl.search.length > 16384) {
     throw new Error("Invalid login transaction");
   }
@@ -113,5 +116,6 @@ export async function finishLogin(
   const sessionHandle = newHandle();
   await store.put("session", sessionHandle, session, ttl);
   // ID and refresh tokens are not persisted. Reauthentication is required at expiry.
-  return { handle: sessionHandle, session };
+  const safeReturn = safeCaseReturn(flow.returnTo);
+  return safeReturn ? { handle: sessionHandle, session, returnTo: safeReturn } : { handle: sessionHandle, session };
 }

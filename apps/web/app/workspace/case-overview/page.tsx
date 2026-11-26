@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { ConnectedCaseNav } from "@/components/ConnectedCaseNav";
 import { Empty, ErrorState, When } from "@/components/ui";
 import { ApiRequestError, listCases, load } from "@/lib/api";
 import { recordedIndicators, type RecordedOutput } from "@/lib/connected-risk";
@@ -11,26 +12,28 @@ interface CaseDetail { case_id: string; status: string; priority: string; alert_
 interface Evidence { items: { evidence_item_id: string; source_type: string; freshness: string; completeness: string }[]; gaps: { code: string; severity: string; detail: string; source_type: string; source_ref: string | null }[] }
 
 export default async function CaseOverview({ searchParams }: { searchParams: Promise<{ case?: string; cursor?: string }> }) {
-  await requireSession();
   const params = await searchParams;
+  const returnTo = `/workspace/case-overview?case=${typeof params.case === "string" ? params.case : ""}`;
+  await requireSession(returnTo);
   const selected = typeof params.case === "string" ? params.case : "";
   const cursor = typeof params.cursor === "string" ? params.cursor : undefined;
   const valid = UUID.test(selected);
   let cases: Awaited<ReturnType<typeof listCases>> | null = null;
   let caseError: ApiRequestError | null = null;
-  try { cases = await listCases(undefined, cursor); }
+  try { cases = await listCases(undefined, cursor, returnTo); }
   catch (error) { if (!(error instanceof ApiRequestError)) throw error; caseError = error; }
-  const detail = valid ? await load<CaseDetail>(`/api/v1/cases/${selected}`) : null;
+  const detail = valid ? await load<CaseDetail>(`/api/v1/cases/${selected}`, returnTo) : null;
   // Follow-up reads use the same authenticated API and occur only after the case read succeeds.
   const [evidence, outputs] = detail?.data ? await Promise.all([
-    load<Evidence>(`/api/v1/cases/${selected}/evidence`),
-    load<{ items: RecordedOutput[] }>(`/api/v1/cases/${selected}/agent-outputs`),
+    load<Evidence>(`/api/v1/cases/${selected}/evidence`, returnTo),
+    load<{ items: RecordedOutput[] }>(`/api/v1/cases/${selected}/agent-outputs`, returnTo),
   ]) : [null, null];
   const link = (path: string) => `${path}?${new URLSearchParams({ case: selected })}`;
   const indicators = (outputs?.data?.items ?? []).flatMap((output) => recordedIndicators(output).map((finding) => ({ output, finding })));
   return <section className="connected-workspace investigation-overview" aria-labelledby="case-overview-title">
     <p><Link href="/workspace" prefetch={false}>← Back to workspace preview</Link></p>
     <h1 id="case-overview-title">Case investigation overview</h1>
+    {detail?.data && <ConnectedCaseNav caseId={selected} active="overview" />}
     <div className="panel investigation-notice"><strong>Connected, read-only view</strong><p>Case details, current evidence and previously recorded indicators may refer to different points in time. Review the original records before making a decision.</p></div>
     <section className="panel"><h2>Choose an accessible case</h2>
       {caseError && <ErrorState error={caseError} what="Cases" />}
@@ -55,7 +58,7 @@ export default async function CaseOverview({ searchParams }: { searchParams: Pro
       <section className="panel"><h2>Current evidence and gaps</h2>
         {evidence?.error && <ErrorState error={evidence.error} what="Evidence" />}
         {evidence?.data && <><p>{evidence.data.items.length} current evidence source(s) · {evidence.data.gaps.length} checklist gap(s)</p>
-          {evidence.data.gaps.length > 0 ? <><p>Checklist gaps are reported per source or document record. A document processing warning does not by itself identify the document selected for investigation.</p><ul className="investigation-gaps">{evidence.data.gaps.map((gap, index) => <li key={index}>{gap.severity} · {gap.code}: {gap.detail}<br /><small>Source: {gap.source_type}{gap.source_ref ? ` · ${gap.source_ref}` : " · Reference not recorded"}</small></li>)}</ul></> : <p>No checklist gaps were returned. Review the underlying evidence before making a decision.</p>}
+          {evidence.data.gaps.length > 0 ? <><p>Checklist gaps are reported per source or document record. A document processing warning does not by itself identify the document selected for investigation.</p><details open><summary>{evidence.data.gaps.length} checklist gap(s) · expand or collapse</summary><ul className="investigation-gaps">{evidence.data.gaps.map((gap, index) => <li key={index}>{gap.severity} · {gap.code}: {gap.detail}<br /><small>Source: {gap.source_type}{gap.source_ref ? ` · ${gap.source_ref}` : " · Reference not recorded"}</small></li>)}</ul></details></> : <p>No checklist gaps were returned. Review the underlying evidence before making a decision.</p>}
           <p><Link prefetch={false} href={link("/workspace/evidence-briefing")}>Review evidence briefing →</Link></p></>}
       </section>
       <section className="panel"><h2>Previously recorded risk indicators</h2>
@@ -63,13 +66,19 @@ export default async function CaseOverview({ searchParams }: { searchParams: Pro
         {outputs?.data && <>{indicators.length === 0 ? <Empty>No recognized recorded indicators were returned. This does not establish that the case has no risk or that detection ran.</Empty> : <ul>{indicators.map(({ output, finding }, index) => <li key={`${output.output_id}-${finding.claim_id}-${index}`}>{finding.claim} · {finding.support_status} · snapshot {output.snapshot_id}</li>)}</ul>}
           <p><Link prefetch={false} href={link("/workspace/recorded-risk")}>Review recorded indicators and calculations →</Link></p></>}
       </section>
-      <section className="panel"><h2>Continue the investigation</h2><ul className="investigation-links">
-        <li><Link prefetch={false} href={link("/workspace/recorded-transactions")}>Review recorded transactions →</Link></li>
-        <li><Link prefetch={false} href={link("/workspace/recorded-provenance")}>Review document provenance →</Link></li>
-        <li><Link prefetch={false} href={link("/workspace/recorded-review")}>Compare recorded report changes →</Link></li>
-        <li><Link prefetch={false} href={link("/workspace/recorded-monitor")}>Inspect recorded investigation runs →</Link></li>
-        <li><Link prefetch={false} href={`/cases/${selected}`}>Open the existing case workflow →</Link></li>
-      </ul></section>
+      <section className="panel"><h2>Continue the investigation</h2>
+        <p>Follow the case through its evidence, documents and report. Connected summaries are read-only; case actions remain in the existing workflow and depend on your permissions.</p>
+        <ol className="investigation-journey">
+          <li><Link prefetch={false} href={link("/workspace/evidence-briefing")}><strong>Inspect evidence</strong><span>Review sources, gaps and conflicts.</span></Link></li>
+          <li><Link prefetch={false} href={link("/workspace/recorded-transactions")}><strong>Review transactions</strong><span>Filter recorded transaction evidence.</span></Link></li>
+          <li><Link prefetch={false} href={link("/workspace/recorded-provenance")}><strong>Review document provenance</strong><span>Inspect versions and extracted fields.</span></Link></li>
+          <li><Link prefetch={false} href={`/cases/${selected}/documents`}><strong>Open case documents</strong><span>Review documents and available case actions.</span></Link></li>
+          <li><Link prefetch={false} href={`/cases/${selected}/report`}><strong>Open the investigation report</strong><span>Review the current report and available actions.</span></Link></li>
+          <li><Link prefetch={false} href={link("/workspace/recorded-review")}><strong>Compare report history</strong><span>Inspect recorded report changes.</span></Link></li>
+          <li><Link prefetch={false} href={link("/workspace/recorded-monitor")}><strong>Inspect investigation runs</strong><span>Review recorded workflow activity.</span></Link></li>
+          <li><Link prefetch={false} href={`/cases/${selected}`}><strong>Open the case workflow</strong><span>Return to case actions and the activity timeline.</span></Link></li>
+        </ol>
+      </section>
     </>}
   </section>;
 }

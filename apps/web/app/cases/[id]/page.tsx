@@ -1,10 +1,10 @@
 import { randomUUID } from "node:crypto";
 import Link from "next/link";
-import { resumeRun, updateCase } from "@/app/actions";
+import { CaseStatusForm } from "@/components/CaseStatusForm";
+import { ResumeWorkflowForm } from "@/components/ResumeWorkflowForm";
 import { StartInvestigationForm } from "@/components/StartInvestigationForm";
 import { ReopenCaseForm } from "@/components/ReopenCaseForm";
 import { StatusBadge } from "@/components/StatusBadge";
-import { SubmitButton } from "@/components/SubmitButton";
 import { Empty, ErrorState, Field, Flash, Tabs, When } from "@/components/ui";
 import { type CaseStatus, load } from "@/lib/api";
 import { requireSession } from "@/lib/session";
@@ -48,20 +48,25 @@ export default async function CaseOverview({ params, searchParams }: {
   params: Promise<{ id: string }>;
   searchParams: Promise<Record<string, string | undefined>>;
 }) {
-  await requireSession();
   const { id } = await params;
+  await requireSession(`/cases/${id}`);
   const sp = await searchParams;
-  const { data: c, error } = await load<CaseDetail>(`/api/v1/cases/${id}`);
+  const uncertainAction = typeof sp.error === "string" && sp.error.startsWith("CONNECTION_ERROR:");
+  const { data: c, error } = await load<CaseDetail>(`/api/v1/cases/${id}`, `/cases/${id}`);
   if (error) return <ErrorState error={error} what="Case" />;
-  const runs = await load<{ items: RunView[] }>(`/api/v1/cases/${id}/workflows`);
+  const runs = await load<{ items: RunView[] }>(`/api/v1/cases/${id}/workflows`, `/cases/${id}`);
   const active = runs.data?.items.find((r) => !["SUCCEEDED", "FAILED", "CANCELLED"].includes(r.status));
   return (
-    <section aria-labelledby="h">
-      <p><Link href="/cases">← Back to case queue</Link></p>
-      <h1 id="h">Case {c.case_id.slice(0, 8)} <StatusBadge status={c.status} /></h1>
-      <p><Link href={`/workspace/case-overview?${new URLSearchParams({ case: c.case_id })}`}>Open connected investigation overview →</Link></p>
+    <section className="case-journey" aria-labelledby="h">
+      <header className="case-page-heading">
+        <p className="portal-eyebrow">INVESTIGATION / CASE OVERVIEW</p>
+        <h1 id="h">Case {c.case_id.slice(0, 8)} <StatusBadge status={c.status} /></h1>
+        <p>Review the case details, investigation runs and recorded activity.</p>
+        <div className="case-heading-links"><Link href="/cases">← Back to case queue</Link><Link href={`/workspace/case-overview?${new URLSearchParams({ case: c.case_id })}`}>Open connected investigation overview →</Link></div>
+      </header>
       <Tabs caseId={id} active="" />
       <Flash ok={sp.ok} error={sp.error} />
+      {uncertainAction && <p className="warn" role="status">Check the recorded case before another action. <a href={`/cases/${id}`}>Reload case</a></p>}
       {c.status === "BLOCKED" ? (
         <p className="warn" role="status"><strong>Blocked:</strong> {c.blocked_reason} (owner: {c.blocked_owner_role})</p>
       ) : null}
@@ -86,7 +91,7 @@ export default async function CaseOverview({ params, searchParams }: {
       {runs.data && runs.data.items.length > 0 ? (
         <div className="case-run-table" role="region" aria-label="Investigation runs table" tabIndex={0}><table>
           <caption>Recorded investigation runs</caption>
-          <thead><tr><th>Run</th><th>Status</th><th>Reason / next action</th><th>Started</th></tr></thead>
+          <thead><tr><th scope="col">Run</th><th scope="col">Status</th><th scope="col">Reason / next action</th><th scope="col">Started</th></tr></thead>
           <tbody>
             {runs.data.items.map((r) => (
               <tr key={r.run_id}>
@@ -99,42 +104,20 @@ export default async function CaseOverview({ params, searchParams }: {
           </tbody>
         </table></div>
       ) : null}
-      {runs.data && !active && ["ASSIGNED", "INVESTIGATING", "REWORK"].includes(c.status) ? (
+      {!uncertainAction && runs.data && !active && ["ASSIGNED", "INVESTIGATING", "REWORK"].includes(c.status) ? (
         <StartInvestigationForm caseId={id} requestKey={randomUUID()} />
       ) : null}
-      {active?.status === "WAITING_EVIDENCE" ? (
-        <form action={resumeRun} className="stack panel">
-          <input type="hidden" name="run_id" value={active.run_id} />
-          <input type="hidden" name="action" value="EVIDENCE_SUPPLIED" />
-          <input type="hidden" name="back" value={`/cases/${id}`} />
-          <label htmlFor="reason">What changed (required)</label>
-          <input id="reason" name="reason" required minLength={5} maxLength={300} />
-          <SubmitButton>Evidence supplied - continue</SubmitButton>
-        </form>
+      {!uncertainAction && active?.status === "WAITING_EVIDENCE" ? (
+        <ResumeWorkflowForm runId={active.run_id} action="EVIDENCE_SUPPLIED" returnPath={`/cases/${id}`} label="What changed (required)" button="Evidence supplied - continue" />
       ) : null}
-      {active?.status === "WAITING_REVIEW" && ["INVESTIGATING", "REWORK"].includes(c.status) ? (
-        <form action={resumeRun} className="stack panel">
-          <input type="hidden" name="run_id" value={active.run_id} />
-          <input type="hidden" name="action" value="REANALYZE" />
-          <input type="hidden" name="back" value={`/cases/${id}`} />
-          <label htmlFor="reanalyze">Re-analyse with fresh evidence (reason)</label>
-          <input id="reanalyze" name="reason" required minLength={5} maxLength={300} />
-          <SubmitButton>Re-run evidence and analysis</SubmitButton>
-        </form>
+      {!uncertainAction && active?.status === "WAITING_REVIEW" && ["INVESTIGATING", "REWORK"].includes(c.status) ? (
+        <ResumeWorkflowForm runId={active.run_id} action="REANALYZE" returnPath={`/cases/${id}`} label="Re-analyse with fresh evidence (reason)" button="Re-run evidence and analysis" />
       ) : null}
-      {["INVESTIGATING", "BLOCKED"].includes(c.status) ? (
-        <form action={updateCase} className="inline panel">
-          <input type="hidden" name="case_id" value={id} />
-          <input type="hidden" name="record_version" value={c.record_version} />
-          <input type="hidden" name="status" value={c.status === "BLOCKED" ? "INVESTIGATING" : "BLOCKED"} />
-          {c.status === "INVESTIGATING" ? <input type="hidden" name="blocked_owner_role" value="ANALYST" /> : null}
-          <label htmlFor="creason">{c.status === "BLOCKED" ? "Resolve block" : "Block case"}: reason</label>
-          <input id="creason" name="reason" required minLength={3} maxLength={300} />
-          <SubmitButton>{c.status === "BLOCKED" ? "Resume investigation" : "Mark blocked"}</SubmitButton>
-        </form>
+      {!uncertainAction && ["INVESTIGATING", "BLOCKED"].includes(c.status) ? (
+        <CaseStatusForm caseId={id} recordVersion={c.record_version} blocked={c.status === "BLOCKED"} />
       ) : null}
 
-      {c.status === "COMPLETED" && c.can_reopen ? (
+      {!uncertainAction && c.status === "COMPLETED" && c.can_reopen ? (
         <div className="panel" aria-labelledby="reopen-heading">
           <h2 id="reopen-heading">Reopen completed case</h2>
           <p id="reopen-help">

@@ -8,6 +8,7 @@ import { redirect } from "next/navigation";
 import { api, ApiRequestError, BASE, raw } from "@/lib/api";
 import { clearSession, setSession } from "@/lib/session";
 import { authMode } from "@/lib/auth-config";
+import { safeCaseReturn } from "@/lib/case-return";
 
 function str(f: FormData, k: string): string {
   const v = f.get(k);
@@ -25,8 +26,14 @@ async function run(back: string, okMessage: string, fn: () => Promise<unknown>):
     await fn();
   } catch (e) {
     if (!(e instanceof ApiRequestError)) throw e;
-    const problems = (e.body?.error.details as { problems?: { code: string }[] } | undefined)?.problems;
-    failure = `${e.code}: ${e.message}${problems ? " (" + problems.map((p) => p.code).join(", ") + ")" : ""}`;
+    const problems = e.body?.error?.details?.problems;
+    const codes = Array.isArray(problems)
+      ? problems.flatMap((problem: unknown) => {
+          if (!problem || typeof problem !== "object" || !("code" in problem)) return [];
+          return typeof problem.code === "string" ? [problem.code] : [];
+        })
+      : [];
+    failure = `${e.code}: ${e.message}${codes.length ? " (" + codes.join(", ") + ")" : ""}`;
   }
   return failure ? to(back, "error", failure) : to(back, "ok", okMessage);
 }
@@ -35,16 +42,26 @@ async function run(back: string, okMessage: string, fn: () => Promise<unknown>):
 export async function signIn(form: FormData): Promise<never> {
   if (authMode() !== "local") redirect("/signin?error=Development%20sign-in%20is%20disabled.");
   const subject = str(form, "subject");
-  const res = await fetch(`${BASE}/api/v1/dev/session`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ subject, mfa: str(form, "mfa") !== "no" }),
-    cache: "no-store",
-  });
+  let res: Response;
+  try {
+    res = await fetch(`${BASE}/api/v1/dev/session`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ subject, mfa: str(form, "mfa") !== "no" }),
+      cache: "no-store",
+      signal: AbortSignal.timeout(10000),
+    });
+  } catch {
+    return to("/signin", "error", "Sign-in is unavailable. Please try again.");
+  }
   if (!res.ok) to("/signin", "error", "Sign-in failed or the development issuer is disabled.");
-  const body = (await res.json()) as { access_token: string; expires_in: number };
+  const body = await res.json().catch(() => null) as { access_token?: unknown; expires_in?: unknown } | null;
+  if (typeof body?.access_token !== "string" || !body.access_token ||
+      typeof body.expires_in !== "number" || !Number.isFinite(body.expires_in) || body.expires_in <= 0) {
+    return to("/signin", "error", "Sign-in is unavailable. Please try again.");
+  }
   await setSession({ token: body.access_token, subject, exp: Math.floor(Date.now() / 1000) + body.expires_in });
-  redirect("/");
+  redirect(safeCaseReturn(str(form, "returnTo")) ?? "/");
 }
 
 export async function signOut(): Promise<never> {
@@ -53,38 +70,57 @@ export async function signOut(): Promise<never> {
 }
 
 // ------------------------------------------------------------------ cases and workflows
-export async function startInvestigation(form: FormData): Promise<{ok: boolean; message: string}> {
+export async function startInvestigation(form: FormData): Promise<{ok: boolean; message: string; uncertain?: boolean}> {
   const caseId = str(form, "case_id");
   try {
     await api("/api/v1/workflows", { json: { case_id: caseId }, idempotencyKey: str(form, "key") || randomUUID() });
     return {ok: true, message: "Investigation queued."};
   } catch (e) {
     if (!(e instanceof ApiRequestError)) throw e;
-    return {ok: false, message: `${e.code}: ${e.message}`};
+    return {ok: false, message: `${e.code}: ${e.message}`, uncertain: e.code === "CONNECTION_ERROR"};
   }
 }
 
-export async function resumeRun(form: FormData): Promise<never> {
+export async function resumeRun(form: FormData): Promise<{ok: boolean; message: string; back: string; uncertain?: boolean}> {
   const runId = str(form, "run_id");
-  return run(str(form, "back") || `/workflows/${runId}`, "Resume requested.", () =>
-    api(`/api/v1/workflows/${runId}/resume`, { json: { action: str(form, "action"), reason: str(form, "reason") } }));
+  const uuid = "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}";
+  if (!new RegExp(`^${uuid}$`, "i").test(runId)) return {ok: false, message: "Invalid workflow identifier.", back: "/operations"};
+  const requestedBack = str(form, "back");
+  const back = new RegExp(`^/cases/${uuid}$`, "i").test(requestedBack) ? requestedBack : `/workflows/${runId}`;
+  try {
+    await api(`/api/v1/workflows/${runId}/resume`, { json: { action: str(form, "action"), reason: str(form, "reason") }, timeoutMs: 30_000 });
+    return {ok: true, message: "Resume requested.", back};
+  } catch (e) {
+    if (!(e instanceof ApiRequestError)) throw e;
+    return {ok: false, message: `${e.code}: ${e.message}`, back, uncertain: e.code === "CONNECTION_ERROR"};
+  }
 }
 
-export async function cancelRun(form: FormData): Promise<never> {
+export async function cancelRun(form: FormData): Promise<{ok: boolean; message: string; uncertain?: boolean}> {
   const runId = str(form, "run_id");
-  return run(`/workflows/${runId}`, "Cancellation requested.", () =>
-    api(`/api/v1/workflows/${runId}/cancel`, { json: { reason: str(form, "reason") } }));
+  try {
+    await api(`/api/v1/workflows/${runId}/cancel`, { json: { reason: str(form, "reason") }, timeoutMs: 30_000 });
+    return {ok: true, message: "Cancellation requested."};
+  } catch (e) {
+    if (!(e instanceof ApiRequestError)) throw e;
+    return {ok: false, message: `${e.code}: ${e.message}`, uncertain: e.code === "CONNECTION_ERROR"};
+  }
 }
 
-export async function updateCase(form: FormData): Promise<never> {
+export async function updateCase(form: FormData): Promise<{ok: boolean; message: string; uncertain?: boolean}> {
   const caseId = str(form, "case_id");
   const body: Record<string, string> = { reason: str(form, "reason") };
   for (const k of ["status", "priority", "blocked_owner_role"]) if (str(form, k)) body[k] = str(form, k);
-  return run(`/cases/${caseId}`, "Case updated.", () =>
-    api(`/api/v1/cases/${caseId}`, { method: "PATCH", json: body, ifMatch: Number(str(form, "record_version")) }));
+  try {
+    await api(`/api/v1/cases/${caseId}`, { method: "PATCH", json: body, ifMatch: Number(str(form, "record_version")), timeoutMs: 30_000 });
+    return {ok: true, message: "Case updated."};
+  } catch (e) {
+    if (!(e instanceof ApiRequestError)) throw e;
+    return {ok: false, message: `${e.code}: ${e.message}`, uncertain: e.code === "CONNECTION_ERROR"};
+  }
 }
 
-export async function reopenCase(form: FormData): Promise<{ok: boolean; message: string}> {
+export async function reopenCase(form: FormData): Promise<{ok: boolean; message: string; uncertain?: boolean}> {
   const caseId = str(form, "case_id");
   if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(caseId)) {
     return {ok: false, message: "Choose a valid case."};
@@ -112,7 +148,7 @@ export async function reopenCase(form: FormData): Promise<{ok: boolean; message:
     return {ok: true, message: "Case reopened. A new draft requires review."};
   } catch (e) {
     if (!(e instanceof ApiRequestError)) throw e;
-    return {ok: false, message: `${e.code}: ${e.message}`};
+    return {ok: false, message: `${e.code}: ${e.message}`, uncertain: e.code === "CONNECTION_ERROR"};
   }
 }
 
@@ -125,7 +161,7 @@ export async function reassign(form: FormData): Promise<never> {
 }
 
 // ------------------------------------------------------------------ evidence and documents
-export async function resolveConflict(form: FormData): Promise<{ok: boolean; message: string}> {
+export async function resolveConflict(form: FormData): Promise<{ok: boolean; message: string; uncertain?: boolean}> {
   const caseId = str(form, "case_id");
   try {
     await api(`/api/v1/cases/${caseId}/evidence-conflicts/${str(form, "conflict_id")}/resolution`, {
@@ -134,23 +170,28 @@ export async function resolveConflict(form: FormData): Promise<{ok: boolean; mes
     return {ok: true, message: "Conflict resolved; both source values are kept."};
   } catch (e) {
     if (!(e instanceof ApiRequestError)) throw e;
-    return {ok: false, message: `${e.code}: ${e.message}`};
+    return {ok: false, message: `${e.code}: ${e.message}`, uncertain: e.code === "CONNECTION_ERROR"};
   }
 }
 
-export async function freezeSnapshot(form: FormData): Promise<never> {
+export async function freezeSnapshot(form: FormData): Promise<{ok: boolean; message: string; uncertain?: boolean}> {
   const caseId = str(form, "case_id");
-  return run(`/cases/${caseId}/evidence`, "Snapshot request processed.", () =>
-    api(`/api/v1/cases/${caseId}/snapshots`, { method: "POST" }));
+  try {
+    await api(`/api/v1/cases/${caseId}/snapshots`, { method: "POST", timeoutMs: 30_000 });
+    return {ok: true, message: "Snapshot request processed."};
+  } catch (e) {
+    if (!(e instanceof ApiRequestError)) throw e;
+    return {ok: false, message: `${e.code}: ${e.message}`, uncertain: e.code === "CONNECTION_ERROR"};
+  }
 }
 
-export async function uploadDocument(form: FormData): Promise<never> {
+export async function uploadDocument(form: FormData): Promise<{ok: boolean; message: string; uncertain?: boolean}> {
   const caseId = str(form, "case_id");
   const file = form.get("file");
-  if (!(file instanceof File) || file.size === 0) to(`/cases/${caseId}/documents`, "error", "Choose a file to upload.");
+  if (!(file instanceof File) || file.size === 0) return {ok: false, message: "Choose a file to upload."};
   const f = file as File;
   const q = new URLSearchParams({ case_id: caseId, document_type: str(form, "document_type"), filename: f.name });
-  return run(`/cases/${caseId}/documents`, "Uploaded. Scanning and parsing status is shown below.", async () => {
+  try {
     const res = await raw(`/api/v1/documents?${q}`, {
       method: "POST",
       body: Buffer.from(await f.arrayBuffer()),
@@ -158,31 +199,48 @@ export async function uploadDocument(form: FormData): Promise<never> {
       idempotencyKey: str(form, "key") || randomUUID(),
     });
     if (!res.ok) throw new ApiRequestError(res.status, await res.json().catch(() => null));
-  });
+    return {ok: true, message: "Uploaded. Scanning and parsing status is shown below."};
+  } catch (e) {
+    if (!(e instanceof ApiRequestError)) throw e;
+    return {ok: false, message: `${e.code}: ${e.message}`, uncertain: e.code === "CONNECTION_ERROR"};
+  }
 }
 
-export async function correctField(form: FormData): Promise<never> {
+export async function correctField(form: FormData): Promise<{ok: boolean; message: string; uncertain?: boolean}> {
   const docId = str(form, "document_id");
-  return run(`/documents/${docId}`, "Correction saved; the original value is preserved.", () =>
-    api(`/api/v1/documents/${docId}/fields/${str(form, "field_id")}/correction`, {
+  try {
+    await api(`/api/v1/documents/${docId}/fields/${str(form, "field_id")}/correction`, {
       json: { value: str(form, "value"), reason: str(form, "reason") },
-    }));
+      timeoutMs: 30_000,
+    });
+    return {ok: true, message: "Correction saved; the original value is preserved."};
+  } catch (e) {
+    if (!(e instanceof ApiRequestError)) throw e;
+    return {ok: false, message: `${e.code}: ${e.message}`, uncertain: e.code === "CONNECTION_ERROR"};
+  }
 }
 
 // ------------------------------------------------------------------ reports and review
-export async function editReport(form: FormData): Promise<never> {
+export async function editReport(form: FormData): Promise<{ok: boolean; message: string; uncertain?: boolean; sessionExpired?: boolean}> {
   const caseId = str(form, "case_id");
   const sections = form.getAll("section_id").map((id, i) => ({
     section_id: String(id),
     text: String(form.getAll("section_text")[i] ?? ""),
   })).filter((s) => s.text.trim().length > 0);
-  return run(`/cases/${caseId}/report`, "Saved as a new report version.", () =>
-    api(`/api/v1/cases/${caseId}/reports/edits`, {
+  try {
+    await api(`/api/v1/cases/${caseId}/reports/edits`, {
       json: { base_version_no: Number(str(form, "base_version_no")), edit_note: str(form, "edit_note"), sections },
-    }));
+      timeoutMs: 30_000,
+      preserveAuthError: true,
+    });
+    return {ok: true, message: "Saved as a new report version."};
+  } catch (e) {
+    if (!(e instanceof ApiRequestError)) throw e;
+    return {ok: false, message: `${e.code}: ${e.message}`, uncertain: e.code === "CONNECTION_ERROR", sessionExpired: e.code === "SESSION_EXPIRED"};
+  }
 }
 
-export async function submitReport(form: FormData): Promise<{ok: boolean; message: string}> {
+export async function submitReport(form: FormData): Promise<{ok: boolean; message: string; uncertain?: boolean}> {
   const caseId = str(form, "case_id");
   try {
     await api(`/api/v1/cases/${caseId}/reports/submit`, {
@@ -192,17 +250,22 @@ export async function submitReport(form: FormData): Promise<{ok: boolean; messag
     return {ok: true, message: "Submitted for independent review."};
   } catch (e) {
     if (!(e instanceof ApiRequestError)) throw e;
-    return {ok: false, message: `${e.code}: ${e.message}`};
+    return {ok: false, message: `${e.code}: ${e.message}`, uncertain: e.code === "CONNECTION_ERROR"};
   }
 }
 
-export async function withdrawReport(form: FormData): Promise<never> {
+export async function withdrawReport(form: FormData): Promise<{ok: boolean; message: string; uncertain?: boolean}> {
   const caseId = str(form, "case_id");
-  return run(`/cases/${caseId}/report`, "Submission withdrawn.", () =>
-    api(`/api/v1/cases/${caseId}/reports/withdraw`, { json: { reason: str(form, "reason") } }));
+  try {
+    await api(`/api/v1/cases/${caseId}/reports/withdraw`, { json: { reason: str(form, "reason") }, timeoutMs: 30_000 });
+    return {ok: true, message: "Submission withdrawn."};
+  } catch (e) {
+    if (!(e instanceof ApiRequestError)) throw e;
+    return {ok: false, message: `${e.code}: ${e.message}`, uncertain: e.code === "CONNECTION_ERROR"};
+  }
 }
 
-export async function decide(form: FormData): Promise<{ok: boolean; message: string}> {
+export async function decide(form: FormData): Promise<{ok: boolean; message: string; uncertain?: boolean}> {
   const id = str(form, "approval_request_id");
   try {
     const res = await raw(`/api/v1/approvals/${id}/decision`, {
@@ -218,7 +281,7 @@ export async function decide(form: FormData): Promise<{ok: boolean; message: str
     return {ok: true, message: "Decision recorded."};
   } catch (e) {
     if (!(e instanceof ApiRequestError)) throw e;
-    return {ok: false, message: `${e.code}: ${e.message}`};
+    return {ok: false, message: `${e.code}: ${e.message}`, uncertain: e.code === "CONNECTION_ERROR"};
   }
 }
 

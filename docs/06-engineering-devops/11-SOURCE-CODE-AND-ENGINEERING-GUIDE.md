@@ -49,7 +49,7 @@ Trace the source, scope and time of evidence through a recorded snapshot before 
 
 ## 5. Example technical review
 
-1. Open the [case study](../07-case-study/08-PORTFOLIO-CASE-STUDY.md) and select the tenant-isolation, AI-boundary or review-separation example.
+1. Open the [case study](../07-case-study/08-CASE-STUDY.md) and select the tenant-isolation, AI-boundary or review-separation example.
 2. Inspect its source file and linked mutation definition. Identify the expected behavior and the change the test deliberately introduces.
 3. Inspect the corresponding [recorded GitHub run](https://github.com/zenithdevelopers7-source/finagent-enterprise/actions/runs/44469329182) and its exact commit. A deliberately failing test can be the expected successful outcome of a mutation check.
 4. Compare with the [evidence register](../05-testing-evidence/12-TESTING-AND-EVIDENCE-REGISTER.md) and identify what has not been verified.

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { ConnectedCaseNav } from "@/components/ConnectedCaseNav";
 import { Empty, ErrorState, When } from "@/components/ui";
 import { api, ApiRequestError, listCases } from "@/lib/api";
 import { requireSession } from "@/lib/session";
@@ -13,8 +14,11 @@ interface DocumentDetail { document_id: string; case_id: string; title: string; 
 interface KycOutput { output_id: string; capability_id: string; status: string; snapshot_id: string; created_at: string; lineage?: { document_selection?: { rule_version: string; review_date: string; basis: string; items: { document_type: string; selection: string; evidence_ref: string | null; source_ref: string | null; processing_status: string | null }[] } }; findings: { claim_id: string; claim: string; claim_type: string; support_status: string; evidence_refs: string[] }[] }
 
 export default async function RecordedProvenance({ searchParams }: { searchParams: Promise<{ case?: string; document?: string; cursor?: string }> }) {
-  await requireSession();
   const params = await searchParams;
+  const value = typeof params.document === "string" ? params.document : "";
+  const returnSelection = UUID.test(value) ? `&document=${value}` : "";
+  const returnTo = `/workspace/recorded-provenance?case=${typeof params.case === "string" ? params.case : ""}${returnSelection}`;
+  await requireSession(returnTo);
   const selected = typeof params.case === "string" ? params.case : "";
   const document = typeof params.document === "string" ? params.document : "";
   const cursor = typeof params.cursor === "string" ? params.cursor : undefined;
@@ -27,19 +31,19 @@ export default async function RecordedProvenance({ searchParams }: { searchParam
   let kycError: ApiRequestError | null = null;
   let detail: DocumentDetail | null = null;
   let detailError: ApiRequestError | null = null;
-  try { cases = await listCases(undefined, cursor); }
+  try { cases = await listCases(undefined, cursor, returnTo); }
   catch (error) { if (!(error instanceof ApiRequestError)) throw error; caseError = error; }
   if (valid) {
-    try { documents = (await api<{ items: DocumentSummary[] }>(`/api/v1/cases/${selected}/documents`)).items; }
+    try { documents = (await api<{ items: DocumentSummary[] }>(`/api/v1/cases/${selected}/documents`, { returnTo })).items; }
     catch (error) { if (!(error instanceof ApiRequestError)) throw error; documentsError = error; }
     if (documents) {
-      try { kycOutputs = (await api<{ items: KycOutput[] }>(`/api/v1/cases/${selected}/agent-outputs`)).items.filter((item) => item.capability_id === "AG-KYC"); }
+      try { kycOutputs = (await api<{ items: KycOutput[] }>(`/api/v1/cases/${selected}/agent-outputs`, { returnTo })).items.filter((item) => item.capability_id === "AG-KYC"); }
       catch (error) { if (!(error instanceof ApiRequestError)) throw error; kycError = error; }
     }
   }
   // Fetch only a document returned by the authorized case list.
   if (UUID.test(document) && documents?.some((item) => item.document_id === document)) {
-    try { detail = await api<DocumentDetail>(`/api/v1/documents/${document}`); }
+    try { detail = await api<DocumentDetail>(`/api/v1/documents/${document}`, { returnTo }); }
     catch (error) { if (!(error instanceof ApiRequestError)) throw error; detailError = error; }
   }
   const link = (value: Record<string, string>) => `/workspace/recorded-provenance?${new URLSearchParams(value)}`;
@@ -47,6 +51,7 @@ export default async function RecordedProvenance({ searchParams }: { searchParam
     <p><Link href="/workspace" prefetch={false}>← Back to workspace preview</Link></p>
     {valid && <p><Link href={`/workspace/case-overview?${new URLSearchParams({ case: selected })}`} prefetch={false}>← Back to case overview</Link></p>}
     <h1 id="provenance-title">Recorded document provenance</h1>
+    {documents && <ConnectedCaseNav caseId={selected} active="documents" />}
     <div className="panel"><strong>Connected, read-only view</strong><p>Review recorded versions and field history for an accessible case. Extracted values require human verification. This view does not change documents or determine authenticity.</p></div>
     <section className="panel"><h2>Choose an accessible case</h2>
       {caseError && <ErrorState error={caseError} what="Cases" />}

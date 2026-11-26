@@ -12,15 +12,18 @@ export default async function Escalations() {
   await requireSession();
   const { data, error } = await load<{ items: Esc[] }>("/api/v1/escalations");
   return (
-    <section aria-labelledby="h">
-      <h1 id="h">Escalation queue</h1>
+    <section className="portal-section" aria-labelledby="h">
+      <div className="portal-page-heading">
+        <p className="portal-eyebrow">INVESTIGATION / ESCALATIONS</p>
+        <h1 id="h">Escalation queue</h1>
+      </div>
       <p className="muted">Due times are PROPOSED defaults (DEC-16); notification delivery state is shown, including failures.</p>
       {error ? <ErrorState error={error} what="Escalations" /> : null}
       {data && data.items.length === 0 ? <Empty>No open escalations were returned for your account.</Empty> : null}
       {data && data.items.length > 0 ? (
         <div className="escalation-table" role="region" aria-label="Escalation table" tabIndex={0}><table>
           <caption>Open escalations in your access scope</caption>
-          <thead><tr><th>Case</th><th>Status when due</th><th>Due</th><th>Escalated</th><th>Owner</th><th>Notification</th></tr></thead>
+          <thead><tr><th scope="col">Case</th><th scope="col">Status when due</th><th scope="col">Due</th><th scope="col">Escalated</th><th scope="col">Owner</th><th scope="col">Notification</th></tr></thead>
           <tbody>{data.items.map((e) => (
             <tr key={e.escalation_id}>
               <td><Link href={`/cases/${e.case_id}`}>{e.case_id.slice(0, 8)}</Link></td>

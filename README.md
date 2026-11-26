@@ -2,6 +2,26 @@
 
 **Human-reviewed AML investigations · Evidence provenance · Governed AI · Enterprise architecture**
 
+### FinAgent interface
+
+**Portal overview** — the synthetic analyst dashboard and current development priorities.
+
+![FinAgent portal overview showing investigation navigation and development priorities](docs/07-case-study/images/portal-overview-2026-11-26.png)
+
+**Capability map** — a structured view of the planned end-to-end product scope.
+
+![FinAgent capability map showing financial investigation capability areas and remaining work](docs/07-case-study/images/capability-map-2026-11-26.png)
+
+**Analyst workspace preview** — illustrative investigation and oversight interfaces.
+
+![FinAgent analyst workspace preview with investigation and oversight navigation](docs/07-case-study/images/analyst-workspace-2026-11-26.png)
+
+*Local development screenshots captured on 26 November 2026 using synthetic data. Some screens reflect local work not yet included in this branch. Capability and improvement cards describe planned work; workspace previews do not perform production actions.*
+
+![FinAgent illustration: an investigation network, evidence documents and a security shield](apps/web/public/investigation-hero.png)
+
+*Investigation portal artwork. The illustration is not a screenshot or a depiction of live banking data.*
+
 **Featured case study:** [Architecting evidence-linked AI investigations with independent human review](docs/07-case-study/08-CASE-STUDY.md) — architecture decisions, governed AI, security, recovery, current engineering evidence and the cloud delivery roadmap.
 
 FinAgent is an enterprise AI engineering portfolio project exploring how analysts can investigate financial-crime alerts with evidence-linked workflows, controlled AI assistance, and independent human review.
@@ -16,7 +36,7 @@ FinAgent is an enterprise AI engineering portfolio project exploring how analyst
 
 > This is not a deployed bank product, a regulatory certification, or an autonomous system for deciding guilt. Local evidence and passing tests apply to the tested version and environment. Live-provider verification, independent assessment, and production acceptance remain open.
 
-**Start here:** [Synthetic investigation walkthrough](docs/workspace-demo-walkthrough.md) · [Architecture-to-code map](docs/02-system-architecture/06-ARCHITECTURE-TO-CODE-MAP.md) · [Current status and release evidence](docs/05-testing-evidence/13-CURRENT-STATUS-AND-RELEASE-EVIDENCE.md) · [Verified main-branch CI · `6c0bb87` · 21 November 2026](https://github.com/shah-hussain-bangash/finagent-enterprise/actions/runs/44917079385) · [Earlier CI baseline](https://github.com/shah-hussain-bangash/finagent-enterprise/actions/runs/44532646751)
+**Start here:** [Synthetic investigation walkthrough](docs/workspace-demo-walkthrough.md) · [Architecture-to-code map](docs/02-system-architecture/06-ARCHITECTURE-TO-CODE-MAP.md) · [Synthetic acceptance record](docs/05-testing-evidence/14-SYNTHETIC-ACCEPTANCE-RECORD.md) · [Latest verified branch CI · `a6c157b`](https://github.com/shah-hussain-bangash/finagent-enterprise/actions/runs/45394113664) · [Verified main-branch CI · `6c0bb87`](https://github.com/shah-hussain-bangash/finagent-enterprise/actions/runs/44917079385)
 
 ## Business problem
 
@@ -107,9 +127,15 @@ The [engineering handbook](docs/06-engineering-devops/05-ENGINEERING-HANDBOOK.md
 
 ## Verification and evidence
 
+On **24 November 2026**, [run #77](https://github.com/shah-hussain-bangash/finagent-enterprise/actions/runs/45394113664) passed all seven jobs at branch revision [`a6c157b`](https://github.com/shah-hussain-bangash/finagent-enterprise/commit/a6c157b8d059fdc1ac93cbaa3d158050395c7ebf). Its browser job passed **17 synthetic scenarios**, including an analyst and independent reviewer completing an investigation and separate recovery checks for an accepted report withdrawal and workflow cancellation after simulated gateway errors. The test suite verifies recorded report versions and evidence references. The CI run built images without publishing or signing them. This evidence applies to that revision and synthetic environment; it is not production or live-provider acceptance.
+
 On **19 November 2026**, GitHub Actions run [#16](https://github.com/shah-hussain-bangash/finagent-enterprise/actions/runs/44532646751) for main-branch commit [`a09dd9f`](https://github.com/shah-hussain-bangash/finagent-enterprise/commit/a09dd9f144eea0612b3268ec50ef2b68c160c456) reported success for all five jobs. The release-blocker selection reported 343 passed and 392 deselected; the full-suite invocation reported 724 passed and 11 deselected. The mutation check caught 82 of its 82 defined mutations. Deselected tests were not run in those invocations. This is evidence for that commit and synthetic CI environment; later changes require their own verification.
 
-| CI job | What that run checked | Scope limit |
+On **23 November 2026**, [run #62](https://github.com/shah-hussain-bangash/finagent-enterprise/actions/runs/45165370460) passed all seven jobs for integration-branch revision [`54b2936`](https://github.com/shah-hussain-bangash/finagent-enterprise/commit/54b2936a40e4faf1bef67e5c862ce39b4f99ae24). Its browser job passed nine synthetic scenarios, including keyboard navigation and recovery after a case update's response was lost; integration, selected security-control mutation checks and container image builds also passed. The browser job uploaded its test report as an artifact. The images were built without being published or signed. This result belongs to that branch and revision, and does not establish a production deployment or acceptance.
+
+On **24 November 2026**, [run #68](https://github.com/shah-hussain-bangash/finagent-enterprise/actions/runs/45354786714) passed all seven jobs for integration-branch revision [`f70ec41`](https://github.com/shah-hussain-bangash/finagent-enterprise/commit/f70ec4197ca8add231ac35017b1a470e5d20ff9f). Ten synthetic browser scenarios passed, including a single case that recovers an uncertain update and continues through evidence review, report submission and independent approval. The test verifies the reviewed version, snapshot and evidence references; it later reopens the case. See the [acceptance record](docs/05-testing-evidence/14-SYNTHETIC-ACCEPTANCE-RECORD.md) for scope and reproduction. This is evidence for the tested revision, not production acceptance.
+
+| CI job | What run #16 checked | Scope limit |
 |---|---|---|
 | Quality | Python lint and type checks, unit tests, API and event-contract drift | Does not establish production behavior |
 | Security | Repository security task and secret-scan step | Not an independent penetration test or a guarantee that all secrets are absent |

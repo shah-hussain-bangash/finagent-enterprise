@@ -69,7 +69,7 @@ async function fixture(options = {}) {
     return Response.json({ access_token: "synthetic-api-access-token", token_type: "Bearer", expires_in: 3600,
       id_token: idToken, refresh_token: "synthetic-never-store-this", ...options.tokens });
   };
-  const login = await beginLogin(cfg, config, store);
+  const login = await beginLogin(cfg, config, store, options.returnTo);
   flow = await store.read("flow", login.handle);
   const callback = new URL(cfg.redirectUri);
   callback.searchParams.set("code", "synthetic-code"); callback.searchParams.set("state", flow.state);
@@ -114,6 +114,16 @@ test("encrypted records are confidential, authenticated and bound to their stora
   assert.throws(() => openRecord(sealed, "session:two"));
   const bytes = Buffer.from(sealed, "base64url"); bytes[bytes.length - 1] ^= 1;
   assert.throws(() => openRecord(bytes.toString("base64url"), "session:one"));
+});
+
+test("case destination is bound to the Google login transaction", async () => {
+  const path = "/cases/bf69eaa7-86f5-428f-8e1d-bfa2c57420fd/report";
+  const f = await fixture({ returnTo: path });
+  assert.equal(f.flow.returnTo, path);
+  assert.equal((await finishLogin(cfg, f.config, f.callback, f.login.handle, f.checkApi, f.store)).returnTo, path);
+  const invalid = await fixture({ returnTo: "//evil.example" });
+  assert.equal(invalid.flow.returnTo, undefined);
+  assert.equal((await finishLogin(cfg, invalid.config, invalid.callback, invalid.login.handle, invalid.checkApi, invalid.store)).returnTo, undefined);
 });
 
 test("code flow uses state, nonce, S256 and an exact callback, retaining only the encrypted ID credential", async () => {
@@ -246,7 +256,8 @@ test("route handlers complete a mocked login using opaque cookies and rotate the
     throw new Error("Unexpected network target");
   };
   try {
-    const start = await POST(new NextRequest(`${cfg.origin}/auth/google/start`, { method: "POST", headers: { origin: cfg.origin } }));
+    const casePath = "/cases/bf69eaa7-86f5-428f-8e1d-bfa2c57420fd/evidence";
+    const start = await POST(new NextRequest(`${cfg.origin}/auth/google/start?returnTo=${encodeURIComponent(casePath)}`, { method: "POST", headers: { origin: cfg.origin } }));
     assert.equal(start.status, 303);
     const flowCookie = start.cookies.get(FLOW_COOKIE);
     assert.ok(validHandle(flowCookie.value));
@@ -262,7 +273,7 @@ test("route handlers complete a mocked login using opaque cookies and rotate the
       headers: { cookie: `${FLOW_COOKIE}=${flowCookie.value}; ${SESSION_COOKIE}=${old}` },
     }));
     assert.equal(response.status, 303);
-    assert.equal(response.headers.get("location"), `${cfg.origin}/`);
+    assert.equal(response.headers.get("location"), `${cfg.origin}${casePath}`);
     assert.equal(response.headers.get("referrer-policy"), "no-referrer");
     assert.equal(response.headers.get("cache-control"), "no-store");
     const sessionCookie = response.cookies.get(SESSION_COOKIE);

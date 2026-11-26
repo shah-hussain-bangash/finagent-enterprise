@@ -1,6 +1,5 @@
 import Link from "next/link";
-import { correctField } from "@/app/actions";
-import { SubmitButton } from "@/components/SubmitButton";
+import { CorrectDocumentFieldForm } from "@/components/CorrectDocumentFieldForm";
 import { Empty, ErrorState, Flash, Json, When } from "@/components/ui";
 import { load } from "@/lib/api";
 import { requireSession } from "@/lib/session";
@@ -33,6 +32,7 @@ export default async function DocumentReview({ params, searchParams }: {
   await requireSession();
   const { id } = await params;
   const sp = await searchParams;
+  const uncertainAction = typeof sp.error === "string" && sp.error.startsWith("CONNECTION_ERROR:");
   const { data: d, error } = await load<Doc>(`/api/v1/documents/${id}`);
   if (error) return <ErrorState error={error} what="Document" />;
   const current = d.versions[0];
@@ -42,6 +42,7 @@ export default async function DocumentReview({ params, searchParams }: {
       <p><Link href={`/cases/${d.case_id}/documents`}>← Back to case documents</Link></p>
       <p><Link href={`/workspace/recorded-provenance?${new URLSearchParams({ case: d.case_id, document: d.document_id })}#document-details`}>View recorded document provenance →</Link></p>
       <Flash ok={sp.ok} error={sp.error} />
+      {uncertainAction && <p className="warn" role="status">Check the recorded document before another action. <a href={`/documents/${id}`}>Reload document</a></p>}
       {current?.quarantine ? (
         <p role="alert" className="flash flash-error">Quarantined ({current.quarantine.reason_code}): {current.quarantine.detail}
           {" "}Owner: {current.quarantine.owner_role}. The original file is not available for download while quarantined.</p>
@@ -55,7 +56,7 @@ export default async function DocumentReview({ params, searchParams }: {
       {d.fields.length === 0 ? <Empty>No fields extracted.</Empty> : (
         <div className="document-review-table" role="region" aria-label="Extracted document fields table" tabIndex={0}><table>
           <caption>Extracted fields and corrections</caption>
-          <thead><tr><th>Field</th><th>Value</th><th>State / validation</th><th>Provenance</th><th>Origin</th><th>Correct</th></tr></thead>
+          <thead><tr><th scope="col">Field</th><th scope="col">Value</th><th scope="col">State / validation</th><th scope="col">Provenance</th><th scope="col">Origin</th><th scope="col">Correct</th></tr></thead>
           <tbody>
             {d.fields.slice(0, 100).map((f) => (
               <tr key={f.field_id}>
@@ -65,15 +66,7 @@ export default async function DocumentReview({ params, searchParams }: {
                 <td>{where(f)}</td>
                 <td>{f.origin}{f.correction_reason ? <div className="muted">{f.correction_reason}</div> : null}</td>
                 <td>
-                  <form action={correctField} className="stack">
-                    <input type="hidden" name="document_id" value={id} />
-                    <input type="hidden" name="field_id" value={f.field_id} />
-                    <label htmlFor={`v-${f.field_id}`}>New value for {f.field_key}</label>
-                    <input id={`v-${f.field_id}`} name="value" required maxLength={1000} />
-                    <label htmlFor={`r-${f.field_id}`}>Reason for correcting {f.field_key}</label>
-                    <input id={`r-${f.field_id}`} name="reason" required minLength={10} maxLength={300} />
-                    <SubmitButton>{`Save correction for ${f.field_key}`}</SubmitButton>
-                  </form>
+                  {!uncertainAction && <CorrectDocumentFieldForm documentId={id} fieldId={f.field_id} fieldKey={f.field_key} />}
                 </td>
               </tr>
             ))}
@@ -89,7 +82,7 @@ export default async function DocumentReview({ params, searchParams }: {
       <h2>Versions</h2>
       {d.versions.length === 0 ? <Empty>No document versions were returned.</Empty> : <div className="document-review-table" role="region" aria-label="Document versions table" tabIndex={0}><table>
         <caption>Recorded document versions</caption>
-        <thead><tr><th>Version</th><th>Status</th><th>Scan</th><th>Parser</th><th>Size / sha256</th><th>Created</th></tr></thead>
+        <thead><tr><th scope="col">Version</th><th scope="col">Status</th><th scope="col">Scan</th><th scope="col">Parser</th><th scope="col">Size / sha256</th><th scope="col">Created</th></tr></thead>
         <tbody>
           {d.versions.map((v) => (
             <tr key={v.version_id}>

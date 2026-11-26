@@ -21,8 +21,11 @@ function recorded(value: unknown): string {
 }
 
 export default async function RecordedMonitor({ searchParams }: { searchParams: Promise<{ case?: string; run?: string; cursor?: string }> }) {
-  await requireSession();
   const params = await searchParams;
+  const value = typeof params.run === "string" ? params.run : "";
+  const returnSelection = UUID.test(value) ? `&run=${value}` : "";
+  const returnTo = `/workspace/recorded-monitor?case=${typeof params.case === "string" ? params.case : ""}${returnSelection}`;
+  await requireSession(returnTo);
   const selected = typeof params.case === "string" ? params.case : "";
   const runId = typeof params.run === "string" ? params.run : "";
   const cursor = typeof params.cursor === "string" ? params.cursor : undefined;
@@ -35,18 +38,18 @@ export default async function RecordedMonitor({ searchParams }: { searchParams: 
   let runError: ApiRequestError | null = null;
   let outputs: Output[] | null = null;
   let outputError: ApiRequestError | null = null;
-  try { cases = await listCases(undefined, cursor); }
+  try { cases = await listCases(undefined, cursor, returnTo); }
   catch (error) { if (!(error instanceof ApiRequestError)) throw error; caseError = error; }
   if (validCase) {
-    try { runs = (await api<{ items: RunSummary[] }>(`/api/v1/cases/${selected}/workflows`)).items; }
+    try { runs = (await api<{ items: RunSummary[] }>(`/api/v1/cases/${selected}/workflows`, { returnTo })).items; }
     catch (error) { if (!(error instanceof ApiRequestError)) throw error; runsError = error; }
   }
   if (UUID.test(runId) && runs?.some((item) => item.run_id === runId)) {
-    try { run = await api<Run>(`/api/v1/workflows/${runId}`); }
+    try { run = await api<Run>(`/api/v1/workflows/${runId}`, { returnTo }); }
     catch (error) { if (!(error instanceof ApiRequestError)) throw error; runError = error; }
   }
   if (run && run.case_id === selected) {
-    try { outputs = (await api<{ items: Output[] }>(`/api/v1/cases/${selected}/agent-outputs`)).items.filter((item) => item.run_id === runId); }
+    try { outputs = (await api<{ items: Output[] }>(`/api/v1/cases/${selected}/agent-outputs`, { returnTo })).items.filter((item) => item.run_id === runId); }
     catch (error) { if (!(error instanceof ApiRequestError)) throw error; outputError = error; }
   }
   const link = (value: Record<string, string>) => `/workspace/recorded-monitor?${new URLSearchParams(value)}`;
@@ -77,7 +80,7 @@ export default async function RecordedMonitor({ searchParams }: { searchParams: 
       <p>Status reason: {run.status_reason}</p>{run.next_action && <p>Next action: {run.next_action}</p>}
       {run.blockers.length > 0 && <><h3>Blockers</h3><ul>{run.blockers.map((item, index) => <li key={index}>{item.code}{item.reason ? `: ${item.reason}` : ""}</li>)}</ul></>}
       <h3>Recorded steps</h3>
-      {run.steps.length === 0 ? <Empty>No recorded steps were returned.</Empty> : <div style={{ overflowX: "auto" }} role="region" aria-label="Recorded workflow steps table" tabIndex={0}><table><caption>Recorded workflow steps</caption><thead><tr><th>Step</th><th>Status</th><th>Attempt</th><th>Error</th><th>Started</th><th>Finished</th><th>Elapsed</th></tr></thead><tbody>{run.steps.map((step, index) => <tr key={index}><td>{step.node}</td><td>{step.status}</td><td>{step.attempt}</td><td>{step.error_code ?? "None recorded"}</td><td><When iso={step.started_at} /></td><td><When iso={step.finished_at} /></td><td>{elapsed(step.started_at, step.finished_at)}</td></tr>)}</tbody></table></div>}
+      {run.steps.length === 0 ? <Empty>No recorded steps were returned.</Empty> : <div style={{ overflowX: "auto" }} role="region" aria-label="Recorded workflow steps table" tabIndex={0}><table><caption>Recorded workflow steps</caption><thead><tr><th scope="col">Step</th><th scope="col">Status</th><th scope="col">Attempt</th><th scope="col">Error</th><th scope="col">Started</th><th scope="col">Finished</th><th scope="col">Elapsed</th></tr></thead><tbody>{run.steps.map((step, index) => <tr key={index}><td>{step.node}</td><td>{step.status}</td><td>{step.attempt}</td><td>{step.error_code ?? "None recorded"}</td><td><When iso={step.started_at} /></td><td><When iso={step.finished_at} /></td><td>{elapsed(step.started_at, step.finished_at)}</td></tr>)}</tbody></table></div>}
       <h3>Recorded agent usage</h3>
       {outputError && <ErrorState error={outputError} what="Agent outputs" />}
       {outputs?.length === 0 && <Empty>No agent outputs associated with this run were returned.</Empty>}

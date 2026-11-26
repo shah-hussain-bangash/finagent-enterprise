@@ -1,6 +1,6 @@
-import { freezeSnapshot } from "@/app/actions";
+import { CasePageHeading } from "@/components/CasePageHeading";
+import { FreezeSnapshotForm } from "@/components/FreezeSnapshotForm";
 import { ResolveConflictForm } from "@/components/ResolveConflictForm";
-import { SubmitButton } from "@/components/SubmitButton";
 import { Empty, ErrorState, Flash, Json, Tabs, When } from "@/components/ui";
 import { load } from "@/lib/api";
 import { requireSession } from "@/lib/session";
@@ -32,16 +32,18 @@ export default async function EvidencePage({ params, searchParams }: {
   params: Promise<{ id: string }>;
   searchParams: Promise<Record<string, string | undefined>>;
 }) {
-  await requireSession();
   const { id } = await params;
+  await requireSession(`/cases/${id}/evidence`);
   const sp = await searchParams;
-  const { data, error } = await load<Evidence>(`/api/v1/cases/${id}/evidence`);
-  const snaps = await load<{ items: Snapshot[] }>(`/api/v1/cases/${id}/snapshots`);
+  const uncertainAction = typeof sp.error === "string" && sp.error.startsWith("CONNECTION_ERROR:");
+  const { data, error } = await load<Evidence>(`/api/v1/cases/${id}/evidence`, `/cases/${id}/evidence`);
+  const snaps = await load<{ items: Snapshot[] }>(`/api/v1/cases/${id}/snapshots`, `/cases/${id}/evidence`);
   return (
-    <section aria-labelledby="h">
-      <h1 id="h">Evidence</h1>
+    <section className="case-journey" aria-labelledby="h">
+      <CasePageHeading caseId={id} title="Evidence" description="Inspect the sources and snapshots recorded for this investigation." />
       <Tabs caseId={id} active="/evidence" />
       <Flash ok={sp.ok} error={sp.error} />
+      {uncertainAction && <p className="warn" role="status">Check the recorded evidence before another action. <a href={`/cases/${id}/evidence`}>Reload evidence</a></p>}
       {error ? <ErrorState error={error} what="Evidence" /> : null}
       {data ? (
         <>
@@ -60,7 +62,7 @@ export default async function EvidencePage({ params, searchParams }: {
               <p><strong>{c.field_key}</strong>: source A says {c.value_a === null ? <em>value not available</em> : <q>{c.value_a}</q>}, source B says {c.value_b === null ? <em>value not available</em> : <q>{c.value_b}</q>}.
                 Status: <span className={`badge badge-${c.status.toLowerCase()}`}>{c.status}</span></p>
               {c.status === "RESOLVED" ? <p>Resolution {c.resolution}: {c.rationale}</p> : null}
-              {c.status === "OPEN" ? (
+              {!uncertainAction && c.status === "OPEN" ? (
                 <ResolveConflictForm caseId={id} conflictId={c.conflict_id} />
               ) : null}
             </div>
@@ -69,7 +71,7 @@ export default async function EvidencePage({ params, searchParams }: {
           {data.items.length === 0 ? <Empty>No current evidence was returned. This does not establish that evidence does not exist.</Empty> : (
             <div className="case-evidence-table" role="region" aria-label="Current evidence table" tabIndex={0}><table>
               <caption>Current evidence sources</caption>
-              <thead><tr><th>Source</th><th>Version</th><th>Freshness / completeness</th><th>As of</th><th>Content</th></tr></thead>
+              <thead><tr><th scope="col">Source</th><th scope="col">Version</th><th scope="col">Freshness / completeness</th><th scope="col">As of</th><th scope="col">Content</th></tr></thead>
               <tbody>
                 {data.items.map((i) => (
                   <tr id={`evidence-${i.evidence_item_id}`} key={i.evidence_item_id}>
@@ -87,15 +89,12 @@ export default async function EvidencePage({ params, searchParams }: {
         </>
       ) : null}
       <h2>Immutable snapshots</h2>
-      {data && <form action={freezeSnapshot} className="inline">
-        <input type="hidden" name="case_id" value={id} />
-        <SubmitButton>Freeze current evidence</SubmitButton>
-      </form>}
+      {data && !uncertainAction && <FreezeSnapshotForm caseId={id} />}
       {snaps.error && <ErrorState error={snaps.error} what="Snapshot history" />}
       {snaps.data && snaps.data.items.length > 0 ? (
         <div className="case-evidence-table" role="region" aria-label="Evidence snapshots table" tabIndex={0}><table>
           <caption>Recorded evidence snapshots</caption>
-          <thead><tr><th>Version</th><th>Completeness</th><th>Open conflicts</th><th>Gaps</th><th>Created</th></tr></thead>
+          <thead><tr><th scope="col">Version</th><th scope="col">Completeness</th><th scope="col">Open conflicts</th><th scope="col">Gaps</th><th scope="col">Created</th></tr></thead>
           <tbody>
             {snaps.data.items.map((s) => (
               <tr key={s.snapshot_id}>

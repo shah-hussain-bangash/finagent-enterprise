@@ -1,6 +1,7 @@
 import { mobileEntryEnabled } from "@/lib/auth-config";
 import { passwordLoginAvailable } from "@/lib/password-auth";
 ﻿import { signIn } from "@/app/actions";
+import { safeCaseReturn } from "@/lib/case-return";
 import { SubmitButton } from "@/components/SubmitButton";
 import { Flash } from "@/components/ui";
 import { BASE } from "@/lib/api";
@@ -363,6 +364,7 @@ export default async function SignIn({
   searchParams: Promise<Record<string, string | undefined>>;
 }) {
   const sp = await searchParams;
+  const caseReturn = safeCaseReturn(sp.returnTo);
   let passwordEnabled = false;
 
   let mode: "local" | "entra" | "google" | null = null;
@@ -542,8 +544,7 @@ export default async function SignIn({
               className="warn fin-login-message"
             >
               Your session has expired or is missing.
-              Please sign in again. After sign-in, you will return to the overview;
-              reopen your case to continue.
+              Please sign in again. {caseReturn ? "After sign-in, we will reopen the requested case page if you have access." : "After sign-in, you will return to the overview; reopen your case to continue."}
             </p>
           ) : null}
 
@@ -551,6 +552,7 @@ export default async function SignIn({
 
           {passwordEnabled ? (
             <form method="post" action="/auth/password" className="stack panel" aria-label="Email and password sign-in">
+              {caseReturn && <input type="hidden" name="returnTo" value={caseReturn} />}
               <label htmlFor="email">Email address</label>
               <input id="email" name="email" type="email" autoComplete="username" required maxLength={254} />
               <label htmlFor="password">Password</label>
@@ -564,7 +566,7 @@ export default async function SignIn({
             <>
               <form
                 method="post"
-                action="/auth/google/start"
+                action={caseReturn ? `/auth/google/start?returnTo=${encodeURIComponent(caseReturn)}` : "/auth/google/start"}
                 className="fin-provider-form"
               >
                 <button
@@ -634,7 +636,7 @@ export default async function SignIn({
           ) : mode === "entra" ? (
             <form
               method="post"
-              action="/auth/entra/start"
+              action={caseReturn ? `/auth/entra/start?returnTo=${encodeURIComponent(caseReturn)}` : "/auth/entra/start"}
               className="fin-provider-form"
             >
               <button
@@ -658,6 +660,7 @@ export default async function SignIn({
               action={signIn}
               className="stack panel"
             >
+              {caseReturn && <input type="hidden" name="returnTo" value={caseReturn} />}
               <p className="warn">
                 LOCAL DEVELOPMENT sign-in with SYNTHETIC identities.
                 Not available in deployed environments.

@@ -43,6 +43,73 @@ test("explains absent evidence without claiming no transactions exist", async ()
   assert.ok(html.includes("does not establish that no transactions exist"));
 });
 
+test("reports an unavailable evidence response instead of rendering an empty result", async () => {
+  for (const response of [null, [], "invalid"]) {
+    const html = renderToStaticMarkup(await loadPage(response)({ searchParams: Promise.resolve({ case: caseId }) }));
+    assert.ok(html.includes("transaction evidence response is unavailable or malformed"));
+    assert.ok(!html.includes("No current transaction evidence is available"));
+  }
+});
+
+test("discloses missing source and gap lists without claiming evidence is absent", async () => {
+  const html = renderToStaticMarkup(await loadPage({ items: null, gaps: null })({ searchParams: Promise.resolve({ case: caseId }) }));
+  assert.ok(html.includes("evidence source list is unavailable or malformed"));
+  assert.ok(html.includes("Evidence gap information is unavailable or malformed"));
+  assert.ok(!html.includes("No current transaction evidence is available"));
+});
+
+test("retains readable sources and gaps while disclosing malformed records", async () => {
+  const sample = structuredClone(evidence);
+  sample.items.push(null, { source_type: "TRANSACTIONS", evidence_item_id: "broken" });
+  sample.gaps.push(null, { source_type: "TRANSACTIONS", detail: "Synthetic stale source" });
+  const html = renderToStaticMarkup(await loadPage(sample)({ searchParams: Promise.resolve({ case: caseId }) }));
+  assert.ok(html.includes("2 evidence source record(s) could not be read"));
+  assert.ok(html.includes("1 evidence gap record(s) could not be read"));
+  assert.ok(html.includes("Synthetic stale source") && html.includes("tx-one"));
+  assert.ok(!html.includes("No current transaction evidence is available"));
+});
+
+test("distinguishes missing or malformed transaction rows from a valid empty list", async () => {
+  for (const content of [null, {}, { items: "invalid" }]) {
+    const sample = structuredClone(evidence);
+    sample.items[0].content = content;
+    const html = renderToStaticMarkup(await loadPage(sample)({ searchParams: Promise.resolve({ case: caseId }) }));
+    assert.ok(html.includes("Transaction rows are unavailable or malformed"));
+    assert.ok(html.includes("does not establish that there are no transactions"));
+    assert.ok(!html.includes("This evidence source contains no transaction rows"));
+    assert.ok(!html.includes("No summarizable posted amounts match the filters"));
+  }
+  const empty = structuredClone(evidence);
+  empty.items[0].content.items = [];
+  const html = renderToStaticMarkup(await loadPage(empty)({ searchParams: Promise.resolve({ case: caseId }) }));
+  assert.ok(html.includes("This evidence source contains no transaction rows"));
+  assert.ok(!html.includes("Transaction rows are unavailable or malformed"));
+});
+
+test("discloses malformed records and renders invalid fields without losing valid rows", async () => {
+  const sample = structuredClone(evidence);
+  sample.items[0].content.items = [
+    null, "bad row", {},
+    { source_transaction_id: "tx-invalid", booking_time: null, amount: 12.5, currency: { unexpected: true }, direction: "CREDIT", status: "POSTED" },
+    evidence.items[0].content.items[0],
+  ];
+  const html = renderToStaticMarkup(await loadPage(sample)({ searchParams: Promise.resolve({ case: caseId }) }));
+  assert.ok(html.includes("2 malformed transaction record(s) could not be displayed"));
+  assert.ok(html.includes("tx-invalid") && html.includes("tx-one"));
+  assert.ok(html.includes("Invalid value") && html.includes("12.5 (unverified format)"));
+  assert.ok(html.includes("Rows not summarized due to unrecognized status, currency, direction or amount: 2"));
+  assert.ok(html.includes("42.00"));
+});
+
+test("does not call a source empty when all its records are malformed", async () => {
+  const sample = structuredClone(evidence);
+  sample.items[0].content.items = [null, "bad row"];
+  const html = renderToStaticMarkup(await loadPage(sample)({ searchParams: Promise.resolve({ case: caseId }) }));
+  assert.ok(html.includes("2 malformed transaction record(s)"));
+  assert.ok(html.includes("No readable transaction records are available"));
+  assert.ok(!html.includes("This evidence source contains no transaction rows"));
+});
+
 test("filters by direction and status without hiding other statuses by default", async () => {
   const page = loadPage();
   const html = renderToStaticMarkup(await page({ searchParams: Promise.resolve({ case: caseId, direction: "DEBIT", status: "PENDING" }) }));
@@ -59,6 +126,23 @@ test("filters by direction and status without hiding other statuses by default",
 test("reports invalid filters instead of silently treating them as valid", async () => {
   const html = renderToStaticMarkup(await loadPage()({ searchParams: Promise.resolve({ case: caseId, status: "INVALID" }) }));
   assert.ok(html.includes("unrecognized filter was ignored"));
+});
+
+test("explains an empty result caused by direction or status filters", async () => {
+  const html = renderToStaticMarkup(await loadPage()({ searchParams: Promise.resolve({ case: caseId, direction: "DEBIT", status: "POSTED" }) }));
+  assert.ok(html.includes("No recorded transactions match the selected filters"));
+  assert.ok(!html.includes("No recorded transactions match this search"));
+});
+
+test("reports invalid and out-of-range transaction pages", async () => {
+  const page = loadPage();
+  for (const selection of [{ page_source: "e1", page: "0" }, { page_source: "missing", page: "2" }, { page: "2" }]) {
+    const html = renderToStaticMarkup(await page({ searchParams: Promise.resolve({ case: caseId, ...selection }) }));
+    assert.ok(html.includes("requested transaction page is invalid or its source is unavailable"));
+  }
+  const html = renderToStaticMarkup(await page({ searchParams: Promise.resolve({ case: caseId, page_source: "e1", page: "9" }) }));
+  assert.ok(html.includes("requested transaction page is unavailable"));
+  assert.ok(html.includes("Showing page 1 of 1 for this source"));
 });
 
 test("paginates each source while totals cover all filtered rows and filters are preserved", async () => {
@@ -82,4 +166,28 @@ test("sums exact posted amounts separately and discloses excluded or unrecognize
   assert.equal(result.totals.length, 3);
   assert.equal(result.excluded, 2);
   assert.equal(result.unrecognized, 2);
+});
+
+test("keeps large synthetic sources separate when filtering and paging", async () => {
+  const sample = structuredClone(evidence);
+  const sourceA = sample.items[0];
+  const sourceB = structuredClone(sourceA);
+  sourceB.evidence_item_id = "e2";
+  sourceB.source_ref = "source-b";
+  const rows = (prefix, count, amount) => Array.from({ length: count }, (_, index) => ({
+    source_transaction_id: `${prefix}-${String(index + 1).padStart(4, "0")}`,
+    booking_time: "2026-01-01", amount, currency: "AED", direction: "CREDIT", status: "POSTED", counterparty_ref: "sample",
+  }));
+  sourceA.content.items = rows("first", 1000, "1.00");
+  sourceB.content.items = rows("second", 700, "2.00");
+  sample.items.push(sourceB);
+  const html = renderToStaticMarkup(await loadPage(sample)({ searchParams: Promise.resolve({
+    case: caseId, q: "sample", direction: "CREDIT", page_source: "e1", page: "2",
+  }) }));
+  assert.ok(html.includes("first-0026") && html.includes("first-0050"));
+  assert.ok(!html.includes("first-0025") && !html.includes("first-0051"));
+  assert.ok(html.includes("second-0001") && html.includes("second-0025"));
+  assert.ok(!html.includes("second-0026"));
+  assert.ok(html.includes("1000.00") && html.includes("1400.00"));
+  assert.ok(html.includes("of 1000 filtered transactions") && html.includes("of 700 filtered transactions"));
 });
