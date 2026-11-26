@@ -57,12 +57,6 @@ FinAgent addresses this problem through a synthetic investigation workflow: a ca
 
 Some workspace screens contain illustrative or unavailable features. Labels in the application and the [workspace preview documentation](docs/workspace-interface-preview.md) identify the intended scope.
 
-### Workspace preview
-
-![FinAgent workspace preview showing a synthetic risk-detection example and investigation navigation](docs/07-case-study/images/workspace-preview-synthetic.png)
-
-*Synthetic workspace preview captured on 26 November 2026. The risk-detection example is illustrative: its assessment is not saved, submitted or linked to a case. Connected case views are identified separately in the application.*
-
 ## Architecture overview
 
 ```mermaid
