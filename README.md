@@ -1,5 +1,7 @@
 # FinAgent Enterprise
 
+**Start here for the CI-tested baseline:** Follow the [setup at `6c0bb87`](https://github.com/shah-hussain-bangash/finagent-enterprise/blob/6c0bb8714e8f4abe991712692b01cffbd32bb73f/README.md#run-locally), the [synthetic investigation walkthrough](https://github.com/shah-hussain-bangash/finagent-enterprise/blob/6c0bb8714e8f4abe991712692b01cffbd32bb73f/docs/workspace-demo-walkthrough.md), and the [five successful CI jobs](https://github.com/shah-hussain-bangash/finagent-enterprise/actions/runs/44917079385) for that revision. [Later portal previews](#finagent-portal-screenshots) show separate development work.
+
 **Human-reviewed AML investigations · Evidence provenance · Governed AI · Enterprise architecture**
 
 ![FinAgent Enterprise sign-in screen with a synthetic demo identity selector](docs/07-case-study/assets/finagent-sign-in.jpg)
@@ -20,7 +22,7 @@ FinAgent is an enterprise AI engineering portfolio project exploring how analyst
 
 > This is not a deployed bank product, a regulatory certification, or an autonomous system for deciding guilt. Local evidence and passing tests apply to the tested version and environment. Live-provider verification, independent assessment, and production acceptance remain open.
 
-**Start here:** [Synthetic investigation walkthrough](docs/workspace-demo-walkthrough.md) · [Architecture-to-code map](docs/02-system-architecture/06-ARCHITECTURE-TO-CODE-MAP.md) · [Current status and release evidence](docs/05-testing-evidence/13-CURRENT-STATUS-AND-RELEASE-EVIDENCE.md) · [Verified main-branch CI · `6c0bb87` · 21 November 2026](https://github.com/shah-hussain-bangash/finagent-enterprise/actions/runs/44917079385) · [Earlier CI baseline](https://github.com/shah-hussain-bangash/finagent-enterprise/actions/runs/44532646751)
+**Additional documentation:** [Synthetic investigation walkthrough](docs/workspace-demo-walkthrough.md) · [Architecture-to-code map](docs/02-system-architecture/06-ARCHITECTURE-TO-CODE-MAP.md) · [Current status and release evidence](docs/05-testing-evidence/13-CURRENT-STATUS-AND-RELEASE-EVIDENCE.md) · [Verified main-branch CI · `6c0bb87` · 21 November 2026](https://github.com/shah-hussain-bangash/finagent-enterprise/actions/runs/44917079385) · [Earlier CI baseline](https://github.com/shah-hussain-bangash/finagent-enterprise/actions/runs/44532646751)
 
 ## FinAgent portal screenshots
 
