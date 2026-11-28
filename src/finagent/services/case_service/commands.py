@@ -156,6 +156,69 @@ def _eligible_assignee(session: Session, ctx: PrincipalContext, principal_id: uu
     return found is not None
 
 
+def search_assignees(
+    session: Session, ctx: PrincipalContext, raw_case_id: str, role: str, term: str
+) -> list[dict[str, str]]:
+    """Find active direct role holders within the authorized case's tenant."""
+    require(ctx, Permission.CASE_ASSIGN)
+    term = term.strip()
+    if (
+        role not in {"ANALYST", "REVIEWER"}
+        or not 2 <= len(term) <= 100
+        or any(ord(c) < 32 or ord(c) == 127 for c in term)
+    ):
+        raise AppError(
+            ErrorCode.SCHEMA_VALIDATION_FAILED, "Choose a role and enter 2 to 100 search characters."
+        )
+    case = queries.load_scoped_case(session, ctx, raw_case_id)
+    if case is None:
+        raise not_found()
+    if CaseStatus(case.status) in CASE_TERMINAL:
+        raise AppError(ErrorCode.CASE_INVALID_STATE, "Completed or cancelled cases cannot be reassigned.")
+    now = datetime.now(UTC)
+    escaped = term.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
+    assigned = select(CaseAssignment.principal_id).where(
+        CaseAssignment.tenant_id == ctx.tenant_id,
+        CaseAssignment.case_id == case.id,
+        CaseAssignment.active.is_(True),
+    )
+    people = session.scalars(
+        select(Principal)
+        .join(
+            RoleAssignment,
+            and_(
+                RoleAssignment.tenant_id == Principal.tenant_id,
+                RoleAssignment.principal_id == Principal.id,
+            ),
+        )
+        .where(
+            Principal.tenant_id == ctx.tenant_id,
+            Principal.kind == "USER",
+            Principal.status == "ACTIVE",
+            RoleAssignment.role == role,
+            RoleAssignment.valid_from <= now,
+            or_(RoleAssignment.valid_to.is_(None), RoleAssignment.valid_to > now),
+            Principal.display_name.ilike(f"%{escaped}%", escape="\\"),
+            ~Principal.id.in_(assigned),
+        )
+        .order_by(Principal.display_name, Principal.id)
+        .limit(20)
+    ).all()
+    audit.record(
+        session,
+        tenant_id=ctx.tenant_id,
+        action="CASE_ASSIGNEE_SEARCHED",
+        object_type="case",
+        object_id=str(case.id),
+        outcome="SUCCESS",
+        actor_principal_id=ctx.principal_id,
+        actor_kind=ctx.kind.value,
+        case_id=case.id,
+        details={"role": role, "returned_count": len(people)},
+    )
+    return [{"id": str(person.id), "display_name": person.display_name} for person in people]
+
+
 def reassign(
     session: Session, ctx: PrincipalContext, raw_case_id: str, body: AssignmentRequest, if_match: int | None
 ) -> dict[str, Any]:

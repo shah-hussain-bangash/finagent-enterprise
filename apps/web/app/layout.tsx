@@ -38,6 +38,11 @@ const NAV: readonly NavItem[] = [
     anyPermission: ["CASE_READ"],
   },
   {
+    href: "/capabilities",
+    label: "Capabilities",
+    anyPermission: ["CASE_READ", "APPROVAL_DECIDE", "PLATFORM_OPERATE", "AUDIT_READ", "EVALUATION_RUN", "TENANT_ADMIN"],
+  },
+  {
     href: "/approvals",
     label: "Approvals",
     anyPermission: ["APPROVAL_DECIDE"],

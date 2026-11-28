@@ -35,6 +35,7 @@ const output = {
 test("renders a recorded indicator and its context for a selected case", async () => {
   let authenticated = false;
   const page = compile("../app/workspace/recorded-risk/page.tsx", {
+    "@/components/ConnectedCaseNav": { ConnectedCaseNav: () => null },
     "next/link": { __esModule: true, default: ({ children, href }) => React.createElement("a", { href }, children) },
     "@/components/ui": {
       Empty: ({ children }) => React.createElement("p", null, children),

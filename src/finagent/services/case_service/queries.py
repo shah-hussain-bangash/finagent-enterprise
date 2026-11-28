@@ -9,11 +9,25 @@ from __future__ import annotations
 
 import base64
 import binascii
+import re
 import uuid
 from datetime import datetime
 from typing import Any
 
-from sqlalchemy import ColumnElement, Select, and_, exists, false, literal, or_, select, true, tuple_
+from sqlalchemy import (
+    ColumnElement,
+    Select,
+    String,
+    and_,
+    cast,
+    exists,
+    false,
+    literal,
+    or_,
+    select,
+    true,
+    tuple_,
+)
 from sqlalchemy.orm import Session
 
 from finagent.core.errors import AppError, ErrorCode
@@ -213,6 +227,7 @@ def list_cases(
     limit: int,
     status: str | None = None,
     priority: str | None = None,
+    case_ref: str | None = None,
     cursor: str | None = None,
 ) -> dict[str, Any]:
     require(ctx, Permission.CASE_READ)
@@ -223,8 +238,18 @@ def list_cases(
         stmt = stmt.where(Case.status == status)
     if priority is not None:
         if priority not in {"LOW", "NORMAL", "HIGH", "URGENT"}:
-            raise AppError(ErrorCode.SCHEMA_VALIDATION_FAILED, "Unknown priority filter.", {"field": "priority"})
+            raise AppError(
+                ErrorCode.SCHEMA_VALIDATION_FAILED, "Unknown priority filter.", {"field": "priority"}
+            )
         stmt = stmt.where(Case.priority == priority)
+    if case_ref is not None:
+        if not re.fullmatch(r"[0-9a-fA-F]{8}", case_ref):
+            raise AppError(
+                ErrorCode.SCHEMA_VALIDATION_FAILED,
+                "Use the first eight characters of the case ID.",
+                {"field": "case_ref"},
+            )
+        stmt = stmt.where(cast(Case.id, String).like(f"{case_ref.lower()}%"))
     if cursor:
         ts, cid = _decode_cursor(cursor)
         stmt = stmt.where(tuple_(Case.created_at, Case.id) < tuple_(literal(ts), literal(cid)))

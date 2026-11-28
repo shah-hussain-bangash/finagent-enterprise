@@ -1,4 +1,5 @@
 import { CasePageHeading } from "@/components/CasePageHeading";
+import { EvidenceReference } from "@/components/EvidenceReference";
 import { randomUUID } from "node:crypto";
 import Link from "next/link";
 import { createExport } from "@/app/actions";
@@ -56,6 +57,7 @@ export default async function ReportPage({ params, searchParams }: {
           <p>Report status <span className={`badge badge-${report?.status.toLowerCase()}`}>{report?.status}</span> - viewing
             version {v.data.version_no} of {v.data.current_version_no} ({v.data.origin}, {v.data.author_label},{" "}
             <When iso={v.data.created_at} />)</p>
+          <p><Link href={`/cases/${id}/evidence/${v.data.snapshot_id}`}>Inspect the evidence snapshot bound to this report version →</Link></p>
           {!isCurrent ? <p className="warn">You are viewing an earlier version. <Link href={`/cases/${id}/report`}>Return to the current report</Link> to manage the current submission.</p> : null}
           {v.data.watermark ? <p className="warn"><strong>{v.data.watermark}</strong></p> : null}
           {!v.data.validation.valid ? (
@@ -73,8 +75,8 @@ export default async function ReportPage({ params, searchParams }: {
           <ul>
             {v.data.claims.map((c) => (
               <li key={c.claim_id} className="claim"><FindingTag kind={c.claim_type} /> {c.text}{" "}
-                <span className="muted">[{c.support_status}; {[...c.evidence_refs, ...c.citation_refs].map((r) =>
-                  r.startsWith("cite:") ? <Link key={r} href={`/policies/chunks/${r.slice(5)}`}>{r} </Link> : `${r} `)}]</span></li>
+                <span className="muted">[{c.support_status}; {[...c.evidence_refs, ...c.citation_refs].length === 0 ? "no references returned" : [...c.evidence_refs, ...c.citation_refs].map((r, index) =>
+                  <span key={`${r}-${index}`}>{index > 0 && ", "}<EvidenceReference reference={r} caseId={id} snapshotId={v.data.snapshot_id} /></span>)}]</span></li>
             ))}
           </ul>
           {v.data.diff_from_previous?.length ? (

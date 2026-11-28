@@ -13,6 +13,7 @@ function page(calls, result = () => ({ items: [], next_cursor: null })) {
     "next/link": { __esModule: true, default: ({ href, children }) => React.createElement("a", { href }, children) },
     "@/components/StatusBadge": { CASE_STATUS_LABEL: labels, StatusBadge: () => null },
     "@/components/ui": { Empty: ({ children }) => React.createElement("p", null, children), ErrorState: () => null, When: () => null },
+    "@/lib/session": { requireSession: async () => ({}) },
     "@/lib/api": { ApiRequestError: class extends Error {}, listCases: async (...args) => { calls.push(args); return result(...args); } },
   };
   const source = readFileSync(new URL("../app/cases/page.tsx", import.meta.url), "utf8");
@@ -25,14 +26,14 @@ function page(calls, result = () => ({ items: [], next_cursor: null })) {
 test("case status filter uses readable labels while retaining service values", async () => {
   const calls = [];
   const html = renderToStaticMarkup(await page(calls)({ searchParams: Promise.resolve({ status: "AWAITING_REVIEW" }) }));
-  assert.deepEqual(calls[0], ["AWAITING_REVIEW", undefined]);
+  assert.deepEqual(calls[0], ["AWAITING_REVIEW", undefined, "/cases?status=AWAITING_REVIEW", undefined, undefined]);
   assert.match(html, /value="AWAITING_REVIEW"[^>]*>Awaiting review/);
 });
 
 test("empty later page directs the analyst to the first page with the filter preserved", async () => {
   const calls = [];
   const html = renderToStaticMarkup(await page(calls)({ searchParams: Promise.resolve({ status: "BLOCKED", cursor: "next" }) }));
-  assert.deepEqual(calls[0], ["BLOCKED", "next"]);
+  assert.deepEqual(calls[0], ["BLOCKED", "next", "/cases?status=BLOCKED", undefined, undefined]);
   assert.ok(html.includes("No cases were returned on this page"));
   assert.ok(html.includes('href="/cases?status=BLOCKED"'));
 });
@@ -59,5 +60,5 @@ test("navigates two full synthetic case pages without losing the status filter",
   assert.match(second, /alert-50/);
   assert.match(second, /alert-99/);
   assert.ok(second.includes('href="/cases?status=INVESTIGATING"'));
-  assert.deepEqual(calls, [["INVESTIGATING", undefined], ["INVESTIGATING", "next /+"]]);
+  assert.deepEqual(calls, [["INVESTIGATING", undefined, "/cases?status=INVESTIGATING", undefined, undefined], ["INVESTIGATING", "next /+", "/cases?status=INVESTIGATING", undefined, undefined]]);
 });

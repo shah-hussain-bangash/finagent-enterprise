@@ -31,11 +31,12 @@ from finagent.database.models import (
 )
 from finagent.database.seeds import sid
 from finagent.database.session import session_factory, transaction
+from finagent.documents.extraction import typed_field
 from finagent.documents.runtime import sandbox_config
 from finagent.integrations.factory import ConnectorFactory
 from finagent.integrations.tool_gateway.gateway import ExecutionContext, ToolGateway
 from finagent.security.authentication.resolver import resolve_principal_by_id
-from finagent.services.document_service.processing import ProcessingConfig, process_pending
+from finagent.services.document_service.processing import ProcessingConfig, _commit, claim, process_pending
 from finagent.services.evidence_service.gathering import gather_case_evidence, process_case_documents
 from finagent.services.evidence_service.items import EvidenceInput, current_items, record_item
 from finagent.services.evidence_service.snapshots import create_snapshot
@@ -175,6 +176,117 @@ def test_upload_is_idempotent_and_conflicts_on_changed_payload(client, token, db
     assert scalar_count(db_url, Document) == 1
     changed = upload(client, token, analyst, case_id, fx.passport_pdf(name="Other"), key="upload-key-0001")
     assert changed.status_code == 409 and changed.json()["error"]["code"] == "IDEMPOTENCY_CONFLICT"
+
+
+def test_older_document_worker_cannot_replace_newer_pending_evidence(client, token, settings, case) -> None:  # type: ignore[no-untyped-def]
+    case_id, analyst = case
+    first = upload(client, token, analyst, case_id, fx.passport_pdf()).json()
+    document_id = first["document_id"]
+    factory = session_factory(settings.database_url.get_secret_value())
+    cfg = ProcessingConfig(sandbox_config(settings), settings.document_max_attempts)
+    claimed = claim(factory, cfg, limit=1)
+    assert len(claimed) == 1
+    old_version, attempt = claimed[0]
+    assert str(old_version) == first["versions"][0]["version_id"]
+    new = client.post(
+        f"/api/v1/documents/{document_id}/versions",
+        content=fx.passport_pdf(name="Updated"),
+        headers={**token(analyst), "Content-Type": PDF, "Idempotency-Key": f"v-{uuid.uuid4()}"},
+    )
+    assert new.status_code == 201, new.text
+
+    def current_document_evidence():  # type: ignore[no-untyped-def]
+        response = client.get(f"/api/v1/cases/{case_id}/evidence", headers=token(analyst))
+        assert response.status_code == 200, response.text
+        return next(item for item in response.json()["items"] if item["source_ref"] == document_id)
+
+    pending = current_document_evidence()
+    assert pending["content"]["version_no"] == 2
+    assert pending["content"]["status"] == "STORED"
+    assert pending["completeness"] == "INCOMPLETE"
+    assert (
+        _commit(
+            factory, cfg, old_version, attempt, {"status": "PARSED", "parser": "synthetic", "segments": []}
+        )
+        == "PARSED"
+    )
+    after_old_worker = current_document_evidence()
+    assert after_old_worker["evidence_item_id"] == pending["evidence_item_id"]
+    assert after_old_worker["content"]["version_no"] == 2
+    assert after_old_worker["content"]["status"] == "STORED"
+
+
+def test_new_version_blocks_corrections_to_previous_fields_and_scopes_segments(
+    client, token, settings, case, monkeypatch
+) -> None:  # type: ignore[no-untyped-def]
+    case_id, analyst = case
+    first = upload(client, token, analyst, case_id, fx.passport_pdf()).json()
+    document_id = first["document_id"]
+    factory = session_factory(settings.database_url.get_secret_value())
+    cfg = ProcessingConfig(sandbox_config(settings), settings.document_max_attempts)
+    version_id, attempt = claim(factory, cfg, limit=1)[0]
+    monkeypatch.setattr(
+        "finagent.services.document_service.processing.extract",
+        lambda *_: [typed_field("full_name", "Synthetic Name", {"page": 1})],
+    )
+    assert (
+        _commit(
+            factory,
+            cfg,
+            version_id,
+            attempt,
+            {
+                "status": "PARSED",
+                "parser": "synthetic",
+                "segments": [{"page": 1, "text": "Sample"}],
+            },
+        )
+        == "PARSED"
+    )
+    version_url = f"/api/v1/documents/{document_id}/versions/{version_id}/segments"
+    segments = client.get(version_url, params={"limit": 1}, headers=token(analyst))
+    assert segments.status_code == 200, segments.text
+    assert segments.json()["items"] == [{"page": 1, "text": "Sample"}]
+    assert client.get(version_url, headers=token(subject("a", "reviewer1"))).status_code == 404
+    before = client.get(f"/api/v1/documents/{document_id}", headers=token(analyst)).json()
+    field = before["fields"][0]
+    assert field["from_current_version"] is True
+    new = client.post(
+        f"/api/v1/documents/{document_id}/versions",
+        content=fx.passport_pdf(name="Updated"),
+        headers={**token(analyst), "Content-Type": PDF, "Idempotency-Key": f"v-{uuid.uuid4()}"},
+    )
+    assert new.status_code == 201, new.text
+    after = client.get(f"/api/v1/documents/{document_id}", headers=token(analyst)).json()
+    assert after["fields"][0]["from_current_version"] is False
+    correction = client.post(
+        f"/api/v1/documents/{document_id}/fields/{field['field_id']}/correction",
+        json={"value": "Updated Name", "reason": "Synthetic source verification"},
+        headers=token(analyst),
+    )
+    assert correction.status_code == 409, correction.text
+    assert correction.json()["error"]["code"] == "VERSION_CONFLICT"
+
+
+def test_document_list_filters_and_pages_stay_within_case_scope(client, token, case) -> None:  # type: ignore[no-untyped-def]
+    case_id, analyst = case
+    first = upload(client, token, analyst, case_id, fx.passport_pdf(), doc_type="PASSPORT")
+    second = upload(client, token, analyst, case_id, fx.passport_pdf(name="Second"), doc_type="PASSPORT")
+    other = upload(client, token, analyst, case_id, fx.passport_pdf(), doc_type="OTHER")
+    assert first.status_code == second.status_code == other.status_code == 201
+    url = f"/api/v1/cases/{case_id}/documents"
+    params = {"limit": 1, "offset": 0, "status": "STORED", "document_type": "PASSPORT"}
+    first_page = client.get(url, params=params, headers=token(analyst))
+    assert first_page.status_code == 200, first_page.text
+    body = first_page.json()
+    assert body["applied_pagination"] == {"limit": 1, "offset": 0}
+    assert body["applied_filters"] == {"status": "STORED", "document_type": "PASSPORT"}
+    assert body["items"][0]["document_id"] == first.json()["document_id"]
+    assert body["next_offset"] == 1
+    second_page = client.get(url, params={**params, "offset": 1}, headers=token(analyst)).json()
+    assert second_page["items"][0]["document_id"] == second.json()["document_id"]
+    assert second_page["next_offset"] is None
+    assert client.get(url, params=params, headers=token(subject("a", "reviewer1"))).status_code == 404
 
 
 @pytest.mark.req("FR-013", "DIR-014", "SPR-017")
@@ -336,11 +448,13 @@ def test_field_correction_keeps_original_and_versions_evidence(client, token, se
     assert [f["value"] for f in got["field_history"] if f["field_key"] == "date_of_birth"] == ["03/04/1985"]
     with transaction(session_factory(db_url)) as s:
         versions = s.scalars(
-            select(EvidenceItem.version_no)
+            select(EvidenceItem)
             .where(EvidenceItem.source_ref == doc["document_id"])
             .order_by(EvidenceItem.version_no)
         ).all()
-    assert list(versions) == [1, 2]
+        assert [item.version_no for item in versions] == [1, 2, 3]
+        assert [item.completeness for item in versions] == ["INCOMPLETE", "COMPLETE", "COMPLETE"]
+        assert [item.status for item in versions] == ["SUPERSEDED", "SUPERSEDED", "CURRENT"]
     assert "MATERIAL_CHANGE_RECORDED" in audit_actions(db_url, case_id=case_id)
 
 

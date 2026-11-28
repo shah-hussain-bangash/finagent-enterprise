@@ -1,4 +1,7 @@
 import { randomUUID } from "node:crypto";
+import { CaseAssignmentForm } from "@/components/CaseAssignmentForm";
+import { CasePriorityForm } from "@/components/CasePriorityForm";
+import { safeCaseReturn } from "@/lib/case-return";
 import Link from "next/link";
 import { CaseStatusForm } from "@/components/CaseStatusForm";
 import { ResumeWorkflowForm } from "@/components/ResumeWorkflowForm";
@@ -24,6 +27,10 @@ export interface CaseDetail {
   due_at: string | null;
   record_version: number;
   can_reopen: boolean;
+  can_reassign?: boolean;
+  reassignment_requires_mfa?: boolean;
+  can_change_block_status?: boolean;
+  block_status_requires_mfa?: boolean;
   reopening_requires_mfa: boolean;
   blocked_reason: string | null;
   blocked_owner_role: string | null;
@@ -51,7 +58,10 @@ export default async function CaseOverview({ params, searchParams }: {
   const { id } = await params;
   await requireSession(`/cases/${id}`);
   const sp = await searchParams;
-  const uncertainAction = typeof sp.error === "string" && sp.error.startsWith("CONNECTION_ERROR:");
+  const requestedQueue = safeCaseReturn(sp.queue);
+  const queueHref = requestedQueue === "/cases" || requestedQueue?.startsWith("/cases?") ? requestedQueue : "/cases";
+  const conflict = typeof sp.error === "string" && sp.error.startsWith("VERSION_CONFLICT:");
+  const uncertainAction = conflict || (typeof sp.error === "string" && sp.error.startsWith("CONNECTION_ERROR:"));
   const { data: c, error } = await load<CaseDetail>(`/api/v1/cases/${id}`, `/cases/${id}`);
   if (error) return <ErrorState error={error} what="Case" />;
   const runs = await load<{ items: RunView[] }>(`/api/v1/cases/${id}/workflows`, `/cases/${id}`);
@@ -62,11 +72,11 @@ export default async function CaseOverview({ params, searchParams }: {
         <p className="portal-eyebrow">INVESTIGATION / CASE OVERVIEW</p>
         <h1 id="h">Case {c.case_id.slice(0, 8)} <StatusBadge status={c.status} /></h1>
         <p>Review the case details, investigation runs and recorded activity.</p>
-        <div className="case-heading-links"><Link href="/cases">← Back to case queue</Link><Link href={`/workspace/case-overview?${new URLSearchParams({ case: c.case_id })}`}>Open connected investigation overview →</Link></div>
+        <div className="case-heading-links"><Link href={queueHref}>← Back to case queue</Link><Link href={`/workspace/case-overview?${new URLSearchParams({ case: c.case_id })}`}>Open connected investigation overview →</Link></div>
       </header>
       <Tabs caseId={id} active="" />
       <Flash ok={sp.ok} error={sp.error} />
-      {uncertainAction && <p className="warn" role="status">Check the recorded case before another action. <a href={`/cases/${id}`}>Reload case</a></p>}
+      {uncertainAction && <p className="warn" role="status">{conflict ? "The case changed while you were working. Review the latest case before another action." : "Check the recorded case before another action."} <a href={`/cases/${id}?${new URLSearchParams({queue: queueHref})}`}>Reload case</a></p>}
       {c.status === "BLOCKED" ? (
         <p className="warn" role="status"><strong>Blocked:</strong> {c.blocked_reason} (owner: {c.blocked_owner_role})</p>
       ) : null}
@@ -84,6 +94,10 @@ export default async function CaseOverview({ params, searchParams }: {
           <Field label="Record version">{c.record_version}</Field>
         </dl>
       </div>
+
+      {!uncertainAction && c.can_reassign && (c.reassignment_requires_mfa
+        ? <p className="warn">Changing assignments or priority requires additional authentication. <Link href="/security">Open account security</Link></p>
+        : <div className="case-supervisor-controls"><CaseAssignmentForm caseId={id} recordVersion={c.record_version} analystId={c.assigned_analyst_id} reviewerId={c.assigned_reviewer_id} queueHref={queueHref} /><CasePriorityForm caseId={id} recordVersion={c.record_version} priority={c.priority} queueHref={queueHref} /></div>)}
 
       <h2>Investigation runs</h2>
       {runs.error ? <ErrorState error={runs.error} what="Runs" /> : null}
@@ -113,9 +127,10 @@ export default async function CaseOverview({ params, searchParams }: {
       {!uncertainAction && active?.status === "WAITING_REVIEW" && ["INVESTIGATING", "REWORK"].includes(c.status) ? (
         <ResumeWorkflowForm runId={active.run_id} action="REANALYZE" returnPath={`/cases/${id}`} label="Re-analyse with fresh evidence (reason)" button="Re-run evidence and analysis" />
       ) : null}
-      {!uncertainAction && ["INVESTIGATING", "BLOCKED"].includes(c.status) ? (
-        <CaseStatusForm caseId={id} recordVersion={c.record_version} blocked={c.status === "BLOCKED"} />
-      ) : null}
+      {!uncertainAction && c.can_change_block_status && (c.block_status_requires_mfa
+        ? <p className="warn">Additional authentication is required to change the case block status. <Link href="/security">Open account security</Link></p>
+        : <CaseStatusForm caseId={id} recordVersion={c.record_version} blocked={c.status === "BLOCKED"} queueHref={queueHref} />)}
+      {!uncertainAction && ["INVESTIGATING", "BLOCKED"].includes(c.status) && c.can_change_block_status === undefined && <p className="muted">Case status controls are unavailable until the connected service provides access information.</p>}
 
       {!uncertainAction && c.status === "COMPLETED" && c.can_reopen ? (
         <div className="panel" aria-labelledby="reopen-heading">

@@ -157,10 +157,11 @@ def store_version(
             },
         )
     )
-    if quarantine:
-        from finagent.services.document_service.processing import record_document_evidence
+    # A newly accepted version supersedes the previous extraction immediately.
+    # Pending or quarantined content is recorded as incomplete until processing finishes.
+    from finagent.services.document_service.processing import record_document_evidence
 
-        record_document_evidence(session, document, version, [], actor)
+    record_document_evidence(session, document, version, [], actor)
     session.flush()
     return version
 

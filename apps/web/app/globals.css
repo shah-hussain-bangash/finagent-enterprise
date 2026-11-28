@@ -93,9 +93,10 @@ h2 { font-size: 1.15rem; margin: 16px 0 8px; }
 .approval-table table { min-width: 570px; }
 @media (max-width: 600px) { .approval-filter label, .approval-filter select, .approval-filter button { width: 100%; } }
 .case-queue-filter { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; }
+.case-ref-help { flex-basis: 100%; color: #52677b; font-size: .85rem; }
 .case-queue-table { overflow-x: auto; }
 .case-queue-table table { min-width: 680px; }
-@media (max-width: 600px) { .case-queue-filter label, .case-queue-filter select, .case-queue-filter button { width: 100%; } }
+@media (max-width: 600px) { .case-queue-filter label, .case-queue-filter input, .case-queue-filter select, .case-queue-filter button { width: 100%; } }
 .case-run-table { overflow-x: auto; }
 .case-run-table table { min-width: 560px; }
 .case-evidence-table { overflow-x: auto; }
@@ -180,6 +181,8 @@ main { padding: 24px; }
 .case-heading-links { display: flex; flex-wrap: wrap; gap: 8px 20px; }
 .case-journey .panel { border-color: #d8e3ec; border-radius: 10px; padding: 18px; box-shadow: 0 3px 12px rgba(18, 54, 82, .04); }
 .case-journey .facts { gap: 14px 20px; }
+.case-supervisor-controls { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr)); gap: 14px; }
+.case-supervisor-controls .panel { margin: 4px 0 12px; }
 .case-journey .field dd { overflow-wrap: anywhere; }
 .case-journey .tabs { gap: 4px; border-bottom-color: #cfdee9; margin: 14px 0 20px; }
 .case-journey .tabs a { color: #31546e; padding: 9px 13px; }
@@ -1176,3 +1179,44 @@ body.portal-authenticated:not(:has(.fa-workspace)):not(:has(.fin-auth-card)) > h
 .capability-preview-panel strong { display: block; color: #473a22; margin-top: 4px; }
 .capability-preview-panel p { margin: 4px 0 0; color: #665538; font-size: .88rem; }
 .capability-preview-panel > a { font-weight: 700; }
+.capabilities-notice { padding: 16px 18px; border: 1px solid #e7d6ad; border-left: 4px solid #b57c19; border-radius: 9px; background: #fff9e9; color: #57431b; }
+.capabilities-notice p { margin: 5px 0 0; }
+.capabilities-map { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr)); gap: 14px; list-style: none; padding: 0; margin: 22px 0; }
+.capabilities-map > li { min-width: 0; }
+.capabilities-map-card { display: flex; gap: 14px; height: 100%; padding: 19px; border: 1px solid #d5e1ea; border-radius: 11px; background: #fff; box-shadow: 0 4px 16px rgba(18, 54, 82, .05); }
+.capabilities-number { display: grid; place-items: center; flex: 0 0 42px; width: 42px; height: 42px; border-radius: 10px; background: #dff3f2; color: #07646a; font-weight: 750; }
+.capabilities-map-card h2 { margin: 2px 0 8px; color: #123b59; font-size: 1.05rem; }
+.capabilities-map-card p { color: #40586c; font-size: .9rem; line-height: 1.5; margin: 8px 0; }
+.capabilities-map-card .capabilities-remaining { color: #596877; }
+.capabilities-map-card a { display: inline-block; margin-top: 8px; font-size: .86rem; font-weight: 700; }
+.capabilities-map-card details { margin: 12px 0; }
+.capabilities-map-card summary { color: #075c6a; cursor: pointer; font-weight: 650; font-size: .88rem; }
+.capabilities-map-card ul { padding-left: 20px; color: #40586c; font-size: .88rem; }
+.dashboard-capability-map { margin: 18px 0; border: 1px solid #d2e1e9; border-radius: 11px; background: #fff; padding: 16px 18px; }
+.dashboard-capability-map > summary { cursor: pointer; color: #123b59; font-weight: 700; }
+.dashboard-capability-map > summary small { margin-left: 10px; color: #526a7a; font-weight: 400; }
+.dashboard-capability-map > p { color: #52677b; font-size: .9rem; }
+.dashboard-capability-map > ol { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr)); gap: 10px; padding: 0; list-style: none; }
+.dashboard-capability-map > ol > li { min-width: 0; padding: 12px; border: 1px solid #d9e7ed; border-radius: 8px; background: #f8fbfc; }
+.dashboard-capability-map li summary { cursor: pointer; color: #123b59; }
+.dashboard-capability-number { display: inline-block; margin-right: 8px; color: #08727a; font-weight: 700; }
+.dashboard-capability-map li p, .dashboard-capability-map li ul { color: #40586c; font-size: .88rem; }
+.dashboard-capability-map li ul { padding-left: 20px; }
+.dashboard-capability-map li a { font-weight: 650; font-size: .86rem; }
+.dashboard-remaining { margin: 18px 0; padding: 20px; border: 1px solid #e6d8b8; border-radius: 11px; background: #fff; box-shadow: 0 4px 16px rgba(18, 54, 82, .05); }
+.dashboard-remaining h2 { margin: 4px 0 8px; }
+.dashboard-remaining > p { color: #52677b; font-size: .9rem; }
+.dashboard-remaining > ul { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr)); gap: 10px; padding: 0; list-style: none; }
+.dashboard-remaining > ul > li { display: flex; flex-direction: column; gap: 7px; padding: 14px; border: 1px solid #e5e0d2; border-radius: 8px; background: #fffdf7; }
+.dashboard-remaining li strong { color: #183b54; }
+.dashboard-remaining li span { flex: 1; color: #465d70; font-size: .87rem; line-height: 1.45; }
+.dashboard-remaining li a { font-weight: 650; font-size: .85rem; }
+.dashboard-remaining .dashboard-remaining-note { margin-bottom: 0; padding-top: 10px; border-top: 1px solid #ece5d8; }
+.dashboard-improvements { margin: 18px 0; padding: 20px; border: 1px solid #d4e3eb; border-radius: 11px; background: #fff; box-shadow: 0 4px 16px rgba(18, 54, 82, .05); }
+.dashboard-improvements h2 { margin: 4px 0 8px; }
+.dashboard-improvements > p { color: #52677b; font-size: .9rem; }
+.dashboard-improvements > ol { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr)); gap: 10px; padding: 0; list-style: none; }
+.dashboard-improvements > ol > li { display: flex; gap: 10px; padding: 14px; border: 1px solid #d9e7ed; border-radius: 8px; background: #f8fbfc; }
+.dashboard-improvements li strong { color: #183b54; }
+.dashboard-improvements li p { color: #465d70; font-size: .87rem; line-height: 1.45; margin: 6px 0; }
+.dashboard-improvements li a { font-weight: 650; font-size: .85rem; }

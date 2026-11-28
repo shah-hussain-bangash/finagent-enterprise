@@ -40,6 +40,23 @@ def investigating(client, token, db_url):  # type: ignore[no-untyped-def]
     return case_id, assigned_analyst(client, token, case_id)
 
 
+def test_assignee_search_is_case_scoped_and_requires_supervisor_mfa(client, token, db_url) -> None:  # type: ignore[no-untyped-def]
+    case_id = ingest(client, token)["case_id"]
+    assigned = assigned_analyst(client, token, case_id)
+    url = f"/api/v1/cases/{case_id}/eligible-assignees"
+    payload = {"role": "ANALYST", "q": "analyst"}
+    response = client.post(url, json=payload, headers=token(SUP))
+    assert response.status_code == 200, response.text
+    results = response.json()["items"]
+    assigned_id = str(principal("a", assigned.split(".")[1].split("@")[0]))
+    assert results and all(person["id"] != assigned_id for person in results)
+    assert all("analyst" in person["display_name"].lower() for person in results)
+    assert client.post(url, json=payload, headers=token(SUP, mfa=False)).status_code == 401
+    assert client.post(url, json=payload, headers=token(assigned)).status_code == 403
+    assert client.post(url, json=payload, headers=token(subject("b", "supervisor1"))).status_code == 404
+    assert "CASE_ASSIGNEE_SEARCHED" in audit_actions(db_url, case_id=case_id)
+
+
 @pytest.mark.req("FR-004", "UI-002", "FR-011", "MST:API-003")
 def test_block_and_resume_with_if_match_reason_and_owner(client, token, db_url, investigating) -> None:  # type: ignore[no-untyped-def]
     case_id, analyst = investigating

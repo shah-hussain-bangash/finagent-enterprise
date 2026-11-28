@@ -11,13 +11,17 @@ const require = createRequire(import.meta.url);
 const caseId = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa";
 function loadPage(runResult) {
   const mocks = {
+    "@/lib/case-navigation": { caseUpdatePath: (id, _queue, kind, message) => `/cases/${id}?${kind}=${encodeURIComponent(message)}` },
+    "@/lib/case-return": { safeCaseReturn: () => null },
+    "@/components/CaseAssignmentForm": { CaseAssignmentForm: () => null },
+    "@/components/CasePriorityForm": { CasePriorityForm: () => null },
     "next/link": { __esModule: true, default: ({ href, children }) => React.createElement("a", { href }, children) },
     "@/app/actions": { reopenCase() {}, resumeRun() {}, startInvestigation() {}, updateCase() {} },
     "@/components/StatusBadge": { StatusBadge: () => null },
     "@/components/SubmitButton": { SubmitButton: ({ children }) => React.createElement("button", null, children) },
     "@/components/ui": { Empty: ({ children }) => React.createElement("p", null, children), ErrorState: () => React.createElement("p", null, "Runs unavailable"), Field: ({ children }) => React.createElement("div", null, children), Flash: () => null, Tabs: () => null, When: () => null },
     "@/lib/session": { requireSession: async () => {} },
-    "@/lib/api": { load: async (path) => path.endsWith("/workflows") ? runResult : { data: { case_id: caseId, status: "INVESTIGATING", alert: { subject_refs: [] }, timeline: [] }, error: null } },
+    "@/lib/api": { load: async (path) => path.endsWith("/workflows") ? runResult : { data: { case_id: caseId, status: "INVESTIGATING", can_change_block_status: true, alert: { subject_refs: [] }, timeline: [] }, error: null } },
   };
   mocks["@/components/StartInvestigationForm"] = loadComponent("StartInvestigationForm", mocks);
   mocks["@/components/ReopenCaseForm"] = loadComponent("ReopenCaseForm", mocks);
@@ -45,7 +49,7 @@ test("offers to start when run history is available and no run is active", async
 test("an interrupted case action requires a reload before offering more changes", async () => {
   const html = await render({ data: { items: [] }, error: null }, { error: "CONNECTION_ERROR: Outcome may be unknown" });
   assert.ok(html.includes("Reload case"));
-  assert.ok(html.includes(`href="/cases/${caseId}"`));
+  assert.ok(html.includes(`href="/cases/${caseId}?queue=%2Fcases"`));
   assert.ok(!html.includes("Start investigation"));
   assert.ok(!html.includes("Mark blocked"));
   assert.ok(html.includes("Investigation runs"));

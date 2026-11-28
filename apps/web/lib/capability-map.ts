@@ -1,0 +1,53 @@
+type Capability = {
+  title: string;
+  description: string;
+  remaining: string;
+  link?: { href: string; label: string; permissions: string[]; kind: "Connected view" | "Interface preview" };
+};
+
+// This is a development map, not an assertion of production acceptance.
+export const CAPABILITIES: Capability[] = [
+  { title: "Portal and user experience", description: "Role-aware navigation, dashboards and case context.", remaining: "Complete consistent screens, accessibility and realistic-volume acceptance.", link: { href: "/", label: "Open portal overview", permissions: ["CASE_READ", "PLATFORM_OPERATE"], kind: "Connected view" } },
+  { title: "Alert intake and case creation", description: "Receive alerts and create traceable cases.", remaining: "Complete approved source integrations and intake recovery.", link: { href: "/cases", label: "Open case queue", permissions: ["CASE_READ"], kind: "Connected view" } },
+  { title: "Case queue and assignment", description: "Find, prioritize and assign investigation work.", remaining: "Complete assignment coverage and validate queue behavior at scale.", link: { href: "/cases", label: "Open case queue", permissions: ["CASE_READ"], kind: "Connected view" } },
+  { title: "Investigation workflow", description: "Move a case through evidence, analysis and follow-up.", remaining: "Complete role-specific journeys, recovery and rework.", link: { href: "/workspace/case-overview", label: "Open case overview", permissions: ["CASE_READ"], kind: "Connected view" } },
+  { title: "Customer and entity context", description: "Review customer, account and relationship context.", remaining: "Connect approved customer sources and validate access and freshness.", link: { href: "/workspace/evidence-briefing", label: "Open evidence briefing", permissions: ["CASE_READ"], kind: "Connected view" } },
+  { title: "Transactions and financial activity", description: "Inspect recorded transactions and their sources.", remaining: "Complete approved source integrations and production-volume handling.", link: { href: "/workspace/recorded-transactions", label: "Open recorded transactions", permissions: ["CASE_READ"], kind: "Connected view" } },
+  { title: "Risk indicators and analysis", description: "Review recorded indicators, calculations and context.", remaining: "Complete approved rule governance and real-source validation.", link: { href: "/workspace/recorded-risk", label: "Open recorded indicators", permissions: ["CASE_READ"], kind: "Connected view" } },
+  { title: "Evidence management", description: "Inspect sources, gaps, conflicts and snapshots.", remaining: "Complete end-to-end evidence handling across all approved sources.", link: { href: "/workspace/evidence-briefing", label: "Open evidence briefing", permissions: ["CASE_READ"], kind: "Connected view" } },
+  { title: "Document management and provenance", description: "Review documents, versions and extracted fields.", remaining: "Complete institution-approved scanning, storage and lifecycle controls.", link: { href: "/workspace/recorded-provenance", label: "Open document provenance", permissions: ["CASE_READ"], kind: "Connected view" } },
+  { title: "Assistant and bilingual evidence", description: "Explore evidence-grounded assistance and language support.", remaining: "Implement and approve connected assistant and bilingual workflows.", link: { href: "/workspace", label: "Open workspace concepts", permissions: ["CASE_READ", "APPROVAL_DECIDE", "PLATFORM_OPERATE"], kind: "Interface preview" } },
+  { title: "Reports and case conclusions", description: "Prepare reports and inspect their recorded versions.", remaining: "Complete the report journey, resilience and release acceptance.", link: { href: "/workspace/recorded-review", label: "Open report history", permissions: ["CASE_READ"], kind: "Connected view" } },
+  { title: "Independent review and approval", description: "Route reports for independent human review.", remaining: "Complete role-specific coverage and institution-approved review rules.", link: { href: "/approvals", label: "Open review requests", permissions: ["APPROVAL_DECIDE"], kind: "Connected view" } },
+  { title: "Escalations and notifications", description: "Track overdue work, ownership and delivery state.", remaining: "Complete approved service levels and notification integrations.", link: { href: "/escalations", label: "Open escalations", permissions: ["CASE_READ"], kind: "Connected view" } },
+  { title: "Supervisor and operations", description: "Monitor workload, workflows and operational conditions.", remaining: "Complete supervisor workflows and operational acceptance.", link: { href: "/operations", label: "Open operations", permissions: ["CASE_READ", "PLATFORM_OPERATE"], kind: "Connected view" } },
+  { title: "Identity and access", description: "Control sign-in, sessions and permitted actions.", remaining: "Validate the selected identity provider, role policies and step-up controls.", link: { href: "/security", label: "Open account security", permissions: ["CASE_READ", "APPROVAL_DECIDE", "PLATFORM_OPERATE", "TENANT_ADMIN"], kind: "Connected view" } },
+  { title: "Audit and governance", description: "Review recorded activity and administrative controls.", remaining: "Complete retention, audit review and institutional governance requirements.", link: { href: "/audit", label: "Open audit history", permissions: ["AUDIT_READ"], kind: "Connected view" } },
+  { title: "AI evaluation and release governance", description: "Manage evaluation and review of AI behavior.", remaining: "Complete approved datasets, monitoring, release decisions and rollback.", link: { href: "/evaluations", label: "Open evaluations", permissions: ["EVALUATION_RUN"], kind: "Connected view" } },
+  { title: "Integrations and data platform", description: "Connect approved systems and manage data lineage.", remaining: "Implement and validate real adapters, secrets, migrations and data controls." },
+  { title: "Security and resilience", description: "Protect services, data and operational continuity.", remaining: "Complete independent security assessment, monitoring, backup and recovery." },
+  { title: "Testing and production acceptance", description: "Verify the complete system in the target environment.", remaining: "Complete role-based, accessibility, performance and recovery checks and obtain institutional approval." },
+];
+// Scope items describe the target product; individual items are not acceptance claims.
+export const CAPABILITY_DETAILS: readonly (readonly string[])[] = [
+  ["Role-aware navigation and dashboards", "Preserved case context", "Loading, empty, error and session states", "Responsive layouts, accessible interaction and large lists", "Clear connected, historical and preview labels"],
+  ["Approved alert ingestion and source validation", "Duplicate detection and case creation", "Manual intake for authorized users", "Intake errors, recovery and source traceability"],
+  ["Status, priority, owner, alert and due-date filters", "Assignment, reassignment and history", "Supervisor workload distribution", "Overdue cases, blocked work and reopening"],
+  ["Guided case journey and recorded next actions", "Analyst notes and rationale", "Blockers, escalation, information requests and rework", "Safe handling of interrupted or uncertain actions"],
+  ["Customer, account and business context", "Beneficial owners and counterparties", "Data freshness, provenance and conflicts", "Sensitive-data access restrictions"],
+  ["Approved transaction sources and transaction detail", "Date, amount, currency, account, counterparty and status filters", "Currency-aware totals and relationship analysis", "Pending, reversed, duplicate and incomplete records", "Scalable large-volume handling"],
+  ["Recorded indicators, rules and calculation context", "Source evidence, time window and rule versions", "Deterministic results, interpretation and uncertainty", "Analyst assessment without asserting wrongdoing"],
+  ["Approved evidence collection, search and filtering", "Freshness, completeness, conflicts and gaps", "Authorized source access and preserved snapshots", "Provenance links from evidence to findings and report claims"],
+  ["Authorized upload, validation and scanning", "Quarantine, extraction and review", "Field corrections and document version history", "Authorized viewing, download and retention"],
+  ["Approved assistant use cases and authorized evidence", "Citations, source access and grounded responses", "Arabic–English review and translation support", "Human review, abstention and injection resistance", "Model and prompt lineage"],
+  ["Structured drafts, editing and analyst rationale", "Claims, citations and evidence validation", "Version comparison and interrupted-save recovery", "Submission and authorized export with correct markings"],
+  ["Independent reviewer routing and separation of duties", "Exact report and evidence snapshot", "Approval, rework, rejection and information requests", "Authentication, drift detection and decision history"],
+  ["Configurable due dates and escalation rules", "Ownership, overdue work and acknowledgement", "Approved notifications and delivery failure tracking", "Supervisor visibility and resolution"],
+  ["Workload, aging and review queues", "Workflow health, errors and recovery", "Evidence freshness and document processing", "Model usage, cost estimates and authorized drill-down"],
+  ["Approved identity provider and secure sessions", "Role, tenant and case-level access", "Multi-factor and step-up authentication", "Access reviews, revocation and emergency access"],
+  ["Traceable activity, evidence, reports and decisions", "Protected audit history and authorized export", "Retention, legal hold and archival", "Ownership, approvals and architecture decisions"],
+  ["Versioned evaluation datasets and metrics", "Grounding, language and security evaluation", "Human approval of releases", "Monitoring, drift detection and rollback"],
+  ["Approved banking, identity, sanctions and document adapters", "Data contracts, validation and change management", "Retry, reconciliation and uncertain outcomes", "Encryption, key management, retention and lineage"],
+  ["Application, infrastructure and supply-chain controls", "Scanning and isolated document processing", "Rate limits, security monitoring and incident response", "Backup, restore, recovery and independent assessment"],
+  ["Unit, integration, API and browser coverage", "Role, accessibility, security and performance acceptance", "Backup, recovery, staging and rollback validation", "Versioned evidence and institutional release approvals"],
+];

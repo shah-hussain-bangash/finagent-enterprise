@@ -10,6 +10,8 @@ import { loadComponent } from "./load-component.mjs";
 const require = createRequire(import.meta.url);
 function pageWithValidation(valid, calls = [], history = false, destinations = []) {
   const mocks = {
+    "@/components/EvidenceReference": { EvidenceReference: ({ reference }) => reference },
+    "@/components/CasePageHeading": { CasePageHeading: ({ title }) => React.createElement("h1", null, title) },
     "next/link": { __esModule: true, default: ({ href, children }) => React.createElement("a", { href }, children) },
     "@/app/actions": { createExport() {}, editReport() {}, submitReport() {}, withdrawReport() {} },
     "@/components/StatusBadge": { FindingTag: () => null },

@@ -18,7 +18,9 @@ from finagent.database.models import (
     DocumentVersion,
     QuarantineRecord,
 )
+from finagent.domain.states import CASE_TERMINAL, CaseStatus
 from finagent.security.authorization.policy import Permission, PrincipalContext, require
+from finagent.services.audit_service import writer as audit
 from finagent.services.case_service.queries import load_scoped_case, scope_filter
 from finagent.services.document_service.processing import field_view, hydrate_field_payloads, next_action
 
@@ -120,6 +122,18 @@ def document_view(session: Session, doc: Document) -> dict[str, Any]:
     )
     hydrate_field_payloads(session, fields)
     current = next((v for v in versions if v.version_no == doc.current_version_no), None)
+    current_extractions = (
+        set(
+            session.scalars(
+                select(DocumentExtraction.id).where(
+                    DocumentExtraction.tenant_id == doc.tenant_id,
+                    DocumentExtraction.version_id == current.id,
+                )
+            ).all()
+        )
+        if current is not None
+        else set()
+    )
     return {
         "document_id": str(doc.id),
         "case_id": str(doc.case_id),
@@ -133,7 +147,11 @@ def document_view(session: Session, doc: Document) -> dict[str, Any]:
         "record_version": doc.record_version,
         "created_at": doc.created_at.isoformat(),
         "versions": [_version_view(session, v) for v in versions],
-        "fields": [field_view(f) for f in fields if f.is_current],
+        "fields": [
+            {**field_view(f), "from_current_version": f.extraction_id in current_extractions}
+            for f in fields
+            if f.is_current
+        ],
         "field_history": [field_view(f) for f in fields if not f.is_current],
     }
 
@@ -143,28 +161,135 @@ def get_document(session: Session, ctx: PrincipalContext, raw_document_id: str) 
     found = load_scoped_document(session, ctx, raw_document_id)
     if found is None:
         raise not_found()
-    return document_view(session, found[0])
+    doc, case = found
+    result = document_view(session, doc)
+    can_upload = (
+        Permission.DOCUMENT_UPLOAD in ctx.permissions
+        and doc.source == "UPLOAD"
+        and CaseStatus(case.status) not in CASE_TERMINAL
+    )
+    result["can_upload_version"] = can_upload
+    result["upload_version_requires_mfa"] = (
+        can_upload and Permission.DOCUMENT_UPLOAD in ctx.step_up and not ctx.mfa_satisfied
+    )
+    can_correct = Permission.CASE_UPDATE in ctx.permissions and CaseStatus(case.status) not in CASE_TERMINAL
+    result["can_correct_fields"] = can_correct
+    result["correct_fields_requires_mfa"] = (
+        can_correct and Permission.CASE_UPDATE in ctx.step_up and not ctx.mfa_satisfied
+    )
+    return result
 
 
-def list_case_documents(session: Session, ctx: PrincipalContext, raw_case_id: str) -> dict[str, Any]:
+def extraction_segments_page(
+    session: Session,
+    ctx: PrincipalContext,
+    raw_document_id: str,
+    raw_version_id: str,
+    offset: int,
+    limit: int,
+) -> dict[str, Any]:
+    """Return a bounded slice of a scoped version's retained extraction payload."""
+    require(ctx, Permission.CASE_READ)
+    found = load_scoped_document(session, ctx, raw_document_id)
+    if found is None:
+        raise not_found()
+    try:
+        version_id = uuid.UUID(raw_version_id)
+    except ValueError as exc:
+        raise not_found() from exc
+    doc = found[0]
+    version = session.scalar(
+        select(DocumentVersion).where(
+            DocumentVersion.tenant_id == ctx.tenant_id,
+            DocumentVersion.document_id == doc.id,
+            DocumentVersion.id == version_id,
+        )
+    )
+    if version is None:
+        raise not_found()
+    extraction = session.scalar(
+        select(DocumentExtraction)
+        .where(DocumentExtraction.tenant_id == ctx.tenant_id, DocumentExtraction.version_id == version.id)
+        .order_by(DocumentExtraction.created_at.desc())
+        .limit(1)
+    )
+    segments = None
+    if extraction is not None:
+        payload = session.scalar(
+            select(DocumentExtractionPayload).where(
+                DocumentExtractionPayload.tenant_id == ctx.tenant_id,
+                DocumentExtractionPayload.extraction_id == extraction.id,
+            )
+        )
+        segments = payload.segments if payload is not None else extraction.segments
+    items = segments[offset : offset + limit] if segments is not None else []
+    next_offset = (
+        offset + len(items) if segments is not None and offset + len(items) < len(segments) else None
+    )
+    audit.record(
+        session,
+        tenant_id=ctx.tenant_id,
+        action="DOCUMENT_SEGMENTS_VIEWED",
+        object_type="document_version",
+        object_id=str(version.id),
+        outcome="SUCCESS",
+        actor_principal_id=ctx.principal_id,
+        actor_kind=ctx.kind.value,
+        case_id=doc.case_id,
+        details={
+            "document_id": str(doc.id),
+            "offset": offset,
+            "returned_count": len(items),
+            "available": segments is not None,
+        },
+    )
+    return {
+        "version_id": str(version.id),
+        "available": segments is not None,
+        "items": items,
+        "next_offset": next_offset,
+    }
+
+
+def list_case_documents(
+    session: Session,
+    ctx: PrincipalContext,
+    raw_case_id: str,
+    *,
+    limit: int | None = None,
+    offset: int = 0,
+    status: str | None = None,
+    document_type: str | None = None,
+) -> dict[str, Any]:
     require(ctx, Permission.CASE_READ)
     case = load_scoped_case(session, ctx, raw_case_id)
     if case is None:
         raise not_found()
-    docs = session.scalars(
-        select(Document)
-        .where(Document.tenant_id == ctx.tenant_id, Document.case_id == case.id)
-        .order_by(Document.created_at)
-    ).all()
-    items = []
-    for d in docs:
-        current = session.scalar(
-            select(DocumentVersion).where(
-                DocumentVersion.tenant_id == d.tenant_id,
-                DocumentVersion.document_id == d.id,
-                DocumentVersion.version_no == d.current_version_no,
-            )
+    stmt = (
+        select(Document, DocumentVersion)
+        .outerjoin(
+            DocumentVersion,
+            and_(
+                DocumentVersion.tenant_id == Document.tenant_id,
+                DocumentVersion.document_id == Document.id,
+                DocumentVersion.version_no == Document.current_version_no,
+            ),
         )
+        .where(Document.tenant_id == ctx.tenant_id, Document.case_id == case.id)
+        .order_by(Document.created_at, Document.id)
+    )
+    if status is not None:
+        stmt = stmt.where(DocumentVersion.status == status)
+    if document_type is not None:
+        stmt = stmt.where(Document.document_type == document_type)
+    if limit is not None:
+        stmt = stmt.offset(offset).limit(limit + 1)
+    documents = session.execute(stmt).all()
+    has_more = limit is not None and len(documents) > limit
+    if limit is not None:
+        documents = documents[:limit]
+    items = []
+    for d, current in documents:
         items.append(
             {
                 "document_id": str(d.id),
@@ -178,4 +303,19 @@ def list_case_documents(session: Session, ctx: PrincipalContext, raw_case_id: st
                 "created_at": d.created_at.isoformat(),
             }
         )
-    return {"items": items}
+    can_upload = (
+        Permission.DOCUMENT_UPLOAD in ctx.permissions and CaseStatus(case.status) not in CASE_TERMINAL
+    )
+    result: dict[str, Any] = {
+        "items": items,
+        "can_upload": can_upload,
+        "upload_requires_mfa": (
+            can_upload and Permission.DOCUMENT_UPLOAD in ctx.step_up and not ctx.mfa_satisfied
+        ),
+    }
+    if limit is not None:
+        result["applied_pagination"] = {"offset": offset, "limit": limit}
+        result["next_offset"] = offset + limit if has_more else None
+    if status is not None or document_type is not None:
+        result["applied_filters"] = {"status": status, "document_type": document_type}
+    return result

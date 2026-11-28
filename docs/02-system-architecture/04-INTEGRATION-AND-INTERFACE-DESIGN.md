@@ -28,6 +28,7 @@ Logical boundaries are shown; this is not a production network diagram. Local so
 | Web to application API | Web BFF → API | Authenticated server-side requests; application authorizes principal, tenant, case and operation | Test local and chosen identity/session flows separately; do not infer live provider acceptance |
 | Case evidence | Web or authorized client → API | Case-scoped evidence, documents, snapshots and conflict resolution | Check authorization, tenant/case isolation, stale/missing data and errors |
 | Evidence search | Authorized client → API | Case-scoped search over current evidence; links point back to source records | Literal search has limitations and is not a risk decision or model answer |
+| Assignee search | Supervisor portal → API | Local work in progress: case-scoped search for active, directly assigned analyst or reviewer roles | Tenant isolation, authorization, MFA, case scope and separation of duties require integration verification |
 | Source connectors | Tool gateway → configured source | Typed source projections and bounded subject/window scope | Mock-bank tests do not establish a live bank contract |
 | Document intake | Authorized client → document service | Versioned upload, scanning interface, quarantine and extraction | Local scanner and parser tests do not establish production scanner efficacy |
 | Model access | Workflow → model gateway → provider | Capability-specific context, budget controls, recorded usage and validated outputs | Synthetic model behavior does not establish live model quality |
@@ -35,6 +36,8 @@ Logical boundaries are shown; this is not a production network diagram. Local so
 | External case-status write | Guarded finalization → source adapter | Narrow write path subject to policy, settings, tenant flag and effect ledger | Disabled by default in local configuration; actual target and reconciliation agreement remain open |
 
 Selected current routes include `GET /api/v1/cases/{case_id}/evidence`, `POST /api/v1/cases/{case_id}/evidence-search`, `GET` and `POST /api/v1/cases/{case_id}/snapshots`, and `GET /api/v1/cases/{case_id}/documents`. Consult the generated specification and source for request shapes, role requirements and error behavior; this table does not replace the contract.
+
+The in-development `POST /api/v1/cases/{case_id}/eligible-assignees` accepts a JSON body with `role` (`ANALYST` or `REVIEWER`) and a name query `q` of 2–100 characters. It returns at most 20 active people with the requested direct role in the case's tenant, excluding current case assignees. Search requires case-assignment permission and any configured step-up authentication. Submission separately rechecks eligibility and separation of duties. The local generated specification includes this interface; end-to-end verification remains outstanding.
 
 ## Source data and compatibility
 

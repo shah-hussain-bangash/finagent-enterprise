@@ -9,6 +9,7 @@ import ts from "typescript";
 const require = createRequire(import.meta.url);
 function loadPage(items) {
   const mocks = {
+    "@/components/CasePageHeading": { CasePageHeading: ({ title }) => React.createElement("h1", null, title) },
     "next/link": { __esModule: true, default: ({ href, children }) => React.createElement("a", { href }, children) },
     "@/components/StatusBadge": { FindingTag: ({ kind }) => React.createElement("span", null, kind) },
     "@/components/ui": { Empty: ({ children }) => React.createElement("p", null, children), ErrorState: () => null, Json: () => null, Tabs: () => null, When: ({ iso }) => React.createElement("time", null, iso) },

@@ -11,6 +11,10 @@ Check "python 3.12" ((python --version 2>&1) -match "3\.12") (python --version 2
 Check "node >= 22" ((node --version) -match "^v2[2-9]") (node --version)
 Check "docker" ([bool](Get-Command docker -ErrorAction SilentlyContinue)) ""
 Check ".venv" (Test-Path ".venv\Scripts\python.exe") ""
+if (Test-Path ".venv\Scripts\python.exe") {
+    $venvVersion = & .venv\Scripts\python.exe --version 2>&1
+    Check "project Python executable" ($LASTEXITCODE -eq 0) $(if ($LASTEXITCODE -eq 0) { "$venvVersion" } else { "The project environment could not start; repair it before setup." })
+}
 Check ".env present" (Test-Path ".env") ""
 if (Test-Path ".env") {
     $keys = Get-Content .env | Where-Object { $_ -match "^[A-Z_]+=" } | ForEach-Object { ($_ -split "=", 2)[0] }
@@ -22,6 +26,10 @@ $ps = docker compose ps --format "{{.Service}}={{.State}}" 2>$null
 foreach ($svc in "postgres", "redis", "mock-bank") { Check "container $svc" ($ps -match "$svc=running") "" }
 try { $r = Invoke-WebRequest -UseBasicParsing "http://127.0.0.1:$ApiPort/health/ready" -TimeoutSec 3; Check "api ready" ($r.StatusCode -eq 200) "" }
 catch { Check "api ready" $false "not reachable on $ApiPort" }
+try {
+    $passwordConfig = Invoke-RestMethod "http://127.0.0.1:$ApiPort/api/v1/auth/password/config" -TimeoutSec 3
+    Check "password sign-in" ($passwordConfig.enabled -eq $true) $(if ($passwordConfig.enabled -eq $true) { "enabled" } else { "disabled or unavailable; check local auth configuration" })
+} catch { Check "password sign-in" $false "API configuration not reachable on $ApiPort" }
 try { $r = Invoke-WebRequest -UseBasicParsing "http://127.0.0.1:$WebPort/signin" -TimeoutSec 5; Check "web" ($r.StatusCode -eq 200) "" }
 catch { Check "web" $false "not reachable on $WebPort" }
 try { $r = Invoke-WebRequest -UseBasicParsing "http://127.0.0.1:8100/docs" -TimeoutSec 3; Check "mock bank" ($r.StatusCode -eq 200) "" }

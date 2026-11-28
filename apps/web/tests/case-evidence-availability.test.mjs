@@ -10,6 +10,10 @@ import { loadComponent } from "./load-component.mjs";
 const require = createRequire(import.meta.url);
 function loadPage(evidence, snapshots) {
   const mocks = {
+    "next/link": { __esModule: true, default: ({ href, children }) => React.createElement("a", { href }, children) },
+    "@/app/workspace/evidence-briefing/EvidenceSearch": { EvidenceSearch: () => null },
+    "@/components/DocumentEvidenceLink": { DocumentEvidenceLink: () => null },
+    "@/components/CasePageHeading": { CasePageHeading: ({ title }) => React.createElement("h1", null, title) },
     "@/app/actions": { freezeSnapshot() {}, resolveConflict() {} },
     "@/components/SubmitButton": { SubmitButton: ({ children }) => React.createElement("button", null, children) },
     "@/components/ui": { Empty: ({ children }) => React.createElement("p", null, children), ErrorState: ({ what }) => React.createElement("p", null, `${what} unavailable`), Flash: () => null, Json: () => null, Tabs: () => null, When: () => null },

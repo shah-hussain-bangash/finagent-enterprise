@@ -236,6 +236,10 @@ test("interrupted mutations return an explicit uncertain outcome", async () => {
   form.set("case_id", "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa");
   form.set("record_version", "1");
   form.set("reason", "Synthetic reason");
+  form.set("status", "INVESTIGATING");
+  form.set("document_id", "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa");
+  form.set("field_id", "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb");
+  form.set("value", "Synthetic value");
   for (const name of ["startInvestigation", "reopenCase", "updateCase", "resolveConflict", "freezeSnapshot", "correctField", "editReport", "submitReport", "withdrawReport", "cancelRun", "decide"]) {
     const result = await actions[name](form);
     assert.equal(result.ok, false, name);
@@ -288,6 +292,7 @@ test("case status updates use a bounded request timeout", async () => {
   form.set("case_id", "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa");
   form.set("record_version", "1");
   form.set("reason", "Synthetic reason");
+  form.set("status", "INVESTIGATING");
   assert.equal((await updateCase(form)).ok, true);
   assert.equal(options.timeoutMs, 30_000);
 });

@@ -8,10 +8,12 @@ import ts from "typescript";
 import { loadComponent } from "./load-component.mjs";
 
 const require = createRequire(import.meta.url);
-function loadPage(versions = []) {
-  const field = (id, key) => ({ field_id: id, field_key: key, value: null, value_state: "MISSING", validation_status: "UNVERIFIED", origin: "EXTRACTED" });
-  const data = { document_id: "document-1", case_id: "case-1", title: "Sample", document_type: "PASSPORT", versions, fields: [field("field-1", "full_name"), field("field-2", "expiry_date")], field_history: [] };
+function loadPage(versions = [{ version_id: "version-1", version_no: 1, status: "PARSED", downloadable: false, extraction: null, sha256: "abc", size_bytes: 10 }]) {
+  const field = (id, key) => ({ field_id: id, field_key: key, value: null, value_state: "MISSING", validation_status: "UNVERIFIED", origin: "EXTRACTED", from_current_version: true });
+  const data = { document_id: "document-1", case_id: "case-1", title: "Sample", document_type: "PASSPORT", current_version_no: 1, can_correct_fields: true, versions, fields: [field("field-1", "full_name"), field("field-2", "expiry_date")], field_history: [] };
   const mocks = {
+    "@/components/UploadDocumentVersionForm": { UploadDocumentVersionForm: () => null },
+    "@/lib/case-return": { safeCaseReturn: () => null },
     "next/link": { __esModule: true, default: ({ href, children }) => React.createElement("a", { href }, children) },
     "@/app/actions": { correctField() {} },
     "@/components/SubmitButton": { SubmitButton: ({ children }) => React.createElement("button", null, children) },
@@ -43,7 +45,7 @@ test("keeps the case and document context in navigation", async () => {
 test("an interrupted correction leaves extracted fields visible and requires reload", async () => {
   const html = renderToStaticMarkup(await loadPage()({ params: Promise.resolve({ id: "document-1" }), searchParams: Promise.resolve({ error: "CONNECTION_ERROR: Outcome unknown" }) }));
   assert.ok(html.includes("Reload document"));
-  assert.ok(html.includes('href="/documents/document-1"'));
+  assert.ok(html.includes('href="/documents/document-1?returnTo=%2Fcases%2Fcase-1%2Fdocuments"'));
   assert.ok(html.includes("full_name") && html.includes("expiry_date"));
   assert.ok(!html.includes("Save correction for full_name"));
 });

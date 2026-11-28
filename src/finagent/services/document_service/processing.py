@@ -216,7 +216,9 @@ def _load(s: Session, version_id: uuid.UUID, attempt: int) -> tuple[DocumentVers
     if version is None or version.status != "PARSING" or version.attempts != attempt:
         return None  # another worker took over (fenced by the attempt number)
     doc = s.scalar(
-        select(Document).where(Document.tenant_id == version.tenant_id, Document.id == version.document_id)
+        select(Document)
+        .where(Document.tenant_id == version.tenant_id, Document.id == version.document_id)
+        .with_for_update()
     )
     return (version, doc) if doc is not None else None
 
@@ -379,12 +381,11 @@ def _commit(
                 )
             )
         fields: list[DocumentField] = []
-        if not retry:
-            if version.version_no == doc.current_version_no:
-                for old in current_fields(s, doc):
-                    old.is_current = False
-                s.flush()
-                fields = _store_fields(s, doc, extraction, extract(doc.document_type, result))
+        if not retry and version.version_no == doc.current_version_no:
+            for old in current_fields(s, doc):
+                old.is_current = False
+            s.flush()
+            fields = _store_fields(s, doc, extraction, extract(doc.document_type, result))
             record_document_evidence(s, doc, version, fields, actor)
         audit.record(
             s,

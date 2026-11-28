@@ -14,13 +14,15 @@ function loadPage() {
   const calls = [];
   let authenticated = false;
   const mocks = {
+    "@/components/ConnectedCaseNav": { ConnectedCaseNav: () => null },
     "next/link": { __esModule: true, default: ({ href, children }) => React.createElement("a", { href }, children) },
     "@/components/ui": { Empty: ({ children }) => React.createElement("p", null, children), ErrorState: () => React.createElement("p", null, "Access unavailable"), When: ({ iso }) => React.createElement("time", null, iso) },
     "@/lib/session": { requireSession: async () => { authenticated = true; } },
     "@/lib/api": { ApiRequestError: class extends Error {}, listCases: async () => ({ items: [], next_cursor: null }), api: async (path) => {
       assert.ok(authenticated); calls.push(path);
-      if (path.endsWith("/documents")) return { items: [{ document_id: documentId, title: "Sample document", document_type: "OTHER", current_version_no: 2, status: "READY" }] };
+      if (path.includes("/documents?")) return { items: [{ document_id: documentId, title: "Sample document", document_type: "OTHER", current_version_no: 2, status: "READY" }], applied_pagination: { offset: 0, limit: 50 }, next_offset: null };
       if (path.endsWith("/agent-outputs")) return { items: [{ output_id: "o1", capability_id: "AG-KYC", status: "PARTIAL", snapshot_id: "snapshot-example", created_at: "2026-01-01", lineage: { document_selection: { rule_version: "selection-test", review_date: "2026-01-01", basis: "Synthetic rule", items: [{ document_type: "PASSPORT", selection: "SELECTED", evidence_ref: "ev:selected", source_ref: "doc:selected", processing_status: "QUARANTINED" }] } }, findings: [{ claim_id: "k1", claim_type: "GAP", claim: "Synthetic KYC checklist", support_status: "NOT_APPLICABLE", evidence_refs: ["ev:example"] }] }, { output_id: "o3", capability_id: "AG-KYC", status: "PARTIAL", snapshot_id: "snapshot-older", created_at: "2025-01-01", findings: [] }, { output_id: "o2", capability_id: "AG-AML", findings: [] }] };
+      if (path.endsWith(otherId)) return { document_id: otherId, case_id: otherId, title: "Other case secret", versions: [], fields: [], field_history: [] };
       return { document_id: documentId, case_id: caseId, title: "Sample document", versions: [{ version_id: "v1", version_no: 1, status: "FAILED", status_reason: "Unreadable", created_at: "2026-01-01", sha256: "abcdef123456789", downloadable: false }], fields: [{ field_id: "f1", field_key: "name", value: "Example", origin: "CORRECTION", validation_status: "VALID", page: 1, row: null, section: null, correction_reason: "Verified manually" }], field_history: [] };
     } },
   };
@@ -39,10 +41,10 @@ test("shows recorded versions and corrections with historical context", async ()
   assert.ok(html.indexOf("snapshot-example") < html.indexOf("snapshot-older"));
   assert.equal((html.match(/<details class="kyc-history-item" open=""/g) ?? []).length, 1);
 });
-test("does not request a document absent from the authorized case list", async () => {
+test("does not display a document that belongs to a different case", async () => {
   const { page, calls } = loadPage();
   const html = renderToStaticMarkup(await page({ searchParams: Promise.resolve({ case: caseId, document: otherId }) }));
-  assert.equal(calls.length, 2);
-  assert.ok(!calls.some((path) => path.endsWith(otherId)));
-  assert.ok(html.includes("not returned for the selected case"));
+  assert.ok(calls.some((path) => path.endsWith(otherId)));
+  assert.ok(!html.includes("Other case secret"));
+  assert.ok(html.includes("unavailable for the selected case"));
 });

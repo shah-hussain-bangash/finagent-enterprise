@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { ConnectedCaseNav } from "@/components/ConnectedCaseNav";
 import { Empty, ErrorState, When } from "@/components/ui";
 import { api, ApiRequestError, listCases } from "@/lib/api";
 import { requireSession } from "@/lib/session";
@@ -57,6 +58,7 @@ export default async function RecordedMonitor({ searchParams }: { searchParams: 
     <p><Link href="/workspace" prefetch={false}>← Back to workspace preview</Link></p>
     {validCase && <p><Link href={`/workspace/case-overview?${new URLSearchParams({ case: selected })}`} prefetch={false}>← Back to case overview</Link></p>}
     <h1 id="monitor-title">Recorded investigation runs</h1>
+    {runs && <ConnectedCaseNav caseId={selected} active="runs" />}
     <div className="panel"><strong>Connected, read-only view</strong><p>Shows recorded workflow steps and agent outputs for an accessible case. Refresh to see newer status. Usage is shown per output when recorded and is not a run-wide total.</p></div>
     <section className="panel"><h2>Choose an accessible case</h2>
       {caseError && <ErrorState error={caseError} what="Cases" />}

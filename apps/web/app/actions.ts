@@ -109,11 +109,81 @@ export async function cancelRun(form: FormData): Promise<{ok: boolean; message: 
 
 export async function updateCase(form: FormData): Promise<{ok: boolean; message: string; uncertain?: boolean}> {
   const caseId = str(form, "case_id");
-  const body: Record<string, string> = { reason: str(form, "reason") };
+  const versionText = str(form, "record_version");
+  const version = Number(versionText);
+  if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(caseId)) {
+    return {ok: false, message: "Choose a valid case."};
+  }
+  if (!/^[1-9]\d*$/.test(versionText) || !Number.isSafeInteger(version)) {
+    return {ok: false, message: "Reload the case before making changes."};
+  }
+  const reason = str(form, "reason");
+  const body: Record<string, string> = { reason };
   for (const k of ["status", "priority", "blocked_owner_role"]) if (str(form, k)) body[k] = str(form, k);
+  if (reason.length < 3 || reason.length > 300) {
+    return {ok: false, message: "Enter a reason between 3 and 300 characters."};
+  }
+  if ((!body.status && !body.priority)
+      || (body.status && !["INVESTIGATING", "BLOCKED", "CANCELLED"].includes(body.status))
+      || (body.priority && !["LOW", "NORMAL", "HIGH", "URGENT"].includes(body.priority))
+      || (body.status === "BLOCKED" ? !["ANALYST", "AML_SUPERVISOR", "REVIEWER", "POLICY_ADMIN", "TENANT_ADMIN"].includes(body.blocked_owner_role ?? "") : Boolean(body.blocked_owner_role))) {
+    return {ok: false, message: "Choose a valid case change and reload the case if needed."};
+  }
   try {
-    await api(`/api/v1/cases/${caseId}`, { method: "PATCH", json: body, ifMatch: Number(str(form, "record_version")), timeoutMs: 30_000 });
+    await api(`/api/v1/cases/${caseId}`, { method: "PATCH", json: body, ifMatch: version, timeoutMs: 30_000, preserveAuthError: true });
+    revalidatePath(`/cases/${caseId}`);
     return {ok: true, message: "Case updated."};
+  } catch (e) {
+    if (!(e instanceof ApiRequestError)) throw e;
+    return {ok: false, message: `${e.code}: ${e.message}`, uncertain: e.code === "CONNECTION_ERROR"};
+  }
+}
+
+export async function searchCaseAssignees(caseId: string, role: string, query: string): Promise<{items: {id: string; display_name: string}[]; error?: string}> {
+  if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(caseId) || !["ANALYST", "REVIEWER"].includes(role) || query.trim().length < 2 || query.trim().length > 100) {
+    return {items: [], error: "Enter between 2 and 100 characters to search."};
+  }
+  try {
+    const response = await api<unknown>(`/api/v1/cases/${caseId}/eligible-assignees`, {method: "POST", json: {role, q: query.trim()}, preserveAuthError: true, timeoutMs: 10000});
+    const items = response && typeof response === "object" && "items" in response ? response.items : null;
+    const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    if (!Array.isArray(items) || items.length > 20 || !items.every((item: unknown) => {
+      if (!item || typeof item !== "object" || !("id" in item) || !("display_name" in item)) return false;
+      return typeof item.id === "string" && uuid.test(item.id)
+        && typeof item.display_name === "string" && item.display_name.length > 0 && item.display_name.length <= 200;
+    })) {
+      return {items: [], error: "The search response could not be read. Check that the portal and API are compatible."};
+    }
+    return {items: items as {id: string; display_name: string}[]};
+  } catch (e) {
+    if (!(e instanceof ApiRequestError)) throw e;
+    if (e.code === "CONNECTION_ERROR") return {items: [], error: "Search is unavailable. Try again or enter a person ID."};
+    if (e.code === "RATE_LIMITED") return {items: [], error: "Too many requests. Wait before searching again."};
+    return {items: [], error: `${e.code}: ${e.message}`};
+  }
+}
+
+export async function reassignCase(form: FormData): Promise<{ok: boolean; message: string; uncertain?: boolean}> {
+  const caseId = str(form, "case_id"), principalId = str(form, "principal_id");
+  const role = str(form, "role"), reason = str(form, "reason"), versionText = str(form, "record_version");
+  const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  const version = Number(versionText);
+  if (!uuid.test(caseId) || !uuid.test(principalId) || !["ANALYST", "REVIEWER"].includes(role)) {
+    return {ok: false, message: "Enter a valid person ID and assignment role."};
+  }
+  if (!/^[1-9]\d*$/.test(versionText) || !Number.isSafeInteger(version)) {
+    return {ok: false, message: "Reload the case before changing its assignment."};
+  }
+  if (reason.length < 3 || reason.length > 300) {
+    return {ok: false, message: "Enter a reason between 3 and 300 characters."};
+  }
+  try {
+    await api(`/api/v1/cases/${caseId}/assignment`, {
+      method: "POST", json: { principal_id: principalId, role, reason }, ifMatch: version,
+      timeoutMs: 30_000, preserveAuthError: true,
+    });
+    revalidatePath(`/cases/${caseId}`);
+    return {ok: true, message: "Case assignment updated."};
   } catch (e) {
     if (!(e instanceof ApiRequestError)) throw e;
     return {ok: false, message: `${e.code}: ${e.message}`, uncertain: e.code === "CONNECTION_ERROR"};
@@ -186,17 +256,24 @@ export async function freezeSnapshot(form: FormData): Promise<{ok: boolean; mess
 }
 
 export async function uploadDocument(form: FormData): Promise<{ok: boolean; message: string; uncertain?: boolean}> {
-  const caseId = str(form, "case_id");
+  const caseId = str(form, "case_id"), key = str(form, "key");
   const file = form.get("file");
-  if (!(file instanceof File) || file.size === 0) return {ok: false, message: "Choose a file to upload."};
+  if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(caseId) || !/^[A-Za-z0-9._:-]{8,200}$/.test(key)) return {ok: false, message: "Reload the case before uploading."};
+  if (!(file instanceof File) || file.size === 0 || file.size > 20 * 1024 * 1024) return {ok: false, message: "Choose a non-empty file up to 20 MiB."};
   const f = file as File;
+  const extension = f.name.toLowerCase().split(".").pop();
+  const types: Record<string, string> = {pdf: "application/pdf", docx: "application/vnd.openxmlformats-officedocument.wordprocessingml.document", csv: "text/csv"};
+  const mediaType = extension ? types[extension] : undefined;
+  if (!mediaType) return {ok: false, message: "Choose a PDF, DOCX or CSV file."};
   const q = new URLSearchParams({ case_id: caseId, document_type: str(form, "document_type"), filename: f.name });
   try {
     const res = await raw(`/api/v1/documents?${q}`, {
       method: "POST",
       body: Buffer.from(await f.arrayBuffer()),
-      headers: { "Content-Type": f.type || "application/octet-stream" },
-      idempotencyKey: str(form, "key") || randomUUID(),
+      headers: { "Content-Type": mediaType },
+      idempotencyKey: key,
+      timeoutMs: 30000,
+      preserveAuthError: true,
     });
     if (!res.ok) throw new ApiRequestError(res.status, await res.json().catch(() => null));
     return {ok: true, message: "Uploaded. Scanning and parsing status is shown below."};
@@ -206,12 +283,46 @@ export async function uploadDocument(form: FormData): Promise<{ok: boolean; mess
   }
 }
 
-export async function correctField(form: FormData): Promise<{ok: boolean; message: string; uncertain?: boolean}> {
-  const docId = str(form, "document_id");
+export async function uploadDocumentVersion(form: FormData): Promise<{ok: boolean; message: string; uncertain?: boolean}> {
+  const documentId = str(form, "document_id"), key = str(form, "key"), file = form.get("file");
+  if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(documentId)
+      || !/^[A-Za-z0-9._:-]{8,200}$/.test(key)) {
+    return {ok: false, message: "Reload the document before uploading a version."};
+  }
+  if (!(file instanceof File) || file.size === 0 || file.size > 20 * 1024 * 1024) {
+    return {ok: false, message: "Choose a non-empty file up to 20 MiB."};
+  }
+  const extension = file.name.toLowerCase().split(".").pop();
+  const types: Record<string, string> = {pdf: "application/pdf", docx: "application/vnd.openxmlformats-officedocument.wordprocessingml.document", csv: "text/csv"};
+  const mediaType = extension ? types[extension] : undefined;
+  if (!mediaType) return {ok: false, message: "Choose a PDF, DOCX or CSV file."};
   try {
-    await api(`/api/v1/documents/${docId}/fields/${str(form, "field_id")}/correction`, {
-      json: { value: str(form, "value"), reason: str(form, "reason") },
+    const response = await raw(`/api/v1/documents/${documentId}/versions`, {
+      method: "POST", body: Buffer.from(await file.arrayBuffer()), headers: {"Content-Type": mediaType},
+      idempotencyKey: key, timeoutMs: 30000, preserveAuthError: true,
+    });
+    if (!response.ok) throw new ApiRequestError(response.status, await response.json().catch(() => null));
+    revalidatePath(`/documents/${documentId}`);
+    return {ok: true, message: "New version uploaded. Review its scanning and processing status below."};
+  } catch (error) {
+    if (!(error instanceof ApiRequestError)) throw error;
+    return {ok: false, message: `${error.code}: ${error.message}`, uncertain: error.code === "CONNECTION_ERROR"};
+  }
+}
+
+export async function correctField(form: FormData): Promise<{ok: boolean; message: string; uncertain?: boolean}> {
+  const docId = str(form, "document_id"), fieldId = str(form, "field_id");
+  const value = str(form, "value"), reason = str(form, "reason");
+  const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  if (!uuid.test(docId) || !uuid.test(fieldId)) return {ok: false, message: "Reload the document before correcting a field."};
+  if (!value || value.length > 1000 || reason.length < 10 || reason.length > 300) {
+    return {ok: false, message: "Enter a value and a correction reason between 10 and 300 characters."};
+  }
+  try {
+    await api(`/api/v1/documents/${docId}/fields/${fieldId}/correction`, {
+      json: { value, reason },
       timeoutMs: 30_000,
+      preserveAuthError: true,
     });
     return {ok: true, message: "Correction saved; the original value is preserved."};
   } catch (e) {

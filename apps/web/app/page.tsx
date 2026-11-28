@@ -4,6 +4,7 @@ import { ErrorState, When } from "@/components/ui";
 import { listCases, load, type CaseStatus } from "@/lib/api";
 import { requireSession } from "@/lib/session";
 import { sessionIdentity } from "@/lib/session-identity";
+import { CAPABILITIES, CAPABILITY_DETAILS } from "@/lib/capability-map";
 
 interface Overview {
   generated_at: string;
@@ -19,6 +20,23 @@ interface Overview {
 }
 
 const CASE_STATUSES: CaseStatus[] = ["RECEIVED", "ASSIGNED", "INVESTIGATING", "BLOCKED", "AWAITING_REVIEW", "REWORK", "APPROVED", "FINALIZING", "COMPLETED", "CANCELLED"];
+const IMPROVEMENT_PRIORITIES = [
+  { title: "Match the portal and API", detail: "Run the updated services together so case filters and supervisor controls can work.", area: 18 },
+  { title: "Complete one case journey", detail: "Connect case selection, evidence, documents, report submission and independent review.", area: 4 },
+  { title: "Improve case assignment", detail: "Provide authorized searchable selection of eligible analysts and reviewers.", area: 3 },
+  { title: "Focus the dashboard on work", detail: "Highlight accessible assignments, due dates and next actions while keeping planning separate.", area: 1 },
+  { title: "Complete connected features", detail: "Prioritize evidence, documents and reports; keep unfinished assistant and bilingual screens labeled as previews.", area: 8 },
+  { title: "Resolve GitHub checks", detail: "Verify and upload the local fixes for the reported automated-check failures.", area: 20 },
+  { title: "Make startup reliable", detail: "Prepare a repeatable local startup for the matching portal, API and required services.", area: 19 },
+];
+const REMAINING_CAPABILITIES = [
+  { title: "Real financial-data integrations", details: "Approved customer, account, transaction, alert, sanctions and document sources.", area: 18 },
+  { title: "Complete case operations", details: "Searchable assignee selection, analyst notes, notifications and supervisor workflows.", area: 3 },
+  { title: "Connected AI and bilingual assistance", details: "Evidence-grounded answers, citations, translation review and approved model controls.", area: 10 },
+  { title: "Review and operational controls", details: "Complete reviewer and supervisor journeys, monitoring, audit and recovery tools.", area: 14 },
+  { title: "Security and resilience", details: "Institution-approved identity, access, encryption, backup and disaster recovery.", area: 19 },
+  { title: "Production testing and acceptance", details: "End-to-end, security, accessibility, performance and recovery testing, plus institutional approval.", area: 20 },
+];
 
 function Kpi({ label, value, href }: { label: string; value: number | string | undefined; href?: string }) {
   const content = <><span className="overview-kpi-label">{label}</span><span className="overview-kpi-value">{value ?? "Not available"}</span></>;
@@ -49,8 +67,32 @@ export default async function Home() {
         {canReadCases && <Link href="/cases">Open case queue</Link>}
         {canReview && <Link href="/approvals">Open review requests</Link>}
         {canReadCases && <Link href="/escalations">Open escalations</Link>}
+        {canOpenPreview && <Link href="/capabilities">View all capabilities</Link>}
       </nav>
       {error ? <ErrorState error={error} what="Overview" /> : null}
+      {canOpenPreview && <section className="dashboard-improvements" aria-labelledby="improvement-heading">
+        <div className="overview-worklist-header"><div><p className="portal-eyebrow">NEXT DEVELOPMENT STEPS</p><h2 id="improvement-heading">Improvement priorities</h2></div><Link href="/capabilities">View capability map →</Link></div>
+        <p>Planned improvements for the current system. These items are not a claim of completed or production-ready functionality.</p>
+        <ol>{IMPROVEMENT_PRIORITIES.map((item, index) => <li key={item.title}>
+          <span className="dashboard-capability-number">{String(index + 1).padStart(2, "0")}</span><div><strong>{item.title}</strong><p>{item.detail}</p><Link href={`/capabilities#capability-${item.area}`}>View related scope →</Link></div>
+        </li>)}</ol>
+      </section>}
+      {canOpenPreview && <section className="dashboard-remaining" aria-labelledby="remaining-capabilities-heading">
+        <div className="overview-worklist-header"><div><p className="portal-eyebrow">PRODUCT DEVELOPMENT</p><h2 id="remaining-capabilities-heading">Remaining capabilities</h2></div><Link href="/capabilities">View all 20 areas →</Link></div>
+        <p>These areas include unfinished work. Their presence here does not mean they are operational or approved for production.</p>
+        <ul>{REMAINING_CAPABILITIES.map(item => <li key={item.title}><strong>{item.title}</strong><span>{item.details}</span><Link href={`/capabilities#capability-${item.area}`}>View scope →</Link></li>)}</ul>
+        <p className="dashboard-remaining-note">Recent case-management features also need the updated API, and local changes require verification before release.</p>
+      </section>}
+      {canOpenPreview && <details className="dashboard-capability-map">
+        <summary><span>Full capability scope</span><small>20 areas · open to explore</small></summary>
+        <p>Target scope includes connected features, previews and work still to be implemented. This list is not a production-readiness claim.</p>
+        <ol>{CAPABILITIES.map((item, index) => <li key={item.title}>
+          <details><summary><span className="dashboard-capability-number">{String(index + 1).padStart(2, "0")}</span><strong>{item.title}</strong></summary>
+            <p>{item.description}</p><ul>{CAPABILITY_DETAILS[index]?.map(detail => <li key={detail}>{detail}</li>)}</ul>
+            <p><strong>Remaining:</strong> {item.remaining}</p><Link href={`/capabilities#capability-${index + 1}`}>View capability details →</Link>
+          </details>
+        </li>)}</ol>
+      </details>}
       {data ? (
         <>
           <p className="overview-scope">Counts within your access scope ({data.scope}). Generated {data.generated_at}.</p>

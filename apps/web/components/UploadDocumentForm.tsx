@@ -28,6 +28,8 @@ export function UploadDocumentForm({caseId, requestKey}: {caseId: string; reques
     <input type="hidden" name="case_id" value={caseId} />
     <input type="hidden" name="key" value={requestKey} />
     {error && <p role="alert">{error} {uncertain && <>Check the recorded documents before another action. <a href={path}>Reload documents</a></>}</p>}
+    {error?.startsWith("SESSION_EXPIRED:") && <p><a href={`/signin?expired=1&returnTo=${encodeURIComponent(path)}`} target="_blank" rel="noopener noreferrer">Sign in in a new tab</a>, then return here to retry.</p>}
+    {error?.startsWith("MFA_REQUIRED:") && <p><a href="/security" target="_blank" rel="noopener noreferrer">Open account security in a new tab</a>, then return here to retry.</p>}
     {!uncertain && <>
       <label htmlFor="file">File (PDF, DOCX or CSV; up to 20 MiB; scanned before use)</label>
       <input id="file" name="file" type="file" accept=".pdf,.docx,.csv" required />

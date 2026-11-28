@@ -5,10 +5,11 @@ Remaining endpoints from prompt §22 are added in later phases.
 
 from __future__ import annotations
 
-from typing import Annotated, Any
+from typing import Annotated, Any, Literal
 
 from fastapi import APIRouter, Query, Response
 from fastapi.responses import JSONResponse
+from pydantic import BaseModel, ConfigDict, Field
 from sqlalchemy import text
 
 from finagent.api.deps import AppSettings, Factory, IdempotencyKey, IfMatch, Principal
@@ -58,14 +59,17 @@ def get_cases(
     settings: AppSettings,
     status: str | None = None,
     priority: str | None = None,
+    case_ref: str | None = None,
     cursor: str | None = None,
     limit: Annotated[int | None, Query(ge=1)] = None,
 ) -> dict[str, Any]:
     page = min(limit or settings.page_size_default, settings.page_size_max)
     with transaction(factory) as session:
-        result = case_queries.list_cases(session, ctx, limit=page, status=status, priority=priority, cursor=cursor)
-    if priority is not None:
-        result["applied_filters"] = {"priority": priority}
+        result = case_queries.list_cases(
+            session, ctx, limit=page, status=status, priority=priority, case_ref=case_ref, cursor=cursor
+        )
+    if priority is not None or case_ref is not None:
+        result["applied_filters"] = {"priority": priority, "case_ref": case_ref}
     return result
 
 
@@ -78,6 +82,18 @@ def get_case(case_id: str, ctx: Principal, factory: Factory, response: Response)
     # UI hints come from the authenticated principal, never a submitted role or subject.
     can_reopen = detail["status"] == "COMPLETED" and Permission.CASE_ASSIGN in ctx.permissions
     detail["can_reopen"] = can_reopen
+    detail["can_reassign"] = (
+        detail["status"] not in {"COMPLETED", "CANCELLED"} and Permission.CASE_ASSIGN in ctx.permissions
+    )
+    detail["reassignment_requires_mfa"] = (
+        detail["can_reassign"] and Permission.CASE_ASSIGN in ctx.step_up and not ctx.mfa_satisfied
+    )
+    detail["can_change_block_status"] = (
+        detail["status"] in {"INVESTIGATING", "BLOCKED"} and Permission.CASE_UPDATE in ctx.permissions
+    )
+    detail["block_status_requires_mfa"] = (
+        detail["can_change_block_status"] and Permission.CASE_UPDATE in ctx.step_up and not ctx.mfa_satisfied
+    )
     detail["reopening_requires_mfa"] = (
         can_reopen and Permission.CASE_ASSIGN in ctx.step_up and not ctx.mfa_satisfied
     )
@@ -110,6 +126,37 @@ def reopen_case(
         result = reopening.reopen_case(session, ctx, case_id, body, if_match)
     response.headers["ETag"] = f'"{result["record_version"]}"'
     return result
+
+
+class AssigneeSearchRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    role: Literal["ANALYST", "REVIEWER"]
+    q: str = Field(min_length=2, max_length=100)
+
+
+class AssigneeSearchItem(BaseModel):
+    id: str
+    display_name: str
+
+
+class AssigneeSearchResponse(BaseModel):
+    items: list[AssigneeSearchItem]
+
+
+@api.post("/cases/{case_id}/eligible-assignees", tags=["cases"])
+def get_eligible_assignees(
+    case_id: str,
+    body: AssigneeSearchRequest,
+    ctx: Principal,
+    factory: Factory,
+) -> AssigneeSearchResponse:
+    term = body.q.strip()
+    if len(term) < 2:
+        raise AppError(ErrorCode.SCHEMA_VALIDATION_FAILED, "Enter at least two characters to search.")
+    with transaction(factory) as session:
+        people = case_commands.search_assignees(session, ctx, case_id, body.role, term)
+        return AssigneeSearchResponse(items=[AssigneeSearchItem(**person) for person in people])
 
 
 @api.post("/cases/{case_id}/assignment", tags=["cases"])

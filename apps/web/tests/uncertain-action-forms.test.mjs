@@ -30,6 +30,7 @@ for (const [component, action, props, button, refresh] of [
       return [state[current], (value) => { state[current] = value; }];
     } };
     const mocks = {
+      "@/lib/case-navigation": { caseUpdatePath: (id, _queue, kind, message) => `/cases/${id}?${kind}=${encodeURIComponent(message)}` },
       react: hooks,
       "@/app/actions": { [action]: async () => ({ ok: false, uncertain: true, message: "Outcome unknown", back: props.returnPath }) },
       "@/components/SubmitButton": { SubmitButton: ({ children }) => React.createElement("button", null, children) },

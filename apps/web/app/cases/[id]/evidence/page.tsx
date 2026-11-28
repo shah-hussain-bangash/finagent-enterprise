@@ -4,6 +4,9 @@ import { ResolveConflictForm } from "@/components/ResolveConflictForm";
 import { Empty, ErrorState, Flash, Json, Tabs, When } from "@/components/ui";
 import { load } from "@/lib/api";
 import { requireSession } from "@/lib/session";
+import Link from "next/link";
+import { EvidenceSearch } from "@/app/workspace/evidence-briefing/EvidenceSearch";
+import { DocumentEvidenceLink } from "@/components/DocumentEvidenceLink";
 
 interface Item {
   evidence_item_id: string;
@@ -47,6 +50,7 @@ export default async function EvidencePage({ params, searchParams }: {
       {error ? <ErrorState error={error} what="Evidence" /> : null}
       {data ? (
         <>
+          <EvidenceSearch caseId={id} />
           <h2>Gaps and limitations ({data.requirements_version})</h2>
           {data.gaps.length === 0 ? <Empty>No gaps were returned by the current evidence checklist. Review the sources before making a decision.</Empty> : (
             <ul>
@@ -80,7 +84,7 @@ export default async function EvidencePage({ params, searchParams }: {
                       <div className="muted">sha256 {i.content_hash.slice(0, 12)}</div></td>
                     <td>{i.freshness} / {i.completeness}</td>
                     <td><When iso={i.as_of} /></td>
-                    <td><details><summary>View content for {i.source_type} ({i.source_ref})</summary><Json value={i.content} /></details></td>
+                    <td><details><summary>View content for {i.source_type} ({i.source_ref})</summary><Json value={i.content} /></details><DocumentEvidenceLink sourceType={i.source_type} content={i.content} /></td>
                   </tr>
                 ))}
               </tbody>
@@ -98,7 +102,7 @@ export default async function EvidencePage({ params, searchParams }: {
           <tbody>
             {snaps.data.items.map((s) => (
               <tr key={s.snapshot_id}>
-                <td>v{s.version_no} <span className="muted">{s.snapshot_id.slice(0, 8)}</span></td>
+                <td><Link href={`/cases/${id}/evidence/${s.snapshot_id}`}>View version {s.version_no}</Link> <span className="muted">{s.snapshot_id.slice(0, 8)}</span></td>
                 <td><span className={`badge badge-${s.completeness_status.toLowerCase()}`}>{s.completeness_status}</span></td>
                 <td>{s.open_conflicts}</td>
                 <td>{s.gaps.length}</td>

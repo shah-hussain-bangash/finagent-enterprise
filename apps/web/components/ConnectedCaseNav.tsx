@@ -10,6 +10,7 @@ export function ConnectedCaseNav({ caseId, active }: { caseId: string; active: s
     { key: "documents", label: "Document history", href: `/workspace/recorded-provenance?${query}` },
     { key: "risk", label: "Recorded indicators", href: `/workspace/recorded-risk?${query}` },
     { key: "report", label: "Report history", href: `/workspace/recorded-review?${query}` },
+    { key: "runs", label: "Investigation runs", href: `/workspace/recorded-monitor?${query}` },
     { key: "workflow", label: "Case workflow", href: `/cases/${caseId}` },
   ];
   return <nav className="connected-case-nav" aria-label={`Investigation navigation for case ${caseId.slice(0, 8)}`}>

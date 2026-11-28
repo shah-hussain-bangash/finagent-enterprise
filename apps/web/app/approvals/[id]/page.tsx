@@ -1,5 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { DecisionForm } from "@/components/DecisionForm";
+import { EvidenceReference } from "@/components/EvidenceReference";
 import Link from "next/link";
 import { decide } from "@/app/actions";
 import { FindingTag, type FindingKind } from "@/components/StatusBadge";
@@ -44,6 +45,7 @@ export default async function ApprovalDetail({ params, searchParams }: {
       {d.snapshot ? (
         <div className="panel">
           <h2>Bound evidence snapshot v{d.snapshot.version_no}: {d.snapshot.completeness_status}</h2>
+          <p><Link href={`/cases/${d.case_id}/evidence/${d.snapshot_id}`}>Inspect the evidence snapshot submitted for review →</Link></p>
           <p>Open conflicts recorded in this snapshot: {d.snapshot.open_conflicts}</p>
           {d.snapshot.gaps.length ? <ul>{d.snapshot.gaps.map((g, i) => <li key={i}>{g.severity}: {g.code} - {g.detail}</li>)}</ul>
             : <p className="muted">No gaps were recorded in this snapshot.</p>}
@@ -58,7 +60,7 @@ export default async function ApprovalDetail({ params, searchParams }: {
           {d.report.claims.length === 0 && <p>No claims were returned for this report version.</p>}
           <ul>{d.report.claims.map((c) => (
             <li key={c.claim_id} className="claim"><FindingTag kind={c.claim_type} /> {c.text}{" "}
-              <span className="muted">[{c.support_status}; {[...c.evidence_refs, ...c.citation_refs].join(", ")}]</span></li>))}</ul>
+              <span className="muted">[{c.support_status}; {[...c.evidence_refs, ...c.citation_refs].length === 0 ? "no references returned" : [...c.evidence_refs, ...c.citation_refs].map((reference, index) => <span key={`${reference}-${index}`}>{index > 0 && ", "}<EvidenceReference reference={reference} caseId={d.case_id} snapshotId={d.snapshot_id} /></span>)}]</span></li>))}</ul>
           {d.report.diff_from_previous?.length ? (
             <details><summary>Differences from the previous version</summary>
               {d.report.diff_from_previous.map((x) => <div key={x.section_id}><strong>{x.section_id}</strong> ({x.change})

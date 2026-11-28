@@ -4,7 +4,7 @@ import test from "node:test";
 import ts from "typescript";
 
 const source = readFileSync(new URL("../lib/case-return.ts", import.meta.url), "utf8");
-const code = ts.transpileModule(source, { compilerOptions: { module: ts.ModuleKind.CommonJS } }).outputText;
+const code = ts.transpileModule(source, { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText;
 const exports = {};
 new Function("exports", code)(exports);
 const { safeCaseReturn } = exports;
@@ -48,4 +48,19 @@ test("case return preserves only supported document, run, output and version sel
   }
   assert.equal(safeCaseReturn(`/workspace/recorded-review?case=${id}&version=0`), null);
   assert.equal(safeCaseReturn(`/workspace/case-overview?case=${id}&run=${id}`), null);
+});
+
+test("document return paths preserve validated filters and reject unsafe nested destinations", () => {
+  const list = `/cases/${id}/documents?status=PARSED&document_type=PASSPORT&offset=50`;
+  assert.equal(safeCaseReturn(list), list);
+  const nested = `/documents/${id}?${new URLSearchParams({ fields_page: "2", returnTo: list })}`;
+  assert.equal(safeCaseReturn(nested), nested);
+  for (const back of ["https://evil.example", "//evil.example", `/cases/${id}/documents?status=PARSED&next=evil`]) {
+    assert.equal(safeCaseReturn(`/documents/${id}?${new URLSearchParams({ returnTo: back })}`), null);
+  }
+  assert.equal(safeCaseReturn(`/cases/${id}/documents?status=PARSED&status=STORED`), null);
+  assert.equal(safeCaseReturn(`/cases/${id}/documents?offset=1000001`), null);
+  assert.equal(safeCaseReturn(`/documents/${id}?fields_page=0`), null);
+  assert.equal(safeCaseReturn(`/cases/${id}/evidence/${id}?item=${id}`), `/cases/${id}/evidence/${id}?item=${id}`);
+  assert.equal(safeCaseReturn(`/cases/${id}/evidence/${id}?item=invalid`), null);
 });

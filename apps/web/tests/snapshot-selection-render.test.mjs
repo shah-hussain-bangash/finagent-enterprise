@@ -20,6 +20,7 @@ function loadPage(matching = true, mismatch = false, missing = false, noContent 
   if (missing) snapshot.items = [];
   if (noContent) snapshot.items[0].content = null;
   const mocks = {
+    "@/components/ConnectedCaseNav": { ConnectedCaseNav: () => null },
     "next/link": { __esModule: true, default: ({ href, children }) => React.createElement("a", { href }, children) },
     "@/components/ui": { Empty: ({ children }) => React.createElement("p", null, children), ErrorState: () => React.createElement("p", null, "Access unavailable"), When: ({ iso }) => React.createElement("time", null, iso) },
     "@/lib/session": { requireSession: async (path) => { returnPaths.push(path); } },

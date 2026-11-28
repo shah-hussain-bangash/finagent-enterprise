@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import re
 from datetime import timedelta
-from typing import Annotated, Any
+from typing import Annotated, Any, Literal
 
 from fastapi import APIRouter, Header, Query, Request, Response
 from fastapi.responses import JSONResponse
@@ -130,6 +130,30 @@ def get_document(document_id: str, ctx: Principal, factory: Factory) -> dict[str
         return doc_queries.get_document(s, ctx, document_id)
 
 
+class DocumentSegmentsPage(BaseModel):
+    version_id: str
+    available: bool
+    items: list[dict[str, Any]]
+    next_offset: int | None
+
+
+@evidence.get(
+    "/documents/{document_id}/versions/{version_id}/segments",
+    tags=["documents"],
+    response_model=DocumentSegmentsPage,
+)
+def get_document_segments(
+    document_id: str,
+    version_id: str,
+    ctx: Principal,
+    factory: Factory,
+    offset: Annotated[int, Query(ge=0)] = 0,
+    limit: Annotated[int, Query(ge=1, le=100)] = 50,
+) -> dict[str, Any]:
+    with transaction(factory) as session:
+        return doc_queries.extraction_segments_page(session, ctx, document_id, version_id, offset, limit)
+
+
 @evidence.post("/documents/{document_id}/fields/{field_id}/correction", tags=["documents"], status_code=201)
 def correct_field(
     document_id: str, field_id: str, body: FieldCorrection, ctx: Principal, factory: Factory
@@ -161,9 +185,26 @@ def download(
 
 
 @evidence.get("/cases/{case_id}/documents", tags=["documents"])
-def list_case_documents(case_id: str, ctx: Principal, factory: Factory) -> dict[str, Any]:
+def list_case_documents(
+    case_id: str,
+    ctx: Principal,
+    factory: Factory,
+    limit: Annotated[int | None, Query(ge=1, le=100)] = None,
+    offset: Annotated[int, Query(ge=0, le=1000000)] = 0,
+    status: Literal[
+        "RECEIVED", "QUARANTINED", "STORED", "PARSING", "PARSED", "OCR_UNAVAILABLE", "PARSE_FAILED"
+    ]
+    | None = None,
+    document_type: Annotated[str | None, Query(min_length=1, max_length=48, pattern=r"^[A-Z0-9_]+$")] = None,
+) -> dict[str, Any]:
+    if limit is None and offset:
+        raise AppError(
+            ErrorCode.SCHEMA_VALIDATION_FAILED, "A page limit is required when an offset is supplied."
+        )
     with transaction(factory) as s:
-        return doc_queries.list_case_documents(s, ctx, case_id)
+        return doc_queries.list_case_documents(
+            s, ctx, case_id, limit=limit, offset=offset, status=status, document_type=document_type
+        )
 
 
 @evidence.get("/cases/{case_id}/evidence", tags=["evidence"])

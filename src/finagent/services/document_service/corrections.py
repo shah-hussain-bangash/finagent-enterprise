@@ -15,7 +15,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from finagent.core.errors import AppError, ErrorCode, not_found
-from finagent.database.models import DocumentField, DocumentFieldPayload, DocumentVersion
+from finagent.database.models import DocumentExtraction, DocumentField, DocumentFieldPayload, DocumentVersion
 from finagent.documents.extraction import typed_field
 from finagent.domain.states import CASE_TERMINAL, CaseStatus
 from finagent.security.authorization.policy import Permission, PrincipalContext, require
@@ -61,6 +61,30 @@ def correct_field(
         raise AppError(
             ErrorCode.VERSION_CONFLICT,
             "This value was already corrected or replaced. Reload the document and try again.",
+        )
+    version = session.scalar(
+        select(DocumentVersion).where(
+            DocumentVersion.tenant_id == ctx.tenant_id,
+            DocumentVersion.document_id == doc.id,
+            DocumentVersion.version_no == doc.current_version_no,
+        )
+    )
+    matching_extraction = (
+        session.scalar(
+            select(DocumentExtraction.id).where(
+                DocumentExtraction.tenant_id == ctx.tenant_id,
+                DocumentExtraction.id == field.extraction_id,
+                DocumentExtraction.version_id == version.id,
+            )
+        )
+        if version is not None
+        else None
+    )
+    if version is None or matching_extraction is None:
+        raise AppError(
+            ErrorCode.VERSION_CONFLICT,
+            "This field belongs to an earlier document version. "
+            "Reload after the current version is processed.",
         )
     typed = typed_field(
         field.field_key, body.value, {"page": field.page, "row": field.row, "section": field.section}
@@ -116,14 +140,6 @@ def correct_field(
             "reason": body.reason,
         },
     )
-    version = session.scalar(
-        select(DocumentVersion).where(
-            DocumentVersion.tenant_id == ctx.tenant_id,
-            DocumentVersion.document_id == doc.id,
-            DocumentVersion.version_no == doc.current_version_no,
-        )
-    )
-    if version is not None:
-        record_document_evidence(session, doc, version, current_fields(session, doc), Actor.of(ctx))
+    record_document_evidence(session, doc, version, current_fields(session, doc), Actor.of(ctx))
     session.flush()
     return field_view(corrected)

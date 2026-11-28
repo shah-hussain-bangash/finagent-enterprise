@@ -33,10 +33,21 @@ function Secret([int]$bytes = 36) {
     return [Convert]::ToBase64String($b).Replace("+", "-").Replace("/", "_").TrimEnd("=")
 }
 
-if (-not (Test-Path ".venv")) { python -m venv .venv }
+if (-not (Test-Path ".venv")) {
+    python -m venv .venv
+    if ($LASTEXITCODE -ne 0) { throw "Could not create the project Python environment." }
+}
 & .venv\Scripts\python.exe -m pip install --upgrade pip | Out-Null
+if ($LASTEXITCODE -ne 0) { throw "Could not update pip in the project Python environment." }
 & .venv\Scripts\python.exe -m pip install -e ".[dev]"
-Push-Location apps\web; npm ci --no-audit --no-fund; Pop-Location
+if ($LASTEXITCODE -ne 0) { throw "Could not install the project Python dependencies." }
+Push-Location apps\web
+try {
+    npm ci --no-audit --no-fund
+    if ($LASTEXITCODE -ne 0) { throw "Could not install the portal dependencies." }
+} finally {
+    Pop-Location
+}
 
 if (-not (Test-Path ".env")) {
     $app = (Secret 24) -replace "[^A-Za-z0-9_-]", "x"
@@ -53,6 +64,9 @@ if (-not (Test-Path ".env")) {
         "FINAGENT_DATABASE_URL=postgresql+psycopg://finagent_app:$app@127.0.0.1:$PgPort/finagent",
         "FINAGENT_TEST_DATABASE_URL=postgresql+psycopg://finagent:finagent@127.0.0.1:$PgPort/finagent_test",
         "FINAGENT_TEST_REDIS_URL=redis://127.0.0.1:$RedisPort/0",
+        "FINAGENT_REDIS_URL=redis://127.0.0.1:$RedisPort/0",
+        "FINAGENT_WEB_AUTH_REDIS_URL=redis://127.0.0.1:$RedisPort/0",
+        "FINAGENT_WEB_ORIGIN=http://127.0.0.1:$WebPort",
         "FINAGENT_DEV_JWT_SECRET=$(Secret 48)",
         "FINAGENT_WEB_SESSION_SECRET=$(Secret 48)",
         "FINAGENT_BANK_BASE_URL=http://127.0.0.1:8100"
@@ -64,11 +78,15 @@ if (-not (Test-Path ".env")) {
 }
 
 docker compose up -d postgres redis mock-bank
+if ($LASTEXITCODE -ne 0) { throw "Could not start the local dependencies. Check Docker and the Compose output above." }
 Write-Host "Waiting for PostgreSQL..."
+$databaseReady = $false
 for ($i = 0; $i -lt 60; $i++) {
     docker compose exec -T postgres pg_isready -U finagent *> $null
-    if ($LASTEXITCODE -eq 0) { break }
+    if ($LASTEXITCODE -eq 0) { $databaseReady = $true; break }
     Start-Sleep -Seconds 1
 }
+if (-not $databaseReady) { throw "PostgreSQL did not become ready. Migration and seeding were not started." }
 & .venv\Scripts\python.exe scripts\tasks.py migrate db-app-role seed
+if ($LASTEXITCODE -ne 0) { throw "Database setup failed. Review the output above before starting the portal." }
 Write-Host "Setup complete. Start everything with: scripts\windows\start-dev.ps1"

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { ConnectedCaseNav } from "@/components/ConnectedCaseNav";
 import { Empty, ErrorState, When } from "@/components/ui";
 import { api, ApiRequestError } from "@/lib/api";
 import { requireSession } from "@/lib/session";
@@ -38,6 +39,7 @@ export default async function SnapshotSelection({ searchParams }: { searchParams
   return <section className="connected-workspace" aria-labelledby="selection-title">
     <p><Link prefetch={false} href={UUID.test(caseId) ? `/workspace/recorded-provenance?${new URLSearchParams({ case: caseId })}` : "/workspace/recorded-provenance"}>← Back to case provenance</Link></p>
     <h1 id="selection-title">Recorded snapshot document selection</h1>
+    {output && <ConnectedCaseNav caseId={caseId} active="documents" />}
     <div className="panel"><strong>Connected, read-only view</strong><p>This shows the evidence recorded in the KYC output’s snapshot. It may differ from current case evidence. Selection does not establish document authenticity or checklist approval.</p></div>
     {!valid && <p role="alert">A valid case and output are required.</p>}
     {outputError && <ErrorState error={outputError} what="Recorded KYC output" />}

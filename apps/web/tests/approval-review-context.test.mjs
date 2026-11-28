@@ -10,6 +10,7 @@ import { loadComponent } from "./load-component.mjs";
 const require = createRequire(import.meta.url);
 function loadPage(data) {
   const mocks = {
+    "@/components/EvidenceReference": { EvidenceReference: ({ reference }) => reference },
     "next/link": { __esModule: true, default: ({ href, children }) => React.createElement("a", { href }, children) },
     "@/app/actions": { decide() {} },
     "@/components/StatusBadge": { FindingTag: () => null },

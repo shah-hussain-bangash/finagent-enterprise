@@ -3,4 +3,4 @@ export interface EvidenceMatch {
   freshness: string; completeness: string; as_of: string | null; field_path: string;
   excerpt: string; excerpt_truncated: boolean;
 }
-export interface EvidenceSearchState { error?: string; matches?: EvidenceMatch[]; limited?: boolean }
+export interface EvidenceSearchState { error?: string; matches?: EvidenceMatch[]; limited?: boolean; sessionExpired?: boolean }

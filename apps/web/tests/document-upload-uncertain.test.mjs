@@ -10,12 +10,13 @@ import { loadComponent } from "./load-component.mjs";
 const require = createRequire(import.meta.url);
 function loadPage() {
   const mocks = {
+    "@/components/CasePageHeading": { CasePageHeading: ({ title }) => React.createElement("h1", null, title) },
     "next/link": { __esModule: true, default: ({ href, children }) => React.createElement("a", { href }, children) },
     "@/app/actions": { uploadDocument() {} },
     "@/components/SubmitButton": { SubmitButton: ({ children }) => React.createElement("button", null, children) },
     "@/components/ui": { Empty: ({ children }) => React.createElement("p", null, children), ErrorState: () => null, Flash: () => null, Tabs: () => null, When: () => null },
     "@/lib/session": { requireSession: async () => {} },
-    "@/lib/api": { load: async () => ({ data: { items: [{ document_id: "doc-1", title: "Synthetic document", current_version_no: 1 }] }, error: null }) },
+    "@/lib/api": { load: async () => ({ data: { items: [{ document_id: "doc-1", title: "Synthetic document", current_version_no: 1 }], can_upload: true, applied_pagination: { offset: 0, limit: 50 }, next_offset: null }, error: null }) },
   };
   mocks["@/components/UploadDocumentForm"] = loadComponent("UploadDocumentForm", mocks);
   const source = readFileSync(new URL("../app/cases/[id]/documents/page.tsx", import.meta.url), "utf8");
