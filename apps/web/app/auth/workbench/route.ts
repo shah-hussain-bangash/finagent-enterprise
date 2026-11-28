@@ -28,11 +28,11 @@ export async function GET(request: Request) {
     try {
       await startDevelopmentSession("a.analyst1@synthetic", false);
     } catch {
-      // The case route will apply the usual sign-in when a session cannot be established.
+      // The workspace applies the usual sign-in when a session cannot be established.
     }
   }
   return new NextResponse(null, {
     status: 307,
-    headers: { Location: "/cases", "Cache-Control": "no-store" },
+    headers: { Location: "/workspace", "Cache-Control": "no-store" },
   });
 }
