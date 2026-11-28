@@ -5,9 +5,10 @@
 import { randomUUID } from "node:crypto";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { api, ApiRequestError, BASE, raw } from "@/lib/api";
-import { clearSession, setSession } from "@/lib/session";
+import { api, ApiRequestError, raw } from "@/lib/api";
+import { clearSession } from "@/lib/session";
 import { authMode } from "@/lib/auth-config";
+import { startDevelopmentSession } from "@/lib/development-session";
 
 function str(f: FormData, k: string): string {
   const v = f.get(k);
@@ -35,15 +36,9 @@ async function run(back: string, okMessage: string, fn: () => Promise<unknown>):
 export async function signIn(form: FormData): Promise<never> {
   if (authMode() !== "local") redirect("/signin?error=Development%20sign-in%20is%20disabled.");
   const subject = str(form, "subject");
-  const res = await fetch(`${BASE}/api/v1/dev/session`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ subject, mfa: str(form, "mfa") !== "no" }),
-    cache: "no-store",
-  });
-  if (!res.ok) to("/signin", "error", "Sign-in failed or the development issuer is disabled.");
-  const body = (await res.json()) as { access_token: string; expires_in: number };
-  await setSession({ token: body.access_token, subject, exp: Math.floor(Date.now() / 1000) + body.expires_in });
+  if (!await startDevelopmentSession(subject, str(form, "mfa") !== "no")) {
+    to("/signin", "error", "Sign-in failed or the development issuer is disabled.");
+  }
   redirect("/");
 }
 
